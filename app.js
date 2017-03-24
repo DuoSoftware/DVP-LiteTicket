@@ -204,7 +204,7 @@ server.post('/DVP/API/:version/Ticket/:id/RelatedTicket/:ticketid',authorization
 server.del('/DVP/API/:version/Ticket/:id/RelatedTicket/:ticketid',authorization({resource:"ticket", action:"delete"}), ticketService.DeAttachTicket);
 server.put('/DVP/API/:version/Ticket/:id/Engagement/:EngagementId',authorization({resource:"ticket", action:"write"}), ticketService.AppendEngagement);
 server.get('/DVP/API/:version/Ticket/Engagement/:EngagementId',authorization({resource:"ticket", action:"write"}), ticketService.GetTicketsByEngagementId);
-
+server.put('/DVP/API/:version/Ticket/:id/SecurityLevel', authorization({resource:"ticket", action:"write"}), ticketService.UpdateTicketSecurityLevel);
 
 
 

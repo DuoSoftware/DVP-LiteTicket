@@ -21,6 +21,7 @@ var CaseConfiguration = require('dvp-mongomodels/model/CaseManagement').CaseConf
 
 var FileSlotArray = require('dvp-mongomodels/model/Ticket').FileSlotArray;
 var FileSlot= require('dvp-mongomodels/model/Ticket').FileSlot;
+var Notice = require('dvp-mongomodels/model/Notice').Notice;
 
 
 /*var CaseConfiguration = require('dvp-mongomodels/model/CaseConfiguration').CaseConfiguration;*/
@@ -54,8 +55,6 @@ redisClient.on("error", function (err) {
 
 
 });
-
-
 
 
 
@@ -97,6 +96,12 @@ module.exports.CreateTicket = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
+    var securityLevel=null;
+
+    if(req.body.security_level)
+    {
+        securityLevel=req.body.security_level;
+    }
 
     var dateNow = moment();
 
@@ -146,7 +151,6 @@ module.exports.CreateTicket = function (req, res) {
                         priority: req.body.priority,
                         status: "new",
                         submitter: user.id,
-
                         company: company,
                         tenant: tenant,
                         attachments: req.body.attachments,
@@ -160,7 +164,8 @@ module.exports.CreateTicket = function (req, res) {
                         events: [tEvent],
                         assignee: req.body.assignee,
                         assignee_group: req.body.assignee_group,
-                        due_at: req.body.due_at
+                        due_at: req.body.due_at,
+                        security_level:securityLevel
                     });
 
                     ticket.watchers =  [user.id];
@@ -311,40 +316,71 @@ module.exports.GetAllTickets = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    var qObj = {company: company, tenant: tenant, active: true};
 
-    if (req.query.status) {
-        var paramArr;
-        if (Array.isArray(req.query.status)) {
-            paramArr = req.query.status;
+    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+        if (err) {
+            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+            res.end(jsonString);
+
         } else {
 
-            paramArr = [req.query.status];
-        }
-        qObj.status = {$in: paramArr};
-    }
+            if(user) {
 
-    Ticket.find(qObj).populate('assignee', 'name avatar firstname lastname').populate('assignee_group', 'name').populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus').populate('submitter', 'name avatar').populate('collaborators', 'name avatar').populate( {path: 'form_submission',populate : {path: 'form'}}).skip(skip)
-        .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
-            if (err) {
+                var qObj = {company: company, tenant: tenant, active: true,$or:[{security_level:null},{assignee:user.id},{assignee_group:user.group}]};
 
-                jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
+                if (user.security_level) {
 
-            } else {
-
-                if (tickets) {
-
-                    jsonString = messageFormatter.FormatMessage(undefined, "Get All Tickets Successful", true, tickets);
-
-                } else {
-
-                    jsonString = messageFormatter.FormatMessage(undefined, "No Tickets Found", false, tickets);
+                    qObj.$or.push({security_level:{$gte:user.security_level}});
 
                 }
+
+                if (req.query.status) {
+                    var paramArr;
+                    if (Array.isArray(req.query.status)) {
+                        paramArr = req.query.status;
+                    } else {
+
+                        paramArr = [req.query.status];
+                    }
+                    qObj.status = {$in: paramArr};
+                }
+
+                Ticket.find(qObj).populate('assignee', 'name avatar firstname lastname').populate('assignee_group', 'name').populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus').populate('submitter', 'name avatar').populate('collaborators', 'name avatar').populate({
+                    path: 'form_submission',
+                    populate: {path: 'form'}
+                }).skip(skip)
+                    .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
+                        if (err) {
+
+                            jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
+
+                        } else {
+
+                            if (tickets) {
+
+                                jsonString = messageFormatter.FormatMessage(undefined, "Get All Tickets Successful", true, tickets);
+
+                            } else {
+
+                                jsonString = messageFormatter.FormatMessage(undefined, "No Tickets Found", false, tickets);
+
+                            }
+                        }
+
+                        res.end(jsonString);
+                    });
+
             }
 
-            res.end(jsonString);
-        });
+            else{
+
+                jsonString = messageFormatter.FormatMessage(undefined, "No User Found", false, undefined);
+                res.end(jsonString);
+            }
+        }
+    });
+
+
 
 };
 
@@ -423,30 +459,63 @@ module.exports.GetTicketsByTimeRange = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    Ticket.find({
-        company: company,
-        tenant: tenant, active: true,
-        "created_at": {"$gte": req.params.fromDate, "$lt": req.params.toDate}
-    }, function (err, tickets) {
-        //db.posts.find( //query today up to tonight  {"created_on": {"$gte": new Date(2012, 7, 14), "$lt": new Date(2012, 7, 15)}})
+
+    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
         if (err) {
+            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+            res.end(jsonString);
 
-            jsonString = messageFormatter.FormatMessage(err, "Get Tickets By TimeRange Failed", false, undefined);
+        }
+        else {
 
-        } else {
+            if (user) {
 
-            if (tickets) {
+                var qObj = {
+                    company: company,
+                    tenant: tenant,
+                    active: true,
+                    $or: [{security_level: null}, {assignee: user.id}, {assignee_group: user.group}],
+                    "created_at": {"$gte": req.params.fromDate, "$lt": req.params.toDate}
 
-                jsonString = messageFormatter.FormatMessage(undefined, "Get Tickets By TimeRange Successful", true, tickets);
+                };
 
-            } else {
+                if (user.security_level) {
 
-                jsonString = messageFormatter.FormatMessage(undefined, "No Tickets Found", false, tickets);
+                    qObj.$or.push({security_level: {$gte: user.security_level}});
 
+                }
+
+
+                Ticket.find(qObj, function (err, tickets) {
+                    //db.posts.find( //query today up to tonight  {"created_on": {"$gte": new Date(2012, 7, 14), "$lt": new Date(2012, 7, 15)}})
+                    if (err) {
+
+                        jsonString = messageFormatter.FormatMessage(err, "Get Tickets By TimeRange Failed", false, undefined);
+
+                    } else {
+
+                        if (tickets) {
+
+                            jsonString = messageFormatter.FormatMessage(undefined, "Get Tickets By TimeRange Successful", true, tickets);
+
+                        } else {
+
+                            jsonString = messageFormatter.FormatMessage(undefined, "No Tickets Found", false, tickets);
+
+                        }
+                    }
+
+                    res.end(jsonString);
+                });
+
+            }
+            else {
+                jsonString = messageFormatter.FormatMessage(new Error("No user found"), "No user found", false, undefined);
+                res.end(jsonString);
             }
         }
 
-        res.end(jsonString);
+
     });
 };
 
@@ -459,26 +528,48 @@ module.exports.GetAllTicketsWithStatus = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    Ticket.find({company: company, tenant: tenant, active: true, status: req.params.status}).skip(skip)
-        .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
-            if (err) {
 
-                jsonString = messageFormatter.FormatMessage(err, "Get AllTickets With Status Failed", false, undefined);
 
-            } else {
-
-                if (tickets) {
-
-                    jsonString = messageFormatter.FormatMessage(undefined, "Get AllTickets With Status Successful", true, tickets);
-
-                } else {
-
-                    jsonString = messageFormatter.FormatMessage(undefined, "No Ticket Found", false, undefined);
-
-                }
-            }
+    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+        if (err) {
+            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
-        });
+
+        } else {
+
+            var qObj =  {company: company,tenant: tenant,active: true,$or:[{security_level:null},{assignee:user.id},{assignee_group:user.group}]};
+
+
+            if(user.security_level )
+            {
+
+                qObj.$or.push({security_level:{$gte:user.security_level}});
+            }
+            Ticket.find(qObj).skip(skip)
+                .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
+                    if (err) {
+
+                        jsonString = messageFormatter.FormatMessage(err, "Get AllTickets With Status Failed", false, undefined);
+
+                    } else {
+
+                        if (tickets) {
+
+                            jsonString = messageFormatter.FormatMessage(undefined, "Get AllTickets With Status Successful", true, tickets);
+
+                        } else {
+
+                            jsonString = messageFormatter.FormatMessage(undefined, "No Ticket Found", false, undefined);
+
+                        }
+                    }
+                    res.end(jsonString);
+                });
+        }
+    });
+
+
+
 };
 
 module.exports.GetAllTicketsWithStatusTimeRange = function (req, res) {
@@ -487,30 +578,67 @@ module.exports.GetAllTicketsWithStatusTimeRange = function (req, res) {
     var tenant = parseInt(req.user.tenant);
 
     var jsonString;
-    Ticket.find({
-        company: company,
-        tenant: tenant,
-        active: true,
-        "created_at": {"$gte": req.params.fromDate, "$lt": req.params.toDate}
-    }).sort({created_at: -1}).exec(function (err, tickets) {
-        if (err) {
 
-            jsonString = messageFormatter.FormatMessage(err, "Get AllTickets With Status Failed", false, undefined);
+
+    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+        if (err) {
+            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+            res.end(jsonString);
 
         } else {
 
-            if (tickets) {
+            if(user) {
 
-                jsonString = messageFormatter.FormatMessage(undefined, "Get AllTickets With Status Successful", true, tickets);
+                var qObj = {
+                    company: company,
+                    tenant: tenant,
+                    active: true,
+                    $or: [{security_level: null}, {assignee: user.id}, {assignee_group: user.group}],
+                    "created_at": {"$gte": req.params.fromDate, "$lt": req.params.toDate}
+                };
 
-            } else {
+                if (user.security_level) {
 
-                jsonString = messageFormatter.FormatMessage(undefined, "No Ticket Found", false, undefined);
+                    qObj.$or.push({security_level: {$gte: user.security_level}});
+
+                }
+                Ticket.find(qObj).sort({created_at: -1}).exec(function (err, tickets) {
+                    if (err) {
+
+                        jsonString = messageFormatter.FormatMessage(err, "Get AllTickets With Status Failed", false, undefined);
+
+                    } else {
+
+                        if (tickets) {
+
+                            jsonString = messageFormatter.FormatMessage(undefined, "Get AllTickets With Status Successful", true, tickets);
+
+                        } else {
+
+                            jsonString = messageFormatter.FormatMessage(undefined, "No Ticket Found", false, undefined);
+
+                        }
+                    }
+                    res.end(jsonString);
+                });
+
 
             }
+            else
+            {
+                jsonString = messageFormatter.FormatMessage(new Error("No user found"), "No user found", false, undefined);
+                res.end(jsonString);
+            }
         }
-        res.end(jsonString);
     });
+
+
+
+
+
+
+
+
 };
 
 module.exports.GetAllTicketsWithMatrix = function (req, res) {
@@ -597,27 +725,62 @@ module.exports.GetAllTicketsByChannel = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    Ticket.find({company: company, tenant: tenant, channel: req.params.Channel, active: true}).skip(skip)
-        .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
-            if (err) {
 
-                jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
+    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+        if (err) {
+            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+            res.end(jsonString);
 
-            } else {
+        } else {
 
-                if (tickets) {
+            if (user) {
 
-                    jsonString = messageFormatter.FormatMessage(undefined, "Get All Tickets By Channel Successful", true, tickets);
+                var qObj = {
+                    company: company,
+                    tenant: tenant,
+                    active: true,
+                    $or: [{security_level: null}, {assignee: user.id}, {assignee_group: user.group}],
+                    channel: req.params.Channel
+                };
 
-                } else {
+                if (user.security_level) {
 
-                    jsonString = messageFormatter.FormatMessage(undefined, "No Tickets Found", false, tickets);
+                    qObj.$or.push({security_level: {$gte: user.security_level}});
 
                 }
-            }
 
-            res.end(jsonString);
-        });
+                Ticket.find(qObj).skip(skip)
+                    .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
+                        if (err) {
+
+                            jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
+
+                        } else {
+
+                            if (tickets) {
+
+                                jsonString = messageFormatter.FormatMessage(undefined, "Get All Tickets By Channel Successful", true, tickets);
+
+                            } else {
+
+                                jsonString = messageFormatter.FormatMessage(undefined, "No Tickets Found", false, tickets);
+
+                            }
+                        }
+
+                        res.end(jsonString);
+                    });
+
+            }
+            else
+            {
+                jsonString = messageFormatter.FormatMessage(new Error("No user found"), "No user found", false, undefined);
+            }
+        }
+
+    });
+
+
 };
 
 module.exports.GetAllTicketsByChannelTimeRange = function (req, res) {
@@ -627,31 +790,64 @@ module.exports.GetAllTicketsByChannelTimeRange = function (req, res) {
 
 
     var jsonString;
-    Ticket.find({
-        company: company,
-        tenant: tenant,
-        "created_at": {"$gte": req.params.fromDate, "$lt": req.params.toDate},
-        active: true
-    }).sort({created_at: -1}).exec(function (err, tickets) {
+
+    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
         if (err) {
+            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+            res.end(jsonString);
 
-            jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
+        }
+        else {
 
-        } else {
+            if (user) {
 
-            if (tickets) {
+                var qObj = {
+                    company: company,
+                    tenant: tenant,
+                    active: true,
+                    $or: [{security_level: null}, {assignee: user.id}, {assignee_group: user.group}],
+                    "created_at": {"$gte": req.params.fromDate, "$lt": req.params.toDate}
 
-                jsonString = messageFormatter.FormatMessage(undefined, "Get All Tickets By Channel Successful", true, tickets);
+                };
 
-            } else {
+                if (user.security_level) {
 
-                jsonString = messageFormatter.FormatMessage(undefined, "No Tickets Found", false, tickets);
+                    qObj.$or.push({security_level: {$gte: user.security_level}});
+
+                }
+
+                Ticket.find(qObj).sort({created_at: -1}).exec(function (err, tickets) {
+                    if (err) {
+
+                        jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
+
+                    } else {
+
+                        if (tickets) {
+
+                            jsonString = messageFormatter.FormatMessage(undefined, "Get All Tickets By Channel Successful", true, tickets);
+
+                        } else {
+
+                            jsonString = messageFormatter.FormatMessage(undefined, "No Tickets Found", false, tickets);
+
+                        }
+                    }
+
+                    res.end(jsonString);
+                });
 
             }
-        }
+            else
+            {
+                jsonString = messageFormatter.FormatMessage(new Error("No user found"), "No user found", false, undefined);
+                res.end(jsonString);
+            }
 
-        res.end(jsonString);
+        }
     });
+
+
 };
 
 module.exports.GetAllTicketsByRequester = function (req, res) {
@@ -1401,26 +1597,37 @@ module.exports.PickTicket = function (req, res) {
     var tenant = parseInt(req.user.tenant);
 
     var jsonString;
-    Ticket.findOne({company: company, tenant: tenant, _id: req.params.id}).populate('assignee' , '-password').populate('assignee_group').exec(function (err, ticket) {
+
+    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
         if (err) {
-
-            jsonString = messageFormatter.FormatMessage(err, "Fail Find Ticket", false, undefined);
+            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
-        }
-        else {
-            if (ticket) {
-                if (ticket.assignee) {
-                    jsonString = messageFormatter.FormatMessage(undefined, "Already Assign To User.", false, undefined);
-                    res.end(jsonString);
-                }
-                else {
-                    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
-                        if (err) {
-                            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
-                            res.end(jsonString);
 
-                        } else {
-                            if (user) {
+        } else {
+            if (user) {
+
+                var qObj = {company: company, tenant: tenant,_id: req.params.id, active: true,$or:[{security_level:null},{assignee:user.id},{assignee_group:user.group}]};
+
+                if (user.security_level) {
+
+                    qObj.$or.push({security_level:{$gte:user.security_level}});
+
+                }
+
+
+                Ticket.findOne(qObj).populate('assignee' , '-password').populate('assignee_group').exec(function (err, ticket) {
+                    if (err) {
+
+                        jsonString = messageFormatter.FormatMessage(err, "Fail Find Ticket", false, undefined);
+                        res.end(jsonString);
+                    }
+                    else {
+                        if (ticket) {
+                            if (ticket.assignee) {
+                                jsonString = messageFormatter.FormatMessage(undefined, "Already Assign To User.", false, undefined);
+                                res.end(jsonString);
+                            }
+                            else {
                                 var oldTicket = deepcopy(ticket.toJSON());
                                 var assigneeGroup = deepcopy(ticket.toJSON().assignee_group);
                                 var time = new Date().toISOString();
@@ -1469,22 +1676,31 @@ module.exports.PickTicket = function (req, res) {
                                     }
                                     res.end(jsonString);
                                 });
-                            }
-                            else {
-                                jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
-                                res.end(jsonString);
+
                             }
                         }
-                    });
-                }
+                        else {
+                            jsonString = messageFormatter.FormatMessage(undefined, "Fail Find Ticket", false, undefined);
+                            res.end(jsonString);
+                        }
+                    }
+
+                });
+
+
+
             }
             else {
-                jsonString = messageFormatter.FormatMessage(undefined, "Fail Find Ticket", false, undefined);
+                jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
                 res.end(jsonString);
             }
         }
-
     });
+
+
+
+
+
 };
 
 module.exports.GetTicketAudit = function (req, res) {
@@ -3825,6 +4041,7 @@ module.exports.CreateSubTicket = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
+    var securityLevel=null;
 
     Ticket.findOne({company: company, tenant: tenant, _id: req.params.id}, function (err, parentTicket) {
         if (err) {
@@ -3834,6 +4051,11 @@ module.exports.CreateSubTicket = function (req, res) {
 
         }
         else if (parentTicket) {
+
+            if(parentTicket.security_level && parentTicket.security_level<=req.body.security_level)
+            {
+                securityLevel=req.body.security_level;
+            }
 
             User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
                 if (err) {
@@ -3886,7 +4108,8 @@ module.exports.CreateSubTicket = function (req, res) {
                                 tags: req.body.tags,
                                 custom_fields: req.body.custom_fields,
                                 comments: req.body.comments,
-                                events: [tEvent]
+                                events: [tEvent],
+                                security_level:securityLevel
                             });
 
 
@@ -5205,26 +5428,26 @@ module.exports.GetCasesWithLimit = function (req, res) {
     var jsonString;
     Case.find({company: company, tenant: tenant}).skip(tempSkip)
         .limit(tempLimit).populate('caseConfiguration').exec(function (err, cases) {
-        if (err) {
+            if (err) {
 
-            jsonString = messageFormatter.FormatMessage(err, "Get Cases Failed", false, undefined);
-
-        } else {
-
-            if (cases) {
-
-
-                jsonString = messageFormatter.FormatMessage(err, "Get Cases Successful", true, cases);
+                jsonString = messageFormatter.FormatMessage(err, "Get Cases Failed", false, undefined);
 
             } else {
 
-                jsonString = messageFormatter.FormatMessage(undefined, "No Cases Found", false, undefined);
+                if (cases) {
 
+
+                    jsonString = messageFormatter.FormatMessage(err, "Get Cases Successful", true, cases);
+
+                } else {
+
+                    jsonString = messageFormatter.FormatMessage(undefined, "No Cases Found", false, undefined);
+
+                }
             }
-        }
 
-        res.end(jsonString);
-    });
+            res.end(jsonString);
+        });
 };
 
 module.exports.GetCaseConfiguration = function (req, res) {
@@ -7091,22 +7314,51 @@ module.exports.GetTicketsByField = function(req, res) {
     var jsonString;
 
 
-    var tempQuery = {company: company, tenant: tenant};
+    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
 
-
-    if (req.params.key && req.params.value) {
-
-        tempQuery[req.params.key] = req.params.value;
-    }
-
-    Ticket.find(tempQuery, function (err, tickets) {
-        if (err) {
-            jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
-        } else {
-            jsonString = messageFormatter.FormatMessage(undefined, "Get All Tickets Successful", true, tickets);
+        if(err)
+        {
+            jsonString = messageFormatter.FormatMessage(err, "Error in user search", false, undefined);
+            res.end(jsonString);
         }
-        res.end(jsonString);
+        else
+        {
+            if(user)
+            {
+                var tempQuery = {company: company, tenant: tenant,$or:[{security_level:null},{assignee:user.id},{assignee_group:user.group}]};
+
+                if (user.security_level) {
+
+                    tempQuery.$or.push({security_level:{$gte:user.security_level}});
+
+                }
+
+
+                if (req.params.key && req.params.value) {
+
+                    tempQuery[req.params.key] = req.params.value;
+                }
+
+                Ticket.find(tempQuery, function (err, tickets) {
+                    if (err) {
+                        jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
+                    } else {
+                        jsonString = messageFormatter.FormatMessage(undefined, "Get All Tickets Successful", true, tickets);
+                    }
+                    res.end(jsonString);
+                });
+            }
+            else
+            {
+                jsonString = messageFormatter.FormatMessage(new Error("No user found"), "No user found", false, undefined);
+                res.end(jsonString);
+            }
+        }
     });
+
+
+
+
 
 
 };
@@ -7521,6 +7773,79 @@ module.exports.MakePrefixAvailable= function(req, res){
             }
 
         });
+
+
+};
+
+module.exports.UpdateTicketSecurityLevel = function (req, res) {
+    logger.info("DVP-LiteTicket.UpdateTicketSecurityLevel Internal method ");
+
+    var company = parseInt(req.user.company);
+    var tenant = parseInt(req.user.tenant);
+    var jsonString;
+
+
+    if(req.query.level)
+    {
+        var updateObj =
+        {
+            security_level:req.query.level
+        };
+
+        User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+            if(err)
+            {
+                jsonString = messageFormatter.FormatMessage(err, "Error in searching user", false, undefined);
+                res.end(jsonString);
+            }
+            else
+            {
+                if(user) {
+                    var qObj = {_id: req.params.id,company: company, tenant: tenant, active: true,$or:[{security_level:null},{assignee:user.id},{assignee_group:user.group}]};
+
+                    if (user.security_level) {
+                        qObj =  {_id: req.params.id,company: company,tenant: tenant,active: true,$or:[{security_level:{$gte:user.security_level}},{security_level:null},{assignee:user.id},{assignee_group:user.group}]};
+                    }
+
+
+                    Ticket.findOneAndUpdate(qObj, updateObj, function (err, Ticket) {
+
+                        if (err) {
+                            jsonString = messageFormatter.FormatMessage(err, "Ticket Security level Update Failed", false, undefined);
+                            res.end(jsonString);
+                        } else {
+                            if(Ticket)
+                            {
+                                jsonString = messageFormatter.FormatMessage(undefined, "Ticket Security level Updated  successfully", true, Ticket);
+                                res.end(jsonString);
+                            }
+                            else
+                            {
+                                jsonString = messageFormatter.FormatMessage(new Error("Security level updation faild"), "Ticket Security level Updation failed", false, undefined);
+                                res.end(jsonString);
+                            }
+
+                        }
+                    });
+                }
+                else
+                {
+                    jsonString = messageFormatter.FormatMessage(new Error("No user found"), "No user found", false, undefined);
+                    res.end(jsonString);
+                }
+            }
+
+
+
+        });
+    }
+    else
+    {
+        jsonString = messageFormatter.FormatMessage(new Error("Invalid security level"), "Invalid security level", false, undefined);
+        res.end(jsonString);
+    }
+
+
 
 
 };
