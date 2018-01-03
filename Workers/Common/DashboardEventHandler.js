@@ -5,7 +5,7 @@ var config = require('config');
 var redisHandler = require('./RedisHandler');
 var rabbitMqHandler = require('../Trigger/EmailHandler');
 
-var publishEvent = function (tenant, company, eventClass, eventType, eventCategory, param1, param2, sessionId, timeStamp) {
+var publishEvent = function (tenant, company, businessUnit, eventClass, eventType, eventCategory, param1, param2, sessionId, timeStamp) {
     var deferred = q.defer();
 
     try{
@@ -15,6 +15,7 @@ var publishEvent = function (tenant, company, eventClass, eventType, eventCatego
             var eventData = {
                 Tenant: tenant,
                 Company: company,
+                BusinessUnit: businessUnit,
                 EventClass: eventClass,
                 EventType: eventType,
                 EventCategory: eventCategory,
@@ -27,7 +28,7 @@ var publishEvent = function (tenant, company, eventClass, eventType, eventCatego
             rabbitMqHandler.PublishToDashboard('DashboardEvents', eventData);
 
         }else {
-            var pubMessage = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tenant, company, eventClass, eventType, eventCategory, param1, param2, sessionId);
+            var pubMessage = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:%s:YYYY", tenant, company, businessUnit, eventClass, eventType, eventCategory, param1, param2, sessionId);
             redisHandler.Publish("events", pubMessage, function(){});
         }
         deferred.resolve('ProcessFinished');

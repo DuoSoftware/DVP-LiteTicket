@@ -82,7 +82,7 @@ function UpdateDashboardChangeStatus(data, tResult, callback) {
         //var pubMsgEFirstCallResolution = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "firstCallResolution", "total", "total", "Total" + tResult._id);
 
         asyncPubTask.push(function (callback) {
-            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", "firstCallResolution", "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "firstCallResolution", "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
                 callback(null, pResult);
             }).catch(function (ex) {
                 callback(ex, null);
@@ -95,7 +95,7 @@ function UpdateDashboardChangeStatus(data, tResult, callback) {
         //var pubMsgNResolution = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "RESOLUTION", "new", "total", "total", "Total" + tResult._id);
 
         asyncPubTask.push(function (callback) {
-            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "RESOLUTION", "new", "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "RESOLUTION", "new", "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
                 callback(null, pResult);
             }).catch(function (ex) {
                 callback(ex, null);
@@ -108,7 +108,7 @@ function UpdateDashboardChangeStatus(data, tResult, callback) {
         //var pubMsgEResolution = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "RESOLUTION", "closed", "total", "total", "Total" + tResult._id);
 
         asyncPubTask.push(function (callback) {
-            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "RESOLUTION", "closed", "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "RESOLUTION", "closed", "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
                 callback(null, pResult);
             }).catch(function (ex) {
                 callback(ex, null);
@@ -121,7 +121,7 @@ function UpdateDashboardChangeStatus(data, tResult, callback) {
         //var pubMsgNRResolution = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "RESOLUTION", "new", "total", "total", "Total" + tResult._id);
 
         asyncPubTask.push(function (callback) {
-            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "RESOLUTION", "new", "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "RESOLUTION", "new", "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
                 callback(null, pResult);
             }).catch(function (ex) {
                 callback(ex, null);
@@ -136,35 +136,35 @@ function UpdateDashboardChangeStatus(data, tResult, callback) {
         // var pubMsgNRUGroup = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id);
 
         asyncPubTask.push(function (callback) {
-            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "Reopen", "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
                 callback(null, pResult);
             }).catch(function (ex) {
                 callback(ex, null);
             });
         });
         asyncPubTask.push(function (callback) {
-            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "via_" + tResult.channel, "param2", "Channel" + tResult._id, eventTime).then(function (pResult) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "Reopen", "via_" + tResult.channel, "param2", "Channel" + tResult._id, eventTime).then(function (pResult) {
                 callback(null, pResult);
             }).catch(function (ex) {
                 callback(ex, null);
             });
         });
         asyncPubTask.push(function (callback) {
-            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "tags_" + tResult.tags.join(".").replace(/ /g, ''), "param2", "Tags" + tResult._id, eventTime).then(function (pResult) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "Reopen", "tags_" + tResult.tags.join(".").replace(/ /g, ''), "param2", "Tags" + tResult._id, eventTime).then(function (pResult) {
                 callback(null, pResult);
             }).catch(function (ex) {
                 callback(ex, null);
             });
         });
         asyncPubTask.push(function (callback) {
-            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "user_" + assignee, "param2", "User" + tResult._id, eventTime).then(function (pResult) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "Reopen", "user_" + assignee, "param2", "User" + tResult._id, eventTime).then(function (pResult) {
                 callback(null, pResult);
             }).catch(function (ex) {
                 callback(ex, null);
             });
         });
         asyncPubTask.push(function (callback) {
-            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id, eventTime).then(function (pResult) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "Reopen", "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id, eventTime).then(function (pResult) {
                 callback(null, pResult);
             }).catch(function (ex) {
                 callback(ex, null);
@@ -187,35 +187,35 @@ function UpdateDashboardChangeStatus(data, tResult, callback) {
         // asyncPubKeys.push(pubMsgEUGroup);
 
         asyncPubTask.push(function (callback) {
-            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + data, "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "End" + data, "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
                 callback(null, pResult);
             }).catch(function (ex) {
                 callback(ex, null);
             });
         });
         asyncPubTask.push(function (callback) {
-            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + data, "via_" + tResult.channel, "param2", "Channel" + tResult._id, eventTime).then(function (pResult) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "End" + data, "via_" + tResult.channel, "param2", "Channel" + tResult._id, eventTime).then(function (pResult) {
                 callback(null, pResult);
             }).catch(function (ex) {
                 callback(ex, null);
             });
         });
         asyncPubTask.push(function (callback) {
-            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + data, "tags_" + tResult.tags.join(".").replace(/ /g, ''), "param2", "Tags" + tResult._id, eventTime).then(function (pResult) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "End" + data, "tags_" + tResult.tags.join(".").replace(/ /g, ''), "param2", "Tags" + tResult._id, eventTime).then(function (pResult) {
                 callback(null, pResult);
             }).catch(function (ex) {
                 callback(ex, null);
             });
         });
         asyncPubTask.push(function (callback) {
-            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + data, "user_" + assignee, "param2", "User" + tResult._id, eventTime).then(function (pResult) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "End" + data, "user_" + assignee, "param2", "User" + tResult._id, eventTime).then(function (pResult) {
                 callback(null, pResult);
             }).catch(function (ex) {
                 callback(ex, null);
             });
         });
         asyncPubTask.push(function (callback) {
-            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + data, "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id, eventTime).then(function (pResult) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "End" + data, "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id, eventTime).then(function (pResult) {
                 callback(null, pResult);
             }).catch(function (ex) {
                 callback(ex, null);
@@ -238,35 +238,35 @@ function UpdateDashboardChangeStatus(data, tResult, callback) {
     // asyncPubKeys.push(pubMsgNUGroup);
 
     asyncPubTask.push(function (callback) {
-        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", tResult.status, "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
             callback(null, pResult);
         }).catch(function (ex) {
             callback(ex, null);
         });
     });
     asyncPubTask.push(function (callback) {
-        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "via_" + tResult.channel, "param2", "Channel" + tResult._id, eventTime).then(function (pResult) {
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", tResult.status, "via_" + tResult.channel, "param2", "Channel" + tResult._id, eventTime).then(function (pResult) {
             callback(null, pResult);
         }).catch(function (ex) {
             callback(ex, null);
         });
     });
     asyncPubTask.push(function (callback) {
-        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "tags_" + tResult.tags.join(".").replace(/ /g, ''), "param2", "Tags" + tResult._id, eventTime).then(function (pResult) {
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", tResult.status, "tags_" + tResult.tags.join(".").replace(/ /g, ''), "param2", "Tags" + tResult._id, eventTime).then(function (pResult) {
             callback(null, pResult);
         }).catch(function (ex) {
             callback(ex, null);
         });
     });
     asyncPubTask.push(function (callback) {
-        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "user_" + assignee, "param2", "User" + tResult._id, eventTime).then(function (pResult) {
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", tResult.status, "user_" + assignee, "param2", "User" + tResult._id, eventTime).then(function (pResult) {
             callback(null, pResult);
         }).catch(function (ex) {
             callback(ex, null);
         });
     });
     asyncPubTask.push(function (callback) {
-        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id, eventTime).then(function (pResult) {
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", tResult.status, "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id, eventTime).then(function (pResult) {
             callback(null, pResult);
         }).catch(function (ex) {
             callback(ex, null);
@@ -298,13 +298,13 @@ function UpdateDashboardChangeAssignee(data, tResult, callback) {
     var eventTime = new Date().toISOString();
     var asyncPubTask = [];
     asyncPubTask = asyncPubTask.concat([function (callback) {
-        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + tResult.status, "user_" + data, "param2", "User" + tResult._id, eventTime).then(function (pResult) {
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "End" + tResult.status, "user_" + data, "param2", "User" + tResult._id, eventTime).then(function (pResult) {
             callback(null, pResult);
         }).catch(function (ex) {
             callback(ex, null);
         });
     },function (callback) {
-        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "user_" + assignee, "param2", "User" + tResult._id, eventTime).then(function (pResult) {
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", tResult.status, "user_" + assignee, "param2", "User" + tResult._id, eventTime).then(function (pResult) {
             callback(null, pResult);
         }).catch(function (ex) {
             callback(ex, null);
@@ -331,13 +331,13 @@ function UpdateDashboardChangeAssigneeGroup(data, tResult, callback) {
     var eventTime = new Date().toISOString();
     var asyncPubTask = [];
     asyncPubTask = asyncPubTask.concat([function (callback) {
-        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + tResult.status, "ugroup_" + data, "param2", "UGroup" + tResult._id, eventTime).then(function (pResult) {
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "End" + tResult.status, "ugroup_" + data, "param2", "UGroup" + tResult._id, eventTime).then(function (pResult) {
             callback(null, pResult);
         }).catch(function (ex) {
             callback(ex, null);
         });
     },function (callback) {
-        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id, eventTime).then(function (pResult) {
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", tResult.status, "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id, eventTime).then(function (pResult) {
             callback(null, pResult);
         }).catch(function (ex) {
             callback(ex, null);

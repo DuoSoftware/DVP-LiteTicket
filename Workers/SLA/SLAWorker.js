@@ -539,7 +539,7 @@ function UpdateDashBoardSLAStats(tResult){
         //update SLA violated count
         //var pubMsgNSlaViolated = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "SLA", "slaviolated", "total", "total", "Total" + tResult.id);
         var eventTime = new Date().toISOString();
-        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, "TICKET", "SLA", "slaviolated", "total", "total", "Total" + tResult.id, eventTime);
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "SLA", "slaviolated", "total", "total", "Total" + tResult.id, eventTime);
     }
 }
 
