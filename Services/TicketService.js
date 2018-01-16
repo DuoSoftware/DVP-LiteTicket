@@ -11,6 +11,7 @@ var TicketStatusFlow = require('dvp-mongomodels/model/TicketStatusFlow').TicketS
 var TicketStatusNode = require('dvp-mongomodels/model/TicketStatusFlow').TicketStatusNode;
 var BulkOperation = require('dvp-mongomodels/model/BulkOperation').BulkOperation;
 var User = require('dvp-mongomodels/model/User');
+var UserAccount = require('dvp-mongomodels/model/UserAccount');
 var UserGroup = require('dvp-mongomodels/model/UserGroup').UserGroup;
 var ExternalUser = require('dvp-mongomodels/model/ExternalUser').ExternalUser;
 var Attachment = require('dvp-mongomodels/model/Attachment').Attachment;
@@ -248,7 +249,10 @@ module.exports.CreateTicket = function (req, res) {
 
     var dateNow = moment();
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').populate({path: 'group'})
+        .exec( function (err, useraccount) {
+
+
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -261,7 +265,9 @@ module.exports.CreateTicket = function (req, res) {
 
             var dataNow = moment();
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var time = new Date().toISOString();
                 var tEvent = TicketEvent({
@@ -293,7 +299,7 @@ module.exports.CreateTicket = function (req, res) {
                         description: req.body.description,
                         priority: req.body.priority,
                         status: "new",
-                        submitter: user.id,
+                        submitter: useraccount.userref.id,
 
                         company: company,
                         tenant: tenant,
@@ -1075,58 +1081,63 @@ module.exports.GetMyGroupTicketList = function (req, res) {
 
     var jsonString;
 
+    UserAccount.findOne({
+        username: req.user.iss,
+        company: company,
+        tenant: tenant
+    }).populate('userref', '-password')
+        .exec(function (err, user) {
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
-        if (err) {
-            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
-            res.end(jsonString);
-
-        } else {
-
-            if (user && user.group) {
-
-                var obj = {
-
-                    "company": company,
-                    "tenant": tenant,
-                    "assignee_group": user.group,
-                    "active": true
-                }
-                if (req.query.businessunit) {
-                    obj.businessUnit = req.query.businessunit;
-                }
-
-                Ticket.find(obj).populate('assignee', 'name avatar firstname lastname')
-                    .populate('assignee', 'name avatar')
-                    .populate('assignee_group', 'name')
-                    .populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus')
-                    .populate('submitter', 'name').populate('collaborators', 'name')
-                    .skip(skip)
-                    .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
-                    if (err) {
-
-                        jsonString = messageFormatter.FormatMessage(err, "Get All Tickets and Status Failed", false, undefined);
-
-                    } else {
-
-                        if (tickets) {
-                            jsonString = messageFormatter.FormatMessage(undefined, "Get All Tickets By Group ID and Status Successful", true, tickets);
-                        } else {
-
-                            jsonString = messageFormatter.FormatMessage(undefined, "No Tickets Found", false, tickets);
-                        }
-                    }
-                    res.end(jsonString);
-                });
-
+            if (err) {
+                jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+                res.end(jsonString);
 
             } else {
 
-                jsonString = messageFormatter.FormatMessage(undefined, "No User Found", false, undefined);
-                res.end(jsonString);
+                if (user && user.userref && user.group) {
+
+                    var obj = {
+
+                        "company": company,
+                        "tenant": tenant,
+                        "assignee_group": user.group,
+                        "active": true
+                    }
+                    if (req.query.businessunit) {
+                        obj.businessUnit = req.query.businessunit;
+                    }
+
+                    Ticket.find(obj).populate('assignee', 'name avatar firstname lastname')
+                        .populate('assignee', 'name avatar')
+                        .populate('assignee_group', 'name')
+                        .populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus')
+                        .populate('submitter', 'name').populate('collaborators', 'name')
+                        .skip(skip)
+                        .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
+                        if (err) {
+
+                            jsonString = messageFormatter.FormatMessage(err, "Get All Tickets and Status Failed", false, undefined);
+
+                        } else {
+
+                            if (tickets) {
+                                jsonString = messageFormatter.FormatMessage(undefined, "Get All Tickets By Group ID and Status Successful", true, tickets);
+                            } else {
+
+                                jsonString = messageFormatter.FormatMessage(undefined, "No Tickets Found", false, tickets);
+                            }
+                        }
+                        res.end(jsonString);
+                    });
+
+
+                } else {
+
+                    jsonString = messageFormatter.FormatMessage(undefined, "No User Found", false, undefined);
+                    res.end(jsonString);
+                }
             }
-        }
-    });
+        });
 };
 
 module.exports.GetAllMyTickets = function (req, res) {
@@ -1139,14 +1150,19 @@ module.exports.GetAllMyTickets = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
+        .exec( function (err, useraccount) {
+
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var qObj = {
                     company: company,
@@ -1218,8 +1234,9 @@ module.exports.GetAllMyGroupTickets = function (req, res) {
 
     var jsonString;
 
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, user) {
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
@@ -1343,14 +1360,18 @@ module.exports.GetAllMyTicketsWithStatus = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
+        .exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var qObj = {
                     company: company,
@@ -1471,13 +1492,18 @@ module.exports.GetRecentTicket = function (req, res) {
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
+        .exec( function (err, useraccount) {
+
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 RecentUserTicket.find({
                     company: company,
@@ -1528,13 +1554,17 @@ module.exports.GetRecentTicketx = function (req, res) {
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
+        .exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 RecentTicket.findOne({
                     company: company,
@@ -1689,17 +1719,18 @@ module.exports.GetTicketWithDetails = function (req, res) {
 
                     try {
 
-                        User.findOne({
-                            username: req.user.iss,
-                            company: company,
-                            tenant: tenant
-                        }, function (err, user) {
+
+                        UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
+                            .exec( function (err, useraccount) {
                             if (err) {
                                 jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                                 res.end(jsonString);
 
                             } else {
-                                if (user) {
+                                if (useraccount && useraccount.userref) {
+
+                                    var user = useraccount.userref.toObject();
+
 
 
                                     InsertUserRecentTicket(company, tenant, user.id, ticket.id, "get");
@@ -1836,13 +1867,16 @@ module.exports.PickTicket = function (req, res) {
                     res.end(jsonString);
                 }
                 else {
-                    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+                    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                         if (err) {
                             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                             res.end(jsonString);
 
                         } else {
-                            if (user) {
+                            if (useraccount && useraccount.userref) {
+
+                                var user = useraccount.userref.toObject();
+
                                 var oldTicket = deepcopy(ticket.toJSON());
                                 var assigneeGroup = deepcopy(ticket.toJSON().assignee_group);
                                 var time = new Date().toISOString();
@@ -2128,18 +2162,16 @@ module.exports.AddCommentByEngagement = function (req, res) {
                 else {
                     console.log("No ticket by parent comment found for engagement " + req.params.engagementid);
                     if (comment) {
-                        User.findOne({
-                            username: author,
-                            company: company,
-                            tenant: tenant
-                        }, function (err, user) {
+                        UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                             if (err) {
                                 console.log("Error searching user to add comment " + req.body.author);
                                 jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                                 res.end(jsonString);
                             }
                             else {
-                                if (user) {
+                                if (useraccount && useraccount.userref) {
+
+                                    var user = useraccount.userref.toObject();
                                     var comment = Comment({
                                         body: req.body.body,
                                         body_type: req.body.body_type,
@@ -2220,14 +2252,17 @@ module.exports.AddCommentByEngagement = function (req, res) {
         else {
             if (ticket) {
                 console.log("Ticket found for engagement " + req.params.engagementid + " checking User");
-                User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+                UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                     if (err) {
                         console.log("Ticket found for engagement " + req.params.engagementid + " No User found");
                         jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                         res.end(jsonString);
                     }
                     else {
-                        if (user) {
+                        if (useraccount && useraccount.userref) {
+
+                            var user = useraccount.userref.toObject();
+
                             var comment = Comment({
                                 body: req.body.body,
                                 body_type: req.body.body_type,
@@ -2348,18 +2383,16 @@ module.exports.AddCommentByEngagement = function (req, res) {
                     else {
                         console.log("No Ticket found for engagement " + req.params.engagementid + " Comment found");
                         if (comment) {
-                            User.findOne({
-                                username: req.user.iss,
-                                company: company,
-                                tenant: tenant
-                            }, function (err, user) {
+                            UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                                 if (err) {
                                     console.log("No Ticket found for engagement " + req.params.engagementid + " Comment found, Invalid user");
                                     jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                                     res.end(jsonString);
                                 }
                                 else {
-                                    if (user) {
+                                    if (useraccount && useraccount.userref) {
+
+                                        var user = useraccount.userref.toObject();
                                         var comment = Comment({
                                             body: req.body.body,
                                             body_type: req.body.body_type,
@@ -2750,13 +2783,15 @@ module.exports.AddCommentByReference = function (req, res) {
         }
         else {
             if (ticket) {
-                User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+                UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                         res.end(jsonString);
                     }
                     else {
-                        if (user) {
+                        if (useraccount && useraccount.userref) {
+
+                            var user = useraccount.userref.toObject();
                             var comment = Comment({
                                 body: req.body.body,
                                 body_type: req.body.body_type,
@@ -2938,13 +2973,15 @@ module.exports.AddComment = function (req, res) {
         else {
             if (ticket) {
 
-                User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+                UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                         res.end(jsonString);
                     }
                     else {
-                        if (user) {
+                        if (useraccount && useraccount.userref) {
+
+                            var user = useraccount.userref.toObject();
 
 
                             var comment = Comment({
@@ -3162,13 +3199,16 @@ module.exports.AddAttachment = function (req, res) {
         }
         else {
             if (ticket) {
-                User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+                UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                         res.end(jsonString);
                     } else {
 
-                        if (user) {
+                        if (useraccount && useraccount.userref) {
+
+                            var user = useraccount.userref.toObject();
+
 
                             var attachment = Attachment({
                                 file: req.body.file,
@@ -3351,17 +3391,16 @@ module.exports.AddCommentToComment = function (req, res) {
                     }
                     else {
                         if (ticket) {
-                            User.findOne({
-                                username: req.user.iss,
-                                company: company,
-                                tenant: tenant
-                            }, function (err, user) {
+                            UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                                 if (err) {
                                     jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                                     res.end(jsonString);
                                 }
                                 else {
-                                    if (user) {
+                                    if (useraccount && useraccount.userref) {
+
+                                        var user = useraccount.userref.toObject();
+
 
 
                                         var comment = Comment({
@@ -3707,7 +3746,9 @@ module.exports.ChangeStatusByUser = function (req, res) {
     var jsonString;
     if (req.body.status && req.body.user) {
 
-        User.findOne({_id: req.body.user, company: company, tenant: tenant}, function (err, user) {
+       // UserAccount.findOne({userref: req.body.user, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, user) {
+
+       // User.findOne({_id: req.body.user, company: company, tenant: tenant}, function (err, user) {
 
 
             Ticket.findOne({
@@ -3865,7 +3906,7 @@ module.exports.ChangeStatusByUser = function (req, res) {
                 }
 
             });
-        });
+        //});
     }
     else {
         jsonString = messageFormatter.FormatMessage(undefined, "Invalid Status.", false, undefined);
@@ -3881,12 +3922,16 @@ module.exports.AssignToUser = function (req, res) {
     var jsonString;
 
     if (req.params.user) {
-        User.findOne({_id: req.params.user, company: company, tenant: tenant}, function (err, user) {
+
+        UserAccount.findOne({userref: req.params.user, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
+        //User.findOne({_id: req.params.user, company: company, tenant: tenant}, function (err, user) {
             if (err) {
                 jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                 res.end(jsonString);
             } else {
-                if (user) {
+                if (useraccount && useraccount.userref) {
+
+                    var user = useraccount.userref.toObject();
                     Ticket.findOne({
                         company: company,
                         tenant: tenant,
@@ -4511,7 +4556,7 @@ module.exports.CreateSubTicket = function (req, res) {
         }
         else if (parentTicket) {
 
-            User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+            UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                 if (err) {
 
                     jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -4520,7 +4565,10 @@ module.exports.CreateSubTicket = function (req, res) {
                 } else {
 
 
-                    if (user) {
+                    if (useraccount && useraccount.userref) {
+
+                        var user = useraccount.userref.toObject();
+
 
                         var time = new Date().toISOString();
                         var tEvent = TicketEvent({
@@ -5239,13 +5287,15 @@ module.exports.WatchTicket = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var time = new Date().toISOString();
 
@@ -5287,13 +5337,15 @@ module.exports.StopWatchTicket = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
                 var time = new Date().toISOString();
                 Ticket.findOneAndUpdate({
                     company: company,
@@ -5358,13 +5410,15 @@ module.exports.AddCommonAttachment = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var attachment = Attachment({
                     file: req.body.file,
@@ -5797,7 +5851,7 @@ module.exports.AddCaseConfiguration = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -5805,7 +5859,9 @@ module.exports.AddCaseConfiguration = function (req, res) {
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
 
                 CaseConfiguration.findOne({
@@ -6001,7 +6057,7 @@ module.exports.CreateCase = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -6009,7 +6065,10 @@ module.exports.CreateCase = function (req, res) {
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 var time = new Date().toISOString();
                 var tEvent = TicketEvent({
@@ -6433,7 +6492,7 @@ module.exports.CreateTicketWithComment = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -6441,7 +6500,9 @@ module.exports.CreateTicketWithComment = function (req, res) {
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var time = new Date().toISOString();
                 var tEvent = TicketEvent({
@@ -6690,7 +6751,7 @@ module.exports.CreateStatusNode = function (req, res) {
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -6698,7 +6759,9 @@ module.exports.CreateStatusNode = function (req, res) {
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
 
                 var ticketStatusNode = TicketStatusNode({
@@ -6831,7 +6894,7 @@ module.exports.CreateStatusFlow = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -6839,7 +6902,9 @@ module.exports.CreateStatusFlow = function (req, res) {
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 if (req.body && req.body.type) {
                     TicketStatusFlow.findOne({
@@ -7018,7 +7083,7 @@ module.exports.AddNodeToStatusFlow = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -7026,7 +7091,9 @@ module.exports.AddNodeToStatusFlow = function (req, res) {
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
 
                 TicketStatusFlow.findOneAndUpdate({_id: req.params.id, company: company, tenant: tenant}, {
@@ -7060,7 +7127,7 @@ module.exports.AddConnectionToStatusFlow = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -7068,7 +7135,9 @@ module.exports.AddConnectionToStatusFlow = function (req, res) {
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
 
                 TicketStatusFlow.findOneAndUpdate({_id: req.params.id, company: company, tenant: tenant}, {
@@ -9270,14 +9339,16 @@ module.exports.GetAllTicketsSubmittedByMe = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var qObj = {
                     company: company,
@@ -9348,15 +9419,16 @@ module.exports.GetAllTicketsWatchedByMe = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
 
+                var user = useraccount.userref.toObject();
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
@@ -9429,14 +9501,17 @@ module.exports.GetAllTicketsCollaboratedByMe = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var qObj = {
                     company: company,
@@ -9505,14 +9580,17 @@ module.exports.GetMySubmittedTicketCount = function (req, res) {
     var tenant = parseInt(req.user.tenant);
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var qObj = {
                     company: company,
@@ -9564,14 +9642,17 @@ module.exports.GetMyWatchedTicketCount = function (req, res) {
     var tenant = parseInt(req.user.tenant);
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 var qObj = {
                     company: company,
@@ -9623,14 +9704,17 @@ module.exports.GetMyCollaboratedTicketCount = function (req, res) {
     var tenant = parseInt(req.user.tenant);
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 var qObj = {
                     company: company,
@@ -9734,14 +9818,17 @@ module.exports.GetMyTicketsCount = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 var qObj = {
                     company: company,
@@ -9798,14 +9885,17 @@ module.exports.GetMyGroupTicketsCount = function (req, res) {
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').populate({path: 'group'}).exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user && user.group) {
+            if (useraccount && useraccount.userref && useraccount.group) {
+
+            //    var user = useraccount.userref.toObject();
+           // if (user && user.group) {
                 /*
                  UserGroup.find({"users": user.id}, function (error, groups) {
                  if(!error  && groups) {
@@ -9836,7 +9926,7 @@ module.exports.GetMyGroupTicketsCount = function (req, res) {
 
                     "company": company,
                     "tenant": tenant,
-                    "assignee_group": user.group,
+                    "assignee_group": useraccount.group,
                     "active": true
                 }
 
