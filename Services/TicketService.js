@@ -7834,6 +7834,14 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
     var tagHeaders = ['Reference', 'Subject', 'Phone Number', 'Email', 'SSN', 'First Name', 'Last Name', 'Address', 'Customer Number', 'Created Date', 'Assignee', 'Submitter', 'Requester', 'Channel', 'Status', 'Priority', 'Type', 'SLA Violated', 'Description', 'Comments'];
     var tagOrder = ['reference', 'subject', 'phoneNumber', 'email', 'ssn', 'firstname', 'lastname', 'address', 'fromNumber', 'createdDate', 'assignee', 'submitter', 'requester', 'channel', 'status', 'priority', 'type', 'slaViolated', 'description', 'comments'];
 
+    if(tagCount)
+    {
+        for (j = 0; j < tagCount; j++)
+        {
+            tagHeaders.push('Tag' + (j + 1));
+            tagOrder.push('Tag' + (j + 1));
+        }
+    }
 
     Ticket.find(tempQuery)
         .skip(offset)
@@ -7988,7 +7996,7 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
                                 {
                                     ticketListForCSV = null;
                                     tickets = null;
-                                    global.gc();
+                                    //global.gc();
                                     callback(err, false);
 
                                 }
@@ -7996,7 +8004,7 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
                                 {
                                     ticketListForCSV = null;
                                     tickets = null;
-                                    global.gc();
+                                    //global.gc();
                                     callback(null, true);
                                 }
 
@@ -8012,7 +8020,7 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
                                 {
                                     ticketListForCSV = null;
                                     tickets = null;
-                                    global.gc();
+                                    //global.gc();
                                     callback(err, false);
                                 }
                                 else
@@ -8024,7 +8032,7 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
                                         {
                                             ticketListForCSV = null;
                                             tickets = null;
-                                            global.gc();
+                                            //global.gc();
                                             callback(err, false);
 
                                         }
@@ -8032,7 +8040,7 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
                                         {
                                             ticketListForCSV = null;
                                             tickets = null;
-                                            global.gc();
+                                            //global.gc();
                                             callback(null, true);
                                         }
 
