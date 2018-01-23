@@ -8176,14 +8176,14 @@ var appendToCSVFile = function (uniqueId, fileName, tempQuery, offset, limit, tz
                                 if (err) {
                                     ticketListForCSV = null;
                                     tickets = null;
-                                    //global.gc();
+                                    global.gc();
                                     callback(err, false);
 
                                 }
                                 else {
                                     ticketListForCSV = null;
                                     tickets = null;
-                                    //global.gc();
+                                    global.gc();
                                     callback(null, true);
                                 }
 
@@ -8196,7 +8196,7 @@ var appendToCSVFile = function (uniqueId, fileName, tempQuery, offset, limit, tz
                                 if (err) {
                                     ticketListForCSV = null;
                                     tickets = null;
-                                    //global.gc();
+                                    global.gc();
                                     callback(err, false);
                                 }
                                 else {
@@ -8210,14 +8210,14 @@ var appendToCSVFile = function (uniqueId, fileName, tempQuery, offset, limit, tz
                                         if (err) {
                                             ticketListForCSV = null;
                                             tickets = null;
-                                            //global.gc();
+                                            global.gc();
                                             callback(err, false);
 
                                         }
                                         else {
                                             ticketListForCSV = null;
                                             tickets = null;
-                                            //global.gc();
+                                            global.gc();
                                             callback(null, true);
                                         }
 
