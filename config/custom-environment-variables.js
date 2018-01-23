@@ -114,7 +114,8 @@ module.exports = {
         "domain": "HOST_NAME",
         "port": "HOST_LITETICKET_PORT",
         "version": "HOST_VERSION",
-        "HashKey":"HOST_HASHKEY"
+        "HashKey":"HOST_HASHKEY",
+        "UseDashboardMsgQueue": 'HOST_USE_DASHBOARD_MSG_QUEUE'
     },
 
     "LBServer" : {
