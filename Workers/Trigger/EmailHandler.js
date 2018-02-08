@@ -131,4 +131,20 @@ function SendMessage(ticket, template, messageData, messageType, callback){
     }
 }
 
+function PublishToDashboard(messageType, sendObj){
+
+    console.log("PublishToDashboard :: messageType: "+ messageType +" :: sendObj: "+ sendObj);
+    try {
+        if(messageType && sendObj) {
+            queueConnection.publish(messageType, sendObj, {
+                contentType: 'application/json'
+            });
+        }
+    }catch(exp){
+
+        console.log(exp);
+    }
+}
+
 module.exports.SendMessage = SendMessage;
+module.exports.PublishToDashboard = PublishToDashboard;

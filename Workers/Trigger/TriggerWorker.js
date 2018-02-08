@@ -14,7 +14,7 @@ var PickAgent = require('./PickAgent.js');
 var DvpNotification = require('./DvpNotification.js');
 var restClientHandler = require('./RestClient.js');
 var SlaWorker = require('../SLA/SLAWorker.js');
-var redisHandler = require('../Common/RedisHandler.js');
+var dashboardEventHandler = require('../Common/DashboardEventHandler');
 var deepcopy = require("deepcopy");
 var emailHandler = require('./EmailHandler.js');
 var dvpInteraction = require('../Common/DvpInteractions');
@@ -72,87 +72,214 @@ function UpdateDashboardChangeStatus(data, tResult, callback) {
     //var param1 = util.format("via_%s.tags_%s.user_%s.ugroup_%s", tResult.channel, tResult.tags.join("-"), assignee, assignee_group);
     //var param2 = util.format("user_%s#ugroup_%s", assignee, assignee_group);
 
+    var eventTime = new Date().toISOString();
     var asyncPubKeys = [];
     var asyncPubTask = [];
 
 
 
     if (tResult && tResult.status === "closed" && tResult.ticket_matrix.external_replies && tResult.ticket_matrix.external_replies === 0) {
-        var pubMsgEFirstCallResolution = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "firstCallResolution", "total", "total", "Total" + tResult._id);
+        //var pubMsgEFirstCallResolution = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "firstCallResolution", "total", "total", "Total" + tResult._id);
 
-        asyncPubKeys.push(pubMsgEFirstCallResolution);
+        asyncPubTask.push(function (callback) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "firstCallResolution", "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
+                callback(null, pResult);
+            }).catch(function (ex) {
+                callback(ex, null);
+            });
+        });
     }
 
     if (tResult && tResult.status === "new") {
         //run ticket resolve time
-        var pubMsgNResolution = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "RESOLUTION", "new", "total", "total", "Total" + tResult._id);
+        //var pubMsgNResolution = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "RESOLUTION", "new", "total", "total", "Total" + tResult._id);
 
-        asyncPubKeys.push(pubMsgNResolution);
+        asyncPubTask.push(function (callback) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "RESOLUTION", "new", "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
+                callback(null, pResult);
+            }).catch(function (ex) {
+                callback(ex, null);
+            });
+        });
     }
 
     if (tResult && tResult.status === "closed") {
         //stop ticket resolve time
-        var pubMsgEResolution = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "RESOLUTION", "closed", "total", "total", "Total" + tResult._id);
+        //var pubMsgEResolution = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "RESOLUTION", "closed", "total", "total", "Total" + tResult._id);
 
-        asyncPubKeys.push(pubMsgEResolution);
+        asyncPubTask.push(function (callback) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "RESOLUTION", "closed", "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
+                callback(null, pResult);
+            }).catch(function (ex) {
+                callback(ex, null);
+            });
+        });
     }
 
     if (tResult && data && data === "closed" && tResult.status === "open") {
         //rerun ticket resolve time
-        var pubMsgNRResolution = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "RESOLUTION", "new", "total", "total", "Total" + tResult._id);
+        //var pubMsgNRResolution = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "RESOLUTION", "new", "total", "total", "Total" + tResult._id);
 
-        asyncPubKeys.push(pubMsgNRResolution);
+        asyncPubTask.push(function (callback) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "RESOLUTION", "new", "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
+                callback(null, pResult);
+            }).catch(function (ex) {
+                callback(ex, null);
+            });
+        });
 
         //set ticket reopn count
-        var pubMsgNReopen = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "total", "total", "Total" + tResult._id);
-        var pubMsgNRChannel = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "via_" + tResult.channel, "param2", "Channel" + tResult._id);
-        var pubMsgNRTags = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "tags_" + tResult.tags.join(".").replace(/ /g, ''), "param2", "Tags" + tResult._id);
-        var pubMsgNRUser = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "user_" + assignee, "param2", "User" + tResult._id);
-        var pubMsgNRUGroup = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id);
+        // var pubMsgNReopen = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "total", "total", "Total" + tResult._id);
+        // var pubMsgNRChannel = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "via_" + tResult.channel, "param2", "Channel" + tResult._id);
+        // var pubMsgNRTags = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "tags_" + tResult.tags.join(".").replace(/ /g, ''), "param2", "Tags" + tResult._id);
+        // var pubMsgNRUser = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "user_" + assignee, "param2", "User" + tResult._id);
+        // var pubMsgNRUGroup = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "Reopen", "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id);
 
-        asyncPubKeys.push(pubMsgNReopen);
-        asyncPubKeys.push(pubMsgNRChannel);
-        asyncPubKeys.push(pubMsgNRTags);
-        asyncPubKeys.push(pubMsgNRUser);
-        asyncPubKeys.push(pubMsgNRUGroup);
+        asyncPubTask.push(function (callback) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "Reopen", "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
+                callback(null, pResult);
+            }).catch(function (ex) {
+                callback(ex, null);
+            });
+        });
+        asyncPubTask.push(function (callback) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "Reopen", "via_" + tResult.channel, "param2", "Channel" + tResult._id, eventTime).then(function (pResult) {
+                callback(null, pResult);
+            }).catch(function (ex) {
+                callback(ex, null);
+            });
+        });
+        asyncPubTask.push(function (callback) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "Reopen", "tags_" + tResult.tags.join(".").replace(/ /g, ''), "param2", "Tags" + tResult._id, eventTime).then(function (pResult) {
+                callback(null, pResult);
+            }).catch(function (ex) {
+                callback(ex, null);
+            });
+        });
+        asyncPubTask.push(function (callback) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "Reopen", "user_" + assignee, "param2", "User" + tResult._id, eventTime).then(function (pResult) {
+                callback(null, pResult);
+            }).catch(function (ex) {
+                callback(ex, null);
+            });
+        });
+        asyncPubTask.push(function (callback) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "Reopen", "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id, eventTime).then(function (pResult) {
+                callback(null, pResult);
+            }).catch(function (ex) {
+                callback(ex, null);
+            });
+        });
     }
 
     if (tResult && data && tResult.status != "new") {
-        var pubMsgETotal = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + data, "total", "total", "Total" + tResult._id);
-        var pubMsgEChannel = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + data, "via_" + tResult.channel, "param2", "Channel" + tResult._id);
-        var pubMsgETags = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + data, "tags_" + tResult.tags.join(".").replace(/ /g, ''), "param2", "Tags" + tResult._id);
-        var pubMsgEUser = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + data, "user_" + assignee, "param2", "User" + tResult._id);
-        var pubMsgEUGroup = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + data, "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id);
+        // var pubMsgETotal = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + data, "total", "total", "Total" + tResult._id);
+        // var pubMsgEChannel = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + data, "via_" + tResult.channel, "param2", "Channel" + tResult._id);
+        // var pubMsgETags = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + data, "tags_" + tResult.tags.join(".").replace(/ /g, ''), "param2", "Tags" + tResult._id);
+        // var pubMsgEUser = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + data, "user_" + assignee, "param2", "User" + tResult._id);
+        // var pubMsgEUGroup = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + data, "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id);
+        //
+        //
+        // asyncPubKeys.push(pubMsgETotal);
+        // asyncPubKeys.push(pubMsgEChannel);
+        // asyncPubKeys.push(pubMsgETags);
+        // asyncPubKeys.push(pubMsgEUser);
+        // asyncPubKeys.push(pubMsgEUGroup);
 
-
-        asyncPubKeys.push(pubMsgETotal);
-        asyncPubKeys.push(pubMsgEChannel);
-        asyncPubKeys.push(pubMsgETags);
-        asyncPubKeys.push(pubMsgEUser);
-        asyncPubKeys.push(pubMsgEUGroup);
+        asyncPubTask.push(function (callback) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "End" + data, "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
+                callback(null, pResult);
+            }).catch(function (ex) {
+                callback(ex, null);
+            });
+        });
+        asyncPubTask.push(function (callback) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "End" + data, "via_" + tResult.channel, "param2", "Channel" + tResult._id, eventTime).then(function (pResult) {
+                callback(null, pResult);
+            }).catch(function (ex) {
+                callback(ex, null);
+            });
+        });
+        asyncPubTask.push(function (callback) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "End" + data, "tags_" + tResult.tags.join(".").replace(/ /g, ''), "param2", "Tags" + tResult._id, eventTime).then(function (pResult) {
+                callback(null, pResult);
+            }).catch(function (ex) {
+                callback(ex, null);
+            });
+        });
+        asyncPubTask.push(function (callback) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "End" + data, "user_" + assignee, "param2", "User" + tResult._id, eventTime).then(function (pResult) {
+                callback(null, pResult);
+            }).catch(function (ex) {
+                callback(ex, null);
+            });
+        });
+        asyncPubTask.push(function (callback) {
+            dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "End" + data, "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id, eventTime).then(function (pResult) {
+                callback(null, pResult);
+            }).catch(function (ex) {
+                callback(ex, null);
+            });
+        });
 
     }
 
     //create new window ==> until close
-    var pubMsgNTotal = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "total", "total", "Total" + tResult._id);
-    var pubMsgNChannel = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "via_" + tResult.channel, "param2", "Channel" + tResult._id);
-    var pubMsgNTags = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "tags_" + tResult.tags.join(".").replace(/ /g, ''), "param2", "Tags" + tResult._id);
-    var pubMsgNUser = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "user_" + assignee, "param2", "User" + tResult._id);
-    var pubMsgNUGroup = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id);
+    // var pubMsgNTotal = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "total", "total", "Total" + tResult._id);
+    // var pubMsgNChannel = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "via_" + tResult.channel, "param2", "Channel" + tResult._id);
+    // var pubMsgNTags = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "tags_" + tResult.tags.join(".").replace(/ /g, ''), "param2", "Tags" + tResult._id);
+    // var pubMsgNUser = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "user_" + assignee, "param2", "User" + tResult._id);
+    // var pubMsgNUGroup = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id);
+    //
+    // asyncPubKeys.push(pubMsgNTotal);
+    // asyncPubKeys.push(pubMsgNChannel);
+    // asyncPubKeys.push(pubMsgNTags);
+    // asyncPubKeys.push(pubMsgNUser);
+    // asyncPubKeys.push(pubMsgNUGroup);
 
-    asyncPubKeys.push(pubMsgNTotal);
-    asyncPubKeys.push(pubMsgNChannel);
-    asyncPubKeys.push(pubMsgNTags);
-    asyncPubKeys.push(pubMsgNUser);
-    asyncPubKeys.push(pubMsgNUGroup);
-
-    asyncPubKeys.forEach(function (pubKey) {
-        asyncPubTask.push(function (callback) {
-            redisHandler.Publish("events", pubKey, function (err, result) {
-                callback(err, result);
-            });
+    asyncPubTask.push(function (callback) {
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", tResult.status, "total", "total", "Total" + tResult._id, eventTime).then(function (pResult) {
+            callback(null, pResult);
+        }).catch(function (ex) {
+            callback(ex, null);
         });
     });
+    asyncPubTask.push(function (callback) {
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", tResult.status, "via_" + tResult.channel, "param2", "Channel" + tResult._id, eventTime).then(function (pResult) {
+            callback(null, pResult);
+        }).catch(function (ex) {
+            callback(ex, null);
+        });
+    });
+    asyncPubTask.push(function (callback) {
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", tResult.status, "tags_" + tResult.tags.join(".").replace(/ /g, ''), "param2", "Tags" + tResult._id, eventTime).then(function (pResult) {
+            callback(null, pResult);
+        }).catch(function (ex) {
+            callback(ex, null);
+        });
+    });
+    asyncPubTask.push(function (callback) {
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", tResult.status, "user_" + assignee, "param2", "User" + tResult._id, eventTime).then(function (pResult) {
+            callback(null, pResult);
+        }).catch(function (ex) {
+            callback(ex, null);
+        });
+    });
+    asyncPubTask.push(function (callback) {
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", tResult.status, "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id, eventTime).then(function (pResult) {
+            callback(null, pResult);
+        }).catch(function (ex) {
+            callback(ex, null);
+        });
+    });
+
+    // asyncPubKeys.forEach(function (pubKey) {
+    //     asyncPubTask.push(function (callback) {
+    //         redisHandler.Publish("events", pubKey, function (err, result) {
+    //             callback(err, result);
+    //         });
+    //     });
+    // });
 
     async.parallelLimit(asyncPubTask, 2,function(err, result) {
         console.log("Message Publish success");
@@ -165,17 +292,22 @@ function UpdateDashboardChangeAssignee(data, tResult, callback) {
     var assignee = tResult.assignee ? tResult.assignee.username : "";
     data = data ? data : "";
 
-    var pubMsgEUser = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + tResult.status, "user_" + data, "param2", "User" + tResult._id);
-    var pubMsgNUser = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "user_" + assignee, "param2", "User" + tResult._id);
+    // var pubMsgEUser = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + tResult.status, "user_" + data, "param2", "User" + tResult._id);
+    // var pubMsgNUser = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "user_" + assignee, "param2", "User" + tResult._id);
 
+    var eventTime = new Date().toISOString();
     var asyncPubTask = [];
     asyncPubTask = asyncPubTask.concat([function (callback) {
-        redisHandler.Publish("events", pubMsgEUser, function (err, result) {
-            callback(err, result);
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "End" + tResult.status, "user_" + data, "param2", "User" + tResult._id, eventTime).then(function (pResult) {
+            callback(null, pResult);
+        }).catch(function (ex) {
+            callback(ex, null);
         });
     },function (callback) {
-        redisHandler.Publish("events", pubMsgNUser, function (err, result) {
-            callback(err, result);
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", tResult.status, "user_" + assignee, "param2", "User" + tResult._id, eventTime).then(function (pResult) {
+            callback(null, pResult);
+        }).catch(function (ex) {
+            callback(ex, null);
         });
     }]);
 
@@ -193,18 +325,22 @@ function UpdateDashboardChangeAssigneeGroup(data, tResult, callback) {
     //var param1 = util.format("via_%s.tags_%s.user_%s.ugroup_%s", tResult.channel, tResult.tags.join("-"), assignee, data);
     //var param2 = util.format("user_%s#ugroup_%s", assignee, data);
 
-    var pubMsgEUGroup = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + tResult.status, "ugroup_" + data, "param2", "UGroup" + tResult._id);
-    var pubMsgNUGroup = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id);
+    // var pubMsgEUGroup = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", "End" + tResult.status, "ugroup_" + data, "param2", "UGroup" + tResult._id);
+    // var pubMsgNUGroup = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "STATUS", tResult.status, "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id);
 
-
+    var eventTime = new Date().toISOString();
     var asyncPubTask = [];
     asyncPubTask = asyncPubTask.concat([function (callback) {
-        redisHandler.Publish("events", pubMsgEUGroup, function (err, result) {
-            callback(err, result);
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", "End" + tResult.status, "ugroup_" + data, "param2", "UGroup" + tResult._id, eventTime).then(function (pResult) {
+            callback(null, pResult);
+        }).catch(function (ex) {
+            callback(ex, null);
         });
     },function (callback) {
-        redisHandler.Publish("events", pubMsgNUGroup, function (err, result) {
-            callback(err, result);
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "STATUS", tResult.status, "ugroup_" + assignee_group, "param2", "UGroup" + tResult._id, eventTime).then(function (pResult) {
+            callback(null, pResult);
+        }).catch(function (ex) {
+            callback(ex, null);
         });
     }]);
 
