@@ -253,206 +253,206 @@ module.exports.CreateTicket = function (req, res) {
         .exec( function (err, useraccount) {
 
 
-        if (err) {
-
-            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
-            res.end(jsonString);
-
-        } else {
-
-            var secondsDiff = moment().diff(dateNow, 'seconds');
-            console.log("User pick time --- >" + secondsDiff);
-
-            var dataNow = moment();
-
-            if (useraccount && useraccount.userref) {
-
-                var user = useraccount.userref.toObject();
-
-                var time = new Date().toISOString();
-                var tEvent = TicketEvent({
-                    type: 'status',
-                    "author": req.user.iss,
-                    "create_at": Date.now(),
-                    body: {
-
-                        "message": req.user.iss + " Created Ticket",
-                        "time": time
-                    }
-                });
-
-                reference.generate(company, tenant, function (done, id, key) {
-
-                    var secondsDiff = moment().diff(dateNow, 'seconds');
-                    console.log("Reference generate time --- >" + secondsDiff);
-
-
-                    var ticket = Ticket({
-                        created_at: Date.now(),
-                        updated_at: Date.now(),
-                        tid: key,
-                        active: true,
-                        is_sub_ticket: false,
-                        type: req.body.type,
-                        subject: req.body.subject,
-                        reference: id,
-                        description: req.body.description,
-                        priority: req.body.priority,
-                        status: "new",
-                        submitter: useraccount.userref.id,
-
-                        company: company,
-                        tenant: tenant,
-                        attachments: req.body.attachments,
-                        related_tickets: req.body.related_tickets,
-                        merged_tickets: req.body.merged_tickets,
-                        engagement_session: req.body.engagement_session,
-                        channel: req.body.channel,
-                        tags: req.body.tags,
-                        custom_fields: req.body.custom_fields,
-                        comments: req.body.comments,
-                        events: [tEvent],
-                        assignee: req.body.assignee,
-                        assignee_group: req.body.assignee_group,
-                        due_at: req.body.due_at,
-                        watchers: [user.id],
-                        businessUnit: req.body.businessUnit
-                    });
-
-                    if (req.body.requester) {
-                        ticket.requester = req.body.requester;
-                        //ticket.watchers.push(req.body.requester);
-
-                    }
-
-
-                    /////////////////////////////ticket matrix//////////////////////
-                    var matrix = {
-
-                        created_at: ticket.created_at,
-                        last_updated: ticket.created_at,
-                        last_status_changed: ticket.created_at,
-                        waited_time: 0,
-                        worked_time: 0,
-                        resolution_time: 0,
-                        sla_violated: false,
-                        reopens: 0,
-                        replies: 0,
-                        assignees: 0
-
-                    };
-
-                    if (req.body.assignee) {
-                        matrix.assignees = 1;
-                    } else {
-
-                        matrix.assignees = 0;
-                    }
-
-                    if (req.body.assignee_group) {
-                        matrix.groups = 1;
-                    } else {
-                        matrix.groups = 0;
-                    }
-
-
-                    ticket.ticket_matrix = matrix;
-
-
-                    if (req.body.tags && util.isArray(req.body.tags) && req.body.tags.length > 0) {
-
-
-                        var arr = [];
-                        req.body.tags.forEach(function (item) {
-
-                            var tagArr = item.split('.');
-                            if (tagArr && tagArr.length > 0) {
-
-                                tagArr.forEach(function (myTags) {
-                                    ticket.isolated_tags.push(myTags);
-                                })
-                            }
-
-                        })
-
-                    }
-
-                    ////////////////////////////////////////////////////////////////
-
-                    ticket.save(function (err, client) {
-                        if (err) {
-                            jsonString = messageFormatter.FormatMessage(err, "Ticket create failed", false, undefined);
-                        }
-                        else {
-
-                            var secondsDiff = moment().diff(dateNow, 'seconds');
-                            console.log("Ticket save time --- ->" + secondsDiff);
-                            //client._doc
-                            jsonString = messageFormatter.FormatMessage(undefined, "Ticket saved successfully", true, client);
-
-
-                            /////////////////////////////////////////recent tickets////////////////////////////////////////////////
-
-
-                            if (client) {
-                                ExecuteTrigger(client.id, "change_status", "new");
-                                ExecuteCase(client);
-                                InsertUserRecentTicket(company, tenant, user.id, client.id, "create");
-                                SetRelatedSlots(req, client.id, client.isolated_tags);
-                                if (req.body.requester)
-                                    AddExternalUserRecentTicket(company, tenant, req.body.requester, client.id);
-                            }
-
-                            /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-                            ////////////////////////////////////////add note to engagement session async//////////////////////////
-                            try {
-                                EngagementSession.findOneAndUpdate({
-                                    engagement_id: req.body.engagement_session,
-                                    company: company,
-                                    tenant: tenant
-                                }, {
-                                    $addToSet: {
-                                        notes: {
-                                            body: '#TID ' + ticket.reference,
-                                            author: req.user.iss,
-                                            created_at: Date.now(),
-                                        }
-                                    }
-                                }, function (err, notes) {
-                                    if (err) {
-
-                                        logger.error("Append Note To EngagementSession Failed", err);
-
-                                    } else {
-
-                                        logger.debug("Append Note To EngagementSession Success");
-
-                                    }
-
-                                });
-                            } catch (excep) {
-
-                                logger.error("Append Note To EngagementSession Failed", excep);
-                            }
-
-
-                            //////////////////////////////////////////////////////////////////////////////////////////////////////
-                            ExecuteSla(client.id, undefined);
-
-
-                        }
-                        res.end(jsonString);
-                    });
-                });
-
-            } else {
+            if (err) {
 
                 jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                 res.end(jsonString);
+
+            } else {
+
+                var secondsDiff = moment().diff(dateNow, 'seconds');
+                console.log("User pick time --- >" + secondsDiff);
+
+                var dataNow = moment();
+
+                if (useraccount && useraccount.userref) {
+
+                    var user = useraccount.userref.toObject();
+
+                    var time = new Date().toISOString();
+                    var tEvent = TicketEvent({
+                        type: 'status',
+                        "author": req.user.iss,
+                        "create_at": Date.now(),
+                        body: {
+
+                            "message": req.user.iss + " Created Ticket",
+                            "time": time
+                        }
+                    });
+
+                    reference.generate(company, tenant, function (done, id, key) {
+
+                        var secondsDiff = moment().diff(dateNow, 'seconds');
+                        console.log("Reference generate time --- >" + secondsDiff);
+
+
+                        var ticket = Ticket({
+                            created_at: Date.now(),
+                            updated_at: Date.now(),
+                            tid: key,
+                            active: true,
+                            is_sub_ticket: false,
+                            type: req.body.type,
+                            subject: req.body.subject,
+                            reference: id,
+                            description: req.body.description,
+                            priority: req.body.priority,
+                            status: "new",
+                            submitter: useraccount.userref.id,
+
+                            company: company,
+                            tenant: tenant,
+                            attachments: req.body.attachments,
+                            related_tickets: req.body.related_tickets,
+                            merged_tickets: req.body.merged_tickets,
+                            engagement_session: req.body.engagement_session,
+                            channel: req.body.channel,
+                            tags: req.body.tags,
+                            custom_fields: req.body.custom_fields,
+                            comments: req.body.comments,
+                            events: [tEvent],
+                            assignee: req.body.assignee,
+                            assignee_group: req.body.assignee_group,
+                            due_at: req.body.due_at,
+                            watchers: [user.id],
+                            businessUnit: req.body.businessUnit
+                        });
+
+                        if (req.body.requester) {
+                            ticket.requester = req.body.requester;
+                            //ticket.watchers.push(req.body.requester);
+
+                        }
+
+
+                        /////////////////////////////ticket matrix//////////////////////
+                        var matrix = {
+
+                            created_at: ticket.created_at,
+                            last_updated: ticket.created_at,
+                            last_status_changed: ticket.created_at,
+                            waited_time: 0,
+                            worked_time: 0,
+                            resolution_time: 0,
+                            sla_violated: false,
+                            reopens: 0,
+                            replies: 0,
+                            assignees: 0
+
+                        };
+
+                        if (req.body.assignee) {
+                            matrix.assignees = 1;
+                        } else {
+
+                            matrix.assignees = 0;
+                        }
+
+                        if (req.body.assignee_group) {
+                            matrix.groups = 1;
+                        } else {
+                            matrix.groups = 0;
+                        }
+
+
+                        ticket.ticket_matrix = matrix;
+
+
+                        if (req.body.tags && util.isArray(req.body.tags) && req.body.tags.length > 0) {
+
+
+                            var arr = [];
+                            req.body.tags.forEach(function (item) {
+
+                                var tagArr = item.split('.');
+                                if (tagArr && tagArr.length > 0) {
+
+                                    tagArr.forEach(function (myTags) {
+                                        ticket.isolated_tags.push(myTags);
+                                    })
+                                }
+
+                            })
+
+                        }
+
+                        ////////////////////////////////////////////////////////////////
+
+                        ticket.save(function (err, client) {
+                            if (err) {
+                                jsonString = messageFormatter.FormatMessage(err, "Ticket create failed", false, undefined);
+                            }
+                            else {
+
+                                var secondsDiff = moment().diff(dateNow, 'seconds');
+                                console.log("Ticket save time --- ->" + secondsDiff);
+                                //client._doc
+                                jsonString = messageFormatter.FormatMessage(undefined, "Ticket saved successfully", true, client);
+
+
+                                /////////////////////////////////////////recent tickets////////////////////////////////////////////////
+
+
+                                if (client) {
+                                    ExecuteTrigger(client.id, "change_status", "new");
+                                    ExecuteCase(client);
+                                    InsertUserRecentTicket(company, tenant, user.id, client.id, "create");
+                                    SetRelatedSlots(req, client.id, client.isolated_tags);
+                                    if (req.body.requester)
+                                        AddExternalUserRecentTicket(company, tenant, req.body.requester, client.id);
+                                }
+
+                                /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                                ////////////////////////////////////////add note to engagement session async//////////////////////////
+                                try {
+                                    EngagementSession.findOneAndUpdate({
+                                        engagement_id: req.body.engagement_session,
+                                        company: company,
+                                        tenant: tenant
+                                    }, {
+                                        $addToSet: {
+                                            notes: {
+                                                body: '#TID ' + ticket.reference,
+                                                author: req.user.iss,
+                                                created_at: Date.now(),
+                                            }
+                                        }
+                                    }, function (err, notes) {
+                                        if (err) {
+
+                                            logger.error("Append Note To EngagementSession Failed", err);
+
+                                        } else {
+
+                                            logger.debug("Append Note To EngagementSession Success");
+
+                                        }
+
+                                    });
+                                } catch (excep) {
+
+                                    logger.error("Append Note To EngagementSession Failed", excep);
+                                }
+
+
+                                //////////////////////////////////////////////////////////////////////////////////////////////////////
+                                ExecuteSla(client.id, undefined);
+
+
+                            }
+                            res.end(jsonString);
+                        });
+                    });
+
+                } else {
+
+                    jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+                    res.end(jsonString);
+                }
             }
-        }
-    });
+        });
 };
 
 module.exports.GetAllTickets = function (req, res) {
@@ -1154,73 +1154,73 @@ module.exports.GetAllMyTickets = function (req, res) {
     UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
         .exec( function (err, useraccount) {
 
-        if (err) {
-            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
-            res.end(jsonString);
-
-        } else {
-
-            if (useraccount && useraccount.userref) {
-
-                var user = useraccount.userref.toObject();
-
-                var qObj = {
-                    company: company,
-                    tenant: tenant, active: true,
-                    assignee: user.id,
-                };
-
-                var sortQuery = {};
-
-                if (req.query.sorted_by) {
-
-                    sortQuery[req.query.sorted_by] = -1;
-
-                } else {
-                    sortQuery = {created_at: -1}
-                }
-
-                if (req.query.status) {
-                    var paramArr;
-                    if (Array.isArray(req.query.status)) {
-                        paramArr = req.query.status;
-                    } else {
-
-                        paramArr = [req.query.status];
-                    }
-
-                    qObj.status = {$in: paramArr}
-                }
-                if (req.query.businessunit) {
-                    qObj.businessUnit = req.query.businessunit;
-                }
-
-                Ticket.find(qObj
-                ).populate('assignee', 'name avatar firstname lastname').populate('assignee_group', 'name').populate('requester', 'name avatar firstname lastname phone email landnumber facebook twitter linkedin googleplus').populate('submitter', 'name avatar firstname lastname').populate('collaborators', 'name avatar firstname lastname').skip(skip)
-                    .limit(size).sort(sortQuery).exec(function (err, tickets) {
-                    if (err) {
-
-                        jsonString = messageFormatter.FormatMessage(err, "Fail to Find Tickets", false, undefined);
-                        res.end(jsonString);
-                    }
-                    else {
-                        if (tickets) {
-                            jsonString = messageFormatter.FormatMessage(undefined, "Find Tickets", true, tickets);
-                        }
-                        else {
-                            jsonString = messageFormatter.FormatMessage(undefined, "Fail To Find Ticket", false, undefined);
-                        }
-                        res.end(jsonString);
-                    }
-                });
-
+            if (err) {
+                jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+                res.end(jsonString);
 
             } else {
-                jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
-                res.end(jsonString);
+
+                if (useraccount && useraccount.userref) {
+
+                    var user = useraccount.userref.toObject();
+
+                    var qObj = {
+                        company: company,
+                        tenant: tenant, active: true,
+                        assignee: user.id,
+                    };
+
+                    var sortQuery = {};
+
+                    if (req.query.sorted_by) {
+
+                        sortQuery[req.query.sorted_by] = -1;
+
+                    } else {
+                        sortQuery = {created_at: -1}
+                    }
+
+                    if (req.query.status) {
+                        var paramArr;
+                        if (Array.isArray(req.query.status)) {
+                            paramArr = req.query.status;
+                        } else {
+
+                            paramArr = [req.query.status];
+                        }
+
+                        qObj.status = {$in: paramArr}
+                    }
+                    if (req.query.businessunit) {
+                        qObj.businessUnit = req.query.businessunit;
+                    }
+
+                    Ticket.find(qObj
+                    ).populate('assignee', 'name avatar firstname lastname').populate('assignee_group', 'name').populate('requester', 'name avatar firstname lastname phone email landnumber facebook twitter linkedin googleplus').populate('submitter', 'name avatar firstname lastname').populate('collaborators', 'name avatar firstname lastname').skip(skip)
+                        .limit(size).sort(sortQuery).exec(function (err, tickets) {
+                        if (err) {
+
+                            jsonString = messageFormatter.FormatMessage(err, "Fail to Find Tickets", false, undefined);
+                            res.end(jsonString);
+                        }
+                        else {
+                            if (tickets) {
+                                jsonString = messageFormatter.FormatMessage(undefined, "Find Tickets", true, tickets);
+                            }
+                            else {
+                                jsonString = messageFormatter.FormatMessage(undefined, "Fail To Find Ticket", false, undefined);
+                            }
+                            res.end(jsonString);
+                        }
+                    });
+
+
+                } else {
+                    jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
+                    res.end(jsonString);
+                }
             }
-        }
-    });
+        });
 };
 
 module.exports.GetAllMyGroupTickets = function (req, res) {
@@ -1363,49 +1363,49 @@ module.exports.GetAllMyTicketsWithStatus = function (req, res) {
 
     UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
         .exec( function (err, useraccount) {
-        if (err) {
-            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
-            res.end(jsonString);
+            if (err) {
+                jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+                res.end(jsonString);
 
-        } else {
+            } else {
 
-            if (useraccount && useraccount.userref) {
+                if (useraccount && useraccount.userref) {
 
-                var user = useraccount.userref.toObject();
+                    var user = useraccount.userref.toObject();
 
-                var qObj = {
-                    company: company,
-                    tenant: tenant, active: true,
-                    submitter: user.id,
-                    status: req.params.status
-                };
-                if (req.query.businessunit) {
-                    qObj.businessUnit = req.query.businessunit;
-                }
-
-                Ticket.find(qObj).skip(skip)
-                    .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
-                    if (err) {
-
-                        jsonString = messageFormatter.FormatMessage(err, "Fail to Find Tickets", false, undefined);
-                        res.end(jsonString);
+                    var qObj = {
+                        company: company,
+                        tenant: tenant, active: true,
+                        submitter: user.id,
+                        status: req.params.status
+                    };
+                    if (req.query.businessunit) {
+                        qObj.businessUnit = req.query.businessunit;
                     }
-                    else {
-                        if (tickets) {
-                            jsonString = messageFormatter.FormatMessage(undefined, "Find Tickets", true, tickets);
+
+                    Ticket.find(qObj).skip(skip)
+                        .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
+                        if (err) {
+
+                            jsonString = messageFormatter.FormatMessage(err, "Fail to Find Tickets", false, undefined);
+                            res.end(jsonString);
                         }
                         else {
-                            jsonString = messageFormatter.FormatMessage(undefined, "Fail To Find Ticket", false, undefined);
+                            if (tickets) {
+                                jsonString = messageFormatter.FormatMessage(undefined, "Find Tickets", true, tickets);
+                            }
+                            else {
+                                jsonString = messageFormatter.FormatMessage(undefined, "Fail To Find Ticket", false, undefined);
+                            }
+                            res.end(jsonString);
                         }
-                        res.end(jsonString);
-                    }
-                })
-            } else {
-                jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
-                res.end(jsonString);
+                    })
+                } else {
+                    jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
+                    res.end(jsonString);
+                }
             }
-        }
-    });
+        });
 };
 
 module.exports.GetTicket = function (req, res) {
@@ -1495,53 +1495,53 @@ module.exports.GetRecentTicket = function (req, res) {
     UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
         .exec( function (err, useraccount) {
 
-        if (err) {
-            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
-            res.end(jsonString);
-        }
-        else {
-            if (useraccount && useraccount.userref) {
-
-                var user = useraccount.userref.toObject();
-
-
-                RecentUserTicket.find({
-                    company: company,
-                    tenant: tenant,
-                    user: user.id
-                }).populate('ticket').sort({"updated_at": -1}).limit(10).exec(function (err, resent) {
-                    if (err) {
-                        jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Failed", false, undefined);
-                        res.end(jsonString);
-                    } else {
-
-                        var resentTicketList = {};
-
-                        resentTicketList.tickets = [];
-
-                        if (Array.isArray(resent)) {
-
-                            resent.forEach(function (obj) {
-
-                                resentTicketList.tickets.push(obj.ticket);
-
-                            })
-
-                        }
-
-                        jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Success", true, resentTicketList);
-                        res.end(jsonString);
-                    }
-                });
-
-
-            }
-            else {
-                jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
+            if (err) {
+                jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                 res.end(jsonString);
             }
-        }
-    });
+            else {
+                if (useraccount && useraccount.userref) {
+
+                    var user = useraccount.userref.toObject();
+
+
+                    RecentUserTicket.find({
+                        company: company,
+                        tenant: tenant,
+                        user: user.id
+                    }).populate('ticket').sort({"updated_at": -1}).limit(10).exec(function (err, resent) {
+                        if (err) {
+                            jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Failed", false, undefined);
+                            res.end(jsonString);
+                        } else {
+
+                            var resentTicketList = {};
+
+                            resentTicketList.tickets = [];
+
+                            if (Array.isArray(resent)) {
+
+                                resent.forEach(function (obj) {
+
+                                    resentTicketList.tickets.push(obj.ticket);
+
+                                })
+
+                            }
+
+                            jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Success", true, resentTicketList);
+                            res.end(jsonString);
+                        }
+                    });
+
+
+                }
+                else {
+                    jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
+                    res.end(jsonString);
+                }
+            }
+        });
 
 }
 
@@ -1556,38 +1556,38 @@ module.exports.GetRecentTicketx = function (req, res) {
 
     UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
         .exec( function (err, useraccount) {
-        if (err) {
-            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
-            res.end(jsonString);
-        }
-        else {
-            if (useraccount && useraccount.userref) {
-
-                var user = useraccount.userref.toObject();
-
-
-                RecentTicket.findOne({
-                    company: company,
-                    tenant: tenant,
-                    user: user.id
-                }).populate('tickets').exec(function (err, resent) {
-                    if (err) {
-                        jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Failed", false, undefined);
-                        res.end(jsonString);
-                    } else {
-                        jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Success", true, resent);
-                        res.end(jsonString);
-                    }
-                });
-
-
-            }
-            else {
-                jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
+            if (err) {
+                jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                 res.end(jsonString);
             }
-        }
-    });
+            else {
+                if (useraccount && useraccount.userref) {
+
+                    var user = useraccount.userref.toObject();
+
+
+                    RecentTicket.findOne({
+                        company: company,
+                        tenant: tenant,
+                        user: user.id
+                    }).populate('tickets').exec(function (err, resent) {
+                        if (err) {
+                            jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Failed", false, undefined);
+                            res.end(jsonString);
+                        } else {
+                            jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Success", true, resent);
+                            res.end(jsonString);
+                        }
+                    });
+
+
+                }
+                else {
+                    jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
+                    res.end(jsonString);
+                }
+            }
+        });
 
 }
 
@@ -1666,6 +1666,8 @@ module.exports.MapTicketToProfile = function (req, res) {
     })
 };
 
+
+
 module.exports.GetTicketWithDetails = function (req, res) {
     logger.info("DVP-LiteTicket.GetTicketWithDetails Internal method ");
 
@@ -1688,7 +1690,7 @@ module.exports.GetTicketWithDetails = function (req, res) {
         .populate({path: 'sub_tickets', populate: {path: 'assignee_group', select: 'name'}})
         .populate({path: 'related_tickets', populate: {path: 'assignee', select: 'name avatar firstname lastname'}})
         .populate({path: 'related_tickets', populate: {path: 'assignee_group', select: 'name'}})
-        .populate('assignee', 'name avatar firstname lastname group')
+        .populate('assignee', 'name avatar firstname lastname ')
         .populate('assignee_group', 'name')
         .populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus contacts firstname lastname')
         .populate('submitter', 'name avatar firstname lastname')
@@ -1719,63 +1721,155 @@ module.exports.GetTicketWithDetails = function (req, res) {
 
                     try {
 
+                        if(ticket.assignee && ticket.assignee._id)
+                        {
+                            UserAccount.findOne({userref: ticket.assignee._id, company: company, tenant: tenant}).populate('group').exec(function (errAssgn, resAssgn) {
 
-                        UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
-                            .exec( function (err, useraccount) {
-                            if (err) {
-                                jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
-                                res.end(jsonString);
+                                if(resAssgn && resAssgn.group)
+                                {
+                                    ticket.assignee.group = resAssgn.group._id;
+                                }
 
-                            } else {
-                                if (useraccount && useraccount.userref) {
+                                UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
+                                    .exec( function (err, useraccount) {
+                                        if (err) {
+                                            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+                                            res.end(jsonString);
 
-                                    var user = useraccount.userref.toObject();
+                                        } else {
+                                            if (useraccount && useraccount.userref) {
+
+                                                var user = useraccount.userref.toObject();
 
 
 
-                                    InsertUserRecentTicket(company, tenant, user.id, ticket.id, "get");
+                                                InsertUserRecentTicket(company, tenant, user.id, ticket.id, "get");
 
 
-                                    if (ticket.comments) {
-                                        var commentArray = ticket.comments.filter(function (comment) {
-                                            var updatedComment;
-                                            if (!(comment.public === 'private' && comment.author.id !== user.id)) {
-                                                updatedComment = comment;
+                                                if (ticket.comments) {
+                                                    var commentArray = ticket.comments.filter(function (comment) {
+                                                        var updatedComment;
+                                                        if (!(comment.public === 'private' && comment.author.id !== user.id)) {
+                                                            updatedComment = comment;
+                                                        }
+                                                        else {
+                                                            comment.body = "Content unavailable";
+                                                            updatedComment = comment;
+                                                        }
+                                                        return updatedComment;
+                                                    });
+
+                                                    ticket.comments = commentArray;
+
+                                                    jsonString = messageFormatter.FormatMessage(undefined, "Ticket found", true, ticket);
+                                                    res.end(jsonString);
+                                                }
+                                                else {
+                                                    jsonString = messageFormatter.FormatMessage(undefined, "Ticket found, But no comment object found", true, ticket);
+                                                    res.end(jsonString);
+                                                }
+
+
+                                            }
+                                            else
+                                            {
+                                                jsonString = messageFormatter.FormatMessage(new Error("No user Account found"), "No user Account found", false, undefined);
+                                                res.end(jsonString);
+
+                                            }
+                                        }
+                                    });
+
+                            });
+                        }
+                        else
+                        {
+                            UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
+                                .exec( function (err, useraccount) {
+                                    if (err) {
+                                        jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+                                        res.end(jsonString);
+
+                                    } else {
+                                        if (useraccount && useraccount.userref) {
+
+                                            var user = useraccount.userref.toObject();
+
+
+
+                                            InsertUserRecentTicket(company, tenant, user.id, ticket.id, "get");
+
+
+                                            if (ticket.comments) {
+                                                var commentArray = ticket.comments.filter(function (comment) {
+                                                    var updatedComment;
+                                                    if (!(comment.public === 'private' && comment.author.id !== user.id)) {
+                                                        updatedComment = comment;
+                                                    }
+                                                    else {
+                                                        comment.body = "Content unavailable";
+                                                        updatedComment = comment;
+                                                    }
+                                                    return updatedComment;
+                                                });
+
+                                                ticket.comments = commentArray;
+
+                                                jsonString = messageFormatter.FormatMessage(undefined, "Ticket found", true, ticket);
+                                                res.end(jsonString);
                                             }
                                             else {
-                                                comment.body = "Content unavailable";
-                                                updatedComment = comment;
+                                                jsonString = messageFormatter.FormatMessage(undefined, "Ticket found, But no comment object found", true, ticket);
+                                                res.end(jsonString);
                                             }
-                                            return updatedComment;
-                                        });
 
-                                        ticket.comments = commentArray;
 
-                                        jsonString = messageFormatter.FormatMessage(undefined, "Ticket found", true, ticket);
-                                        res.end(jsonString);
+                                        }
+                                        else
+                                        {
+                                            jsonString = messageFormatter.FormatMessage(new Error("No user Account found"), "No user Account found", false, undefined);
+                                            res.end(jsonString);
+
+                                        }
                                     }
-                                    else {
-                                        jsonString = messageFormatter.FormatMessage(undefined, "Ticket found, But no comment object found", true, ticket);
-                                        res.end(jsonString);
-                                    }
+                                });
+                        }
 
 
-                                }
-                            }
-                        });
+
+
+
+
+
+                        /*var funcArr=[];
+
+                         funcArr.push(loadComments.bind(req.user.iss,company,tenant,ticket));
+                         funcArr.push(loadAssigneeData.bind(company,tenant,ticket));
+
+                         async.parallel(funcArr,function (err,result) {
+
+                         if(err)
+                         {
+
+                         }
+                         else
+                         {
+
+                         }
+                         });*/
                     }
 
                     catch (exe) {
 
                         logger.error(exe);
                         jsonString = messageFormatter.FormatMessage(exe, "Error in user search", false, undefined);
-                        res.end(jsonString);
+
                     }
 
                 }
                 else {
                     jsonString = messageFormatter.FormatMessage(undefined, "Fail To Find Ticket", false, undefined);
-                    res.end(jsonString);
+
                 }
             }
 
@@ -3746,166 +3840,166 @@ module.exports.ChangeStatusByUser = function (req, res) {
     var jsonString;
     if (req.body.status && req.body.user) {
 
-       // UserAccount.findOne({userref: req.body.user, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, user) {
+        // UserAccount.findOne({userref: req.body.user, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, user) {
 
-       // User.findOne({_id: req.body.user, company: company, tenant: tenant}, function (err, user) {
+        // User.findOne({_id: req.body.user, company: company, tenant: tenant}, function (err, user) {
 
 
-            Ticket.findOne({
-                company: company,
-                tenant: tenant,
-                reference: req.params.reference,
-                assignee: mongoose.Types.ObjectId(req.body.user)
-            }).populate('assignee', '-password').exec(function (err, ticket) {
-                if (err) {
+        Ticket.findOne({
+            company: company,
+            tenant: tenant,
+            reference: req.params.reference,
+            assignee: mongoose.Types.ObjectId(req.body.user)
+        }).populate('assignee', '-password').exec(function (err, ticket) {
+            if (err) {
 
-                    jsonString = messageFormatter.FormatMessage(err, "Fail Find Ticket", false, undefined);
-                    res.end(jsonString);
-                }
-                else {
-                    if (ticket) {
-                        var oldTicket = deepcopy(ticket.toJSON());
-                        var old_state = ticket.status;
-                        ticket.status = req.body.status;
+                jsonString = messageFormatter.FormatMessage(err, "Fail Find Ticket", false, undefined);
+                res.end(jsonString);
+            }
+            else {
+                if (ticket) {
+                    var oldTicket = deepcopy(ticket.toJSON());
+                    var old_state = ticket.status;
+                    ticket.status = req.body.status;
 
-                        ValidateStatusChangeRequest(tenant, company, ticket.type, old_state, req.body.status, function (response) {
+                    ValidateStatusChangeRequest(tenant, company, ticket.type, old_state, req.body.status, function (response) {
 
-                            var validatedResponse = JSON.parse(response);
-                            if (validatedResponse && validatedResponse.IsSuccess) {
-                                var time = new Date().toISOString();
-                                ticket.updated_at = time;
-                                var tEvent = TicketEvent({
-                                    type: 'status',
-                                    "author": ticket.assignee.username,
-                                    "create_at": Date.now(),
-                                    body: {
-                                        "message": req.user.iss + " Status Update ",
-                                        "time": time
+                        var validatedResponse = JSON.parse(response);
+                        if (validatedResponse && validatedResponse.IsSuccess) {
+                            var time = new Date().toISOString();
+                            ticket.updated_at = time;
+                            var tEvent = TicketEvent({
+                                type: 'status',
+                                "author": ticket.assignee.username,
+                                "create_at": Date.now(),
+                                body: {
+                                    "message": req.user.iss + " Status Update ",
+                                    "time": time
+                                }
+                            });
+                            ticket.events.push(tEvent);
+
+                            ///////////////////////////////////ticket matrix////////////////////////////////
+                            if (ticket.ticket_matrix) {
+                                ticket.ticket_matrix.last_updated = time;
+
+                                if (ticket.status == 'open') {
+
+                                    if (old_state != 'new') {
+
+                                        ticket.ticket_matrix.reopens = ticket.ticket_matrix.reopens + 1;
                                     }
-                                });
-                                ticket.events.push(tEvent);
-
-                                ///////////////////////////////////ticket matrix////////////////////////////////
-                                if (ticket.ticket_matrix) {
-                                    ticket.ticket_matrix.last_updated = time;
-
-                                    if (ticket.status == 'open') {
-
-                                        if (old_state != 'new') {
-
-                                            ticket.ticket_matrix.reopens = ticket.ticket_matrix.reopens + 1;
-                                        }
-                                        else {
-                                            ticket.ticket_matrix.opened_at = time;
-                                            ticket.ticket_matrix.waited_time = time - ticket.ticket_matrix.created_at;
-                                        }
-
-                                    } else if (ticket.status == 'closed' || ticket.status == 'solved') {
-
-                                        ticket.ticket_matrix.solved_at = time;
-                                        ticket.ticket_matrix.resolution_time = time - ticket.ticket_matrix.created_at;
+                                    else {
+                                        ticket.ticket_matrix.opened_at = time;
+                                        ticket.ticket_matrix.waited_time = time - ticket.ticket_matrix.created_at;
                                     }
 
-                                    ticket.ticket_matrix.last_status_changed = time;
+                                } else if (ticket.status == 'closed' || ticket.status == 'solved') {
 
+                                    ticket.ticket_matrix.solved_at = time;
+                                    ticket.ticket_matrix.resolution_time = time - ticket.ticket_matrix.created_at;
                                 }
 
-                                /////////////////////////////////////////////////////////////////////////////////////////
+                                ticket.ticket_matrix.last_status_changed = time;
+
+                            }
+
+                            /////////////////////////////////////////////////////////////////////////////////////////
 
 
-                                if (ticket.sub_tickets.length > 0 && req.body.status == "closed") {
-                                    Ticket.find({
-                                        id: {
-                                            $in: ticket.sub_tickets.map(function (o) {
-                                                return ObjectId(o);
-                                            })
-                                        }, status: "closed"
-                                    }, function (err, docs) {
-                                        if (err) {
-                                            jsonString = messageFormatter.FormatMessage(err, "Fail To Check Sub Ticket Status.", false, undefined);
-                                            res.end(jsonString);
-                                        }
-                                        else {
-                                            if (docs && (ticket.sub_tickets.length == docs.length)) {
+                            if (ticket.sub_tickets.length > 0 && req.body.status == "closed") {
+                                Ticket.find({
+                                    id: {
+                                        $in: ticket.sub_tickets.map(function (o) {
+                                            return ObjectId(o);
+                                        })
+                                    }, status: "closed"
+                                }, function (err, docs) {
+                                    if (err) {
+                                        jsonString = messageFormatter.FormatMessage(err, "Fail To Check Sub Ticket Status.", false, undefined);
+                                        res.end(jsonString);
+                                    }
+                                    else {
+                                        if (docs && (ticket.sub_tickets.length == docs.length)) {
 
 
-                                                ticket.save(function (err, rUser) {
-                                                    if (err) {
-                                                        jsonString = messageFormatter.FormatMessage(err, "Fail Update Status.", false, undefined);
+                                            ticket.save(function (err, rUser) {
+                                                if (err) {
+                                                    jsonString = messageFormatter.FormatMessage(err, "Fail Update Status.", false, undefined);
+                                                }
+                                                else {
+                                                    if (rUser) {
+                                                        jsonString = messageFormatter.FormatMessage(undefined, "Status Update Successfully", true, rUser);
+                                                        ExecuteTrigger(req.params.id, "change_status", oldTicket.status);
                                                     }
                                                     else {
-                                                        if (rUser) {
-                                                            jsonString = messageFormatter.FormatMessage(undefined, "Status Update Successfully", true, rUser);
-                                                            ExecuteTrigger(req.params.id, "change_status", oldTicket.status);
-                                                        }
-                                                        else {
-                                                            jsonString = messageFormatter.FormatMessage(undefined, "Invalid Ticket ID.", true, rUser);
-                                                        }
+                                                        jsonString = messageFormatter.FormatMessage(undefined, "Invalid Ticket ID.", true, rUser);
                                                     }
-                                                    res.end(jsonString);
-                                                });
-                                            }
-                                            else {
-                                                jsonString = messageFormatter.FormatMessage(undefined, "Sub Ticket Not Completed.", false, undefined);
+                                                }
                                                 res.end(jsonString);
-                                            }
-                                        }
-                                    });
-
-                                }
-                                else {
-
-                                    Ticket.findOneAndUpdate({
-                                        reference: req.params.reference,
-                                        company: company,
-                                        tenant: tenant
-                                    }, ticket, function (err, rUser) {
-                                        if (err) {
-                                            jsonString = messageFormatter.FormatMessage(err, "Fail Update Ticket", false, undefined);
+                                            });
                                         }
                                         else {
-                                            if (rUser) {
-                                                jsonString = messageFormatter.FormatMessage(undefined, "Status Update Successfully", true, rUser);
-                                                ExecuteTrigger(req.params.id, "change_status", oldTicket.status);
-                                            }
-                                            else {
-                                                jsonString = messageFormatter.FormatMessage(undefined, "Invalid Ticket ID.", true, rUser);
-                                            }
+                                            jsonString = messageFormatter.FormatMessage(undefined, "Sub Ticket Not Completed.", false, undefined);
+                                            res.end(jsonString);
                                         }
-                                        res.end(jsonString);
-                                    });
-                                }
-                            } else {
-
-                                var queueName = "EMAILOUT";
-                                var message = {
-                                    from: "no-reply",
-                                    to: ticket.assignee.email.contact,
-                                    subject: "Resp:" + req.params.reference + " status update request " + req.body.status,
-                                    //template: "By-User Registration Confirmation",
-                                    body: "The status is invalid",
-                                    company: 0,
-                                    tenant: 1
-                                }
-
-                                queueConnection.publish(queueName, message, {
-                                    contentType: 'application/json'
+                                    }
                                 });
 
-
-                                jsonString = messageFormatter.FormatMessage(undefined, "Invalid Status Change Request", false, undefined);
-                                res.end(jsonString);
                             }
-                        });
+                            else {
 
-                    }
-                    else {
-                        jsonString = messageFormatter.FormatMessage(undefined, "Fail Find Ticket", false, undefined);
-                        res.end(jsonString);
-                    }
+                                Ticket.findOneAndUpdate({
+                                    reference: req.params.reference,
+                                    company: company,
+                                    tenant: tenant
+                                }, ticket, function (err, rUser) {
+                                    if (err) {
+                                        jsonString = messageFormatter.FormatMessage(err, "Fail Update Ticket", false, undefined);
+                                    }
+                                    else {
+                                        if (rUser) {
+                                            jsonString = messageFormatter.FormatMessage(undefined, "Status Update Successfully", true, rUser);
+                                            ExecuteTrigger(req.params.id, "change_status", oldTicket.status);
+                                        }
+                                        else {
+                                            jsonString = messageFormatter.FormatMessage(undefined, "Invalid Ticket ID.", true, rUser);
+                                        }
+                                    }
+                                    res.end(jsonString);
+                                });
+                            }
+                        } else {
+
+                            var queueName = "EMAILOUT";
+                            var message = {
+                                from: "no-reply",
+                                to: ticket.assignee.email.contact,
+                                subject: "Resp:" + req.params.reference + " status update request " + req.body.status,
+                                //template: "By-User Registration Confirmation",
+                                body: "The status is invalid",
+                                company: 0,
+                                tenant: 1
+                            }
+
+                            queueConnection.publish(queueName, message, {
+                                contentType: 'application/json'
+                            });
+
+
+                            jsonString = messageFormatter.FormatMessage(undefined, "Invalid Status Change Request", false, undefined);
+                            res.end(jsonString);
+                        }
+                    });
+
                 }
+                else {
+                    jsonString = messageFormatter.FormatMessage(undefined, "Fail Find Ticket", false, undefined);
+                    res.end(jsonString);
+                }
+            }
 
-            });
+        });
         //});
     }
     else {
@@ -3924,7 +4018,7 @@ module.exports.AssignToUser = function (req, res) {
     if (req.params.user) {
 
         UserAccount.findOne({userref: req.params.user, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
-        //User.findOne({_id: req.params.user, company: company, tenant: tenant}, function (err, user) {
+            //User.findOne({_id: req.params.user, company: company, tenant: tenant}, function (err, user) {
             if (err) {
                 jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                 res.end(jsonString);
@@ -8236,10 +8330,10 @@ var appendToCSVFile = function (uniqueId, fileName, tempQuery, offset, limit, tz
                         if (err == null) {
                             //write the actual data and end with newline
                             var csv = json2csv({
-                                data: ticketListForCSV,
-                                fields: tagOrder,
-                                hasCSVColumnTitle: false
-                            }) + newLine;
+                                    data: ticketListForCSV,
+                                    fields: tagOrder,
+                                    hasCSVColumnTitle: false
+                                }) + newLine;
 
                             fs.appendFile(fileName, csv, function (err) {
                                 if (err) {
@@ -8270,10 +8364,10 @@ var appendToCSVFile = function (uniqueId, fileName, tempQuery, offset, limit, tz
                                 }
                                 else {
                                     var csv = json2csv({
-                                        data: ticketListForCSV,
-                                        fields: tagOrder,
-                                        hasCSVColumnTitle: false
-                                    }) + newLine;
+                                            data: ticketListForCSV,
+                                            fields: tagOrder,
+                                            hasCSVColumnTitle: false
+                                        }) + newLine;
 
                                     fs.appendFile(fileName, csv, function (err) {
                                         if (err) {
@@ -9902,8 +9996,8 @@ module.exports.GetMyGroupTicketsCount = function (req, res) {
 
             if (useraccount && useraccount.userref && useraccount.group) {
 
-            //    var user = useraccount.userref.toObject();
-           // if (user && user.group) {
+                //    var user = useraccount.userref.toObject();
+                // if (user && user.group) {
                 /*
                  UserGroup.find({"users": user.id}, function (error, groups) {
                  if(!error  && groups) {
