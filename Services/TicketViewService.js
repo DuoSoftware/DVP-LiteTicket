@@ -6,6 +6,7 @@ var mongoose = require('mongoose');
 var logger = require('dvp-common/LogHandler/CommonLogHandler.js').logger;
 var TicketView = require('dvp-mongomodels/model/TicketView').TicketView;
 var User = require('dvp-mongomodels/model/User');
+var UserAccount = require('dvp-mongomodels/model/UserAccount');
 var messageFormatter = require('dvp-common/CommonMessageGenerator/ClientMessageJsonFormatter.js');
 var Ticket = require('dvp-mongomodels/model/Ticket').Ticket;
 
@@ -21,13 +22,15 @@ function CreateTicketView(req, res){
 
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({username: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var ticketview = TicketView({
                     title: req.body.title,
@@ -72,13 +75,15 @@ function GetMyTicketViews(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 TicketView.find({$or:[{company: company, tenant: tenant, owner: user.id},{company: company, tenant: tenant, public:true}]}, function (err, view) {
                     if (err) {
@@ -112,13 +117,15 @@ function GetTicketView(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 TicketView.findOne({company: company, tenant: tenant, _id: req.params.id}, function (err, view) {
                     if (err) {
@@ -150,13 +157,16 @@ function DeleteTicketView(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 TicketView.findOneAndRemove({company: company, tenant: tenant, _id: req.params.id, owner: user.id}, function (err, view) {
                     if (err) {
@@ -184,13 +194,15 @@ function UpdateTicketView(req,res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 TicketView.findOneAndUpdate({company: company, tenant: tenant, owner: user.id, _id: req.params.id}, req.body, function (err, view) {
                     if (err) {
@@ -225,13 +237,15 @@ function AddFilterAll(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 TicketView.findOne({company: company, tenant: tenant, _id: req.params.id, owner: user.id}, function (err, view) {
                     if (err) {
@@ -287,13 +301,15 @@ function AddFilterAny(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 TicketView.findOne({company: company, tenant: tenant, _id: req.params.id, owner: user.id}, function (err, view) {
                     if (err) {
@@ -347,13 +363,15 @@ function RemoveFilterAll(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 TicketView.findOne({company: company, tenant: tenant, _id: req.params.id, owner: user.id}, function (err, view) {
                     if (err) {
@@ -404,13 +422,16 @@ function RemoveFilterAny(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 TicketView.findOne({company: company, tenant: tenant, _id: req.params.id, owner: user.id}, function (err, view) {
                     if (err) {
@@ -460,13 +481,15 @@ function GetFiltersAny(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 TicketView.findOne({company: company, tenant: tenant, _id: req.params.id, owner: user.id}, function (err, view) {
                     if (err) {
@@ -497,13 +520,16 @@ function GetFiltersAll(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 TicketView.findOne({company: company, tenant: tenant, _id: req.params.id, owner: user.id}, function (err, view) {
                     if (err) {
@@ -533,13 +559,15 @@ function GetTicketsByView(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 TicketView.findOne({company: company, tenant: tenant, _id: req.params.id}).exec(function (err, view) {
                     if (err) {
@@ -760,13 +788,15 @@ function GetTicketsByViewWithPages(req, res){
         skip = page > 0 ? ((page - 1) * size) : 0;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 TicketView.findOne({company: company, tenant: tenant, _id: req.params.id}).exec(function (err, view) {
                     if (err) {
@@ -972,13 +1002,15 @@ function GetTicketCountByView(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 TicketView.findOne({company: company, tenant: tenant, _id: req.params.id}, function (err, view) {
                     if (err) {

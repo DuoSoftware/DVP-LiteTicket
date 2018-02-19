@@ -278,7 +278,7 @@ function DeleteTag(req, res){
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    Tag.findOneAndRemove({_id:req.params.id,company:company,tenant:tenant}, function (errTagRemove,resTagRemove) {
+    Tag.findOneAndRemove({id:req.params.id,company:company,tenant:tenant}, function (errTagRemove,resTagRemove) {
         if(errTagRemove)
         {
             jsonString=messageFormatter.FormatMessage(errTagRemove, "Tag category deletion failed", false, undefined);
@@ -349,7 +349,7 @@ function CreateTagsToTag(req, res){
         else
         {
             Tag.findOneAndUpdate({_id:req.params.id}, {
-                $addToSet :{tags : resSubTag._doc._id}
+                $addToSet :{tags : resSubTag.id}
 
             },function(errAttachTag,resAttachTag)
             {
@@ -360,7 +360,7 @@ function CreateTagsToTag(req, res){
                 else
                 {
                     var tempAttachTag = resAttachTag.toJSON();
-                    tempAttachTag.newTagID=resSubTag._doc._id;
+                    tempAttachTag.newTagID=resSubTag.id;
                     console.log(JSON.stringify(tempAttachTag.newTagID));
                     console.log(JSON.stringify(tempAttachTag));
                     jsonString=messageFormatter.FormatMessage(undefined, "Attaching Tags succeeded", true, tempAttachTag);

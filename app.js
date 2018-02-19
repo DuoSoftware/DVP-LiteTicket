@@ -7,6 +7,7 @@ var uniqueValidator = require('mongoose-unique-validator');
 var secret = require('dvp-common/Authentication/Secret.js');
 var authorization = require('dvp-common/Authentication/Authorization.js');
 var ticketService = require('./Services/TicketService.js');
+var smsService = require('./Services/SMSDetailService.js');
 var tagService = require('./Services/TagService.js');
 var timerService = require('./Services/TimerService.js');
 var slaService= require('./Services/SLAService.js');
@@ -480,6 +481,13 @@ server.post('/DVP/API/:version/Attachment', authorization({resource:"ticket", ac
 server.get('/DVP/API/:version/Tickets/count', authorization({resource:"ticket", action:"read"}), ticketService.GetAllTicketsCount);
 server.get('/DVP/API/:version/MyTickets/count', authorization({resource:"ticket", action:"read"}), ticketService.GetMyTicketsCount);
 server.get('/DVP/API/:version/MyGroupTickets/count', authorization({resource:"ticket", action:"read"}), ticketService.GetMyGroupTicketsCount);
+
+
+///////////////////////////// SMS Report Data ///////////////////////////////////////////////////
+
+server.post('/DVP/API/:version/SMSDetailReport/data/:skip/:limit', authorization({resource:"sms", action:"read"}), smsService.GetSMSDetailReport);
+server.post('/DVP/API/:version/SMSDetailReport/data', authorization({resource:"sms", action:"read"}), smsService.GetSMSDetailReportDownload);
+server.post('/DVP/API/:version/SMSDetailReport/count', authorization({resource:"sms", action:"read"}), smsService.GetSMSDetailReportCount);
 
 
 server.listen(port, function () {

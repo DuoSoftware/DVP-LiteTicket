@@ -13,7 +13,7 @@ var config = require('config');
 var moment = require('moment');
 var RestClient = require('../Trigger/RestClient.js');
 var CommonWorker = require('../Trigger/TriggerWorker.js');
-var redisHandler = require('../Common/RedisHandler.js');
+var dashboardEventHandler = require('../Common/DashboardEventHandler');
 
 function numSort(a, b) {
     return a.priority - b.priority;
@@ -537,9 +537,9 @@ function ScheduleCallback(req, res){
 function UpdateDashBoardSLAStats(tResult){
     if(tResult && tResult.ticket_matrix && tResult.ticket_matrix.sla_violated === true){
         //update SLA violated count
-        var pubMsgNSlaViolated = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "SLA", "slaviolated", "total", "total", "Total" + tResult.id);
-        redisHandler.Publish("events", pubMsgNSlaViolated, function () {
-        });
+        //var pubMsgNSlaViolated = util.format("EVENT:%d:%d:%s:%s:%s:%s:%s:%s:YYYY", tResult.tenant, tResult.company, "TICKET", "SLA", "slaviolated", "total", "total", "Total" + tResult.id);
+        var eventTime = new Date().toISOString();
+        dashboardEventHandler.PublishEvent(tResult.tenant, tResult.company, tResult.businessUnit, "TICKET", "SLA", "slaviolated", "total", "total", "Total" + tResult.id, eventTime);
     }
 }
 

@@ -11,6 +11,7 @@ var TicketStatusFlow = require('dvp-mongomodels/model/TicketStatusFlow').TicketS
 var TicketStatusNode = require('dvp-mongomodels/model/TicketStatusFlow').TicketStatusNode;
 var BulkOperation = require('dvp-mongomodels/model/BulkOperation').BulkOperation;
 var User = require('dvp-mongomodels/model/User');
+var UserAccount = require('dvp-mongomodels/model/UserAccount');
 var UserGroup = require('dvp-mongomodels/model/UserGroup').UserGroup;
 var ExternalUser = require('dvp-mongomodels/model/ExternalUser').ExternalUser;
 var Attachment = require('dvp-mongomodels/model/Attachment').Attachment;
@@ -21,8 +22,7 @@ var TicketStatics = require('dvp-mongomodels/model/TicketMetrix').TicketStatics;
 var Case = require('dvp-mongomodels/model/CaseManagement').Case;
 var CaseConfiguration = require('dvp-mongomodels/model/CaseManagement').CaseConfiguration;
 var FileSlotArray = require('dvp-mongomodels/model/Ticket').FileSlotArray;
-var FileSlot= require('dvp-mongomodels/model/Ticket').FileSlot;
-
+var FileSlot = require('dvp-mongomodels/model/Ticket').FileSlot;
 
 
 /*var CaseConfiguration = require('dvp-mongomodels/model/CaseConfiguration').CaseConfiguration;*/
@@ -42,7 +42,7 @@ var q = require('q');
 var amqp = require('amqp');
 var moment = require("moment");
 var util = require('util');
-var redis=require('ioredis');
+var redis = require('ioredis');
 var uuid = require('node-uuid');
 
 var redisip = config.Redis.ip;
@@ -52,10 +52,9 @@ var redismode = config.Redis.mode;
 var redisdb = config.Redis.db;
 
 
-
-var redisSetting =  {
-    port:redisport,
-    host:redisip,
+var redisSetting = {
+    port: redisport,
+    host: redisip,
     family: 4,
     password: redispass,
     db: redisdb,
@@ -69,26 +68,26 @@ var redisSetting =  {
     }
 };
 
-if(redismode == 'sentinel'){
+if (redismode == 'sentinel') {
 
-    if(config.Redis.sentinels && config.Redis.sentinels.hosts && config.Redis.sentinels.port, config.Redis.sentinels.name){
+    if (config.Redis.sentinels && config.Redis.sentinels.hosts && config.Redis.sentinels.port && config.Redis.sentinels.name) {
         var sentinelHosts = config.Redis.sentinels.hosts.split(',');
-        if(Array.isArray(sentinelHosts) && sentinelHosts.length > 2){
+        if (Array.isArray(sentinelHosts) && sentinelHosts.length > 2) {
             var sentinelConnections = [];
 
-            sentinelHosts.forEach(function(item){
+            sentinelHosts.forEach(function (item) {
 
-                sentinelConnections.push({host: item, port:config.Redis.sentinels.port})
+                sentinelConnections.push({host: item, port: config.Redis.sentinels.port})
 
             })
 
             redisSetting = {
-                sentinels:sentinelConnections,
+                sentinels: sentinelConnections,
                 name: config.Redis.sentinels.name,
                 password: redispass
             }
 
-        }else{
+        } else {
 
             console.log("No enough sentinel servers found .........");
         }
@@ -98,33 +97,33 @@ if(redismode == 'sentinel'){
 
 var redisClient = undefined;
 
-if(redismode != "cluster") {
+if (redismode != "cluster") {
     redisClient = new redis(redisSetting);
-}else{
+} else {
 
     var redisHosts = redisip.split(",");
-    if(Array.isArray(redisHosts)){
+    if (Array.isArray(redisHosts)) {
 
 
         redisSetting = [];
-        redisHosts.forEach(function(item){
+        redisHosts.forEach(function (item) {
             redisSetting.push({
                 host: item,
                 port: redisport,
                 family: 4,
-                password: redispass});
+                password: redispass
+            });
         });
 
         var redisClient = new redis.Cluster([redisSetting]);
 
-    }else{
+    } else {
 
         redisClient = new redis(redisSetting);
     }
 
 
 }
-
 
 
 var Schema = mongoose.Schema;
@@ -140,7 +139,7 @@ var externalApi = require('./ExternalApiAccess.js');
 ////////////////////////////rabbitmq//////////////////////////////////////////////////////
 //var queueHost = format('amqp://{0}:{1}@{2}:{3}', config.RabbitMQ.user, config.RabbitMQ.password, config.RabbitMQ.ip, config.RabbitMQ.port);
 var rabbitmqHosts = [];
-if(config.RabbitMQ.ip) {
+if (config.RabbitMQ.ip) {
     rabbitmqHosts = config.RabbitMQ.ip.split(",");
 }
 
@@ -151,7 +150,7 @@ var queueConnection = amqp.createConnection({
     password: config.RabbitMQ.password,
     vhost: config.RabbitMQ.vhost,
     noDelay: true,
-    heartbeat:10
+    heartbeat: 10
 }, {
     reconnect: true,
     reconnectBackoffStrategy: 'linear',
@@ -173,18 +172,18 @@ queueConnection.on('error', function (error) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-SetRelatedSlots = function (req,ticketId,tags) {
+SetRelatedSlots = function (req, ticketId, tags) {
 
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    var slotArray=[];
+    var slotArray = [];
 
     FileSlotArray.find({
         company: company,
         tenant: tenant,
-        tags: {$in:tags}
+        tags: {$in: tags}
 
     }).populate('slots').exec(function (err, respFSlot) {
         if (err) {
@@ -199,11 +198,10 @@ SetRelatedSlots = function (req,ticketId,tags) {
 
                 respFSlot.forEach(function (item) {
                     item.slots.forEach(function (slot) {
-                        if(slotArray.indexOf(slot)==-1)
-                        {
-                            var obj=
+                        if (slotArray.indexOf(slot) == -1) {
+                            var obj =
                                 {
-                                    slot: {name: slot.name,fileType: slot.fileType},
+                                    slot: {name: slot.name, fileType: slot.fileType},
                                     attachment: null
                                 }
 
@@ -214,7 +212,7 @@ SetRelatedSlots = function (req,ticketId,tags) {
 
                 });
 
-                Ticket.findOneAndUpdate({_id: ticketId},{slot_attachment:slotArray} ,function (err, tResult) {
+                Ticket.findOneAndUpdate({_id: ticketId}, {slot_attachment: slotArray}, function (err, tResult) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Attach slots to ticket failed", false, undefined);
 
@@ -251,211 +249,210 @@ module.exports.CreateTicket = function (req, res) {
 
     var dateNow = moment();
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
-        if (err) {
-
-            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
-            res.end(jsonString);
-
-        } else {
-
-            var secondsDiff = moment().diff(dateNow, 'seconds');
-            console.log("User pick time --- >"+secondsDiff);
-
-            var dataNow = moment();
-
-            if (user) {
-
-                var time = new Date().toISOString();
-                var tEvent = TicketEvent({
-                    type: 'status',
-                    "author": req.user.iss,
-                    "create_at": Date.now(),
-                    body: {
-
-                        "message": req.user.iss + " Created Ticket",
-                        "time": time
-                    }
-                });
-
-                reference.generate(company, tenant, function (done, id, key) {
-
-                    var secondsDiff = moment().diff(dateNow, 'seconds');
-                    console.log("Reference generate time --- >"+secondsDiff);
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').populate({path: 'group'})
+        .exec( function (err, useraccount) {
 
 
-                    var ticket = Ticket({
-                        created_at: Date.now(),
-                        updated_at: Date.now(),
-                        tid: key,
-                        active: true,
-                        is_sub_ticket: false,
-                        type: req.body.type,
-                        subject: req.body.subject,
-                        reference: id,
-                        description: req.body.description,
-                        priority: req.body.priority,
-                        status: "new",
-                        submitter: user.id,
-
-                        company: company,
-                        tenant: tenant,
-                        attachments: req.body.attachments,
-                        related_tickets: req.body.related_tickets,
-                        merged_tickets: req.body.merged_tickets,
-                        engagement_session: req.body.engagement_session,
-                        channel: req.body.channel,
-                        tags: req.body.tags,
-                        custom_fields: req.body.custom_fields,
-                        comments: req.body.comments,
-                        events: [tEvent],
-                        assignee: req.body.assignee,
-                        assignee_group: req.body.assignee_group,
-                        due_at: req.body.due_at,
-                        watchers :  [user.id]
-                    });
-
-                    if (req.body.requester) {
-                        ticket.requester = req.body.requester;
-                        //ticket.watchers.push(req.body.requester);
-
-                    }
-
-
-                    /////////////////////////////ticket matrix//////////////////////
-                    var matrix = {
-
-                        created_at: ticket.created_at,
-                        last_updated:ticket.created_at,
-                        last_status_changed:ticket.created_at,
-                        waited_time: 0,
-                        worked_time: 0,
-                        resolution_time:0,
-                        sla_violated: false,
-                        reopens: 0,
-                        replies: 0,
-                        assignees: 0
-
-                    };
-
-                    if(req.body.assignee){
-                        matrix.assignees = 1;
-                    }else{
-
-                        matrix.assignees = 0;
-                    }
-
-                    if(req.body.assignee_group){
-                        matrix.groups = 1;
-                    }else{
-                        matrix.groups = 0;
-                    }
-
-
-                    ticket.ticket_matrix = matrix;
-
-
-                    if(req.body.tags && util.isArray(req.body.tags) &&  req.body.tags.length > 0){
-
-
-                        var arr = [];
-                        req.body.tags.forEach(function(item){
-
-                            var tagArr = item.split('.');
-                            if(tagArr && tagArr.length > 0){
-
-                                tagArr.forEach(function(myTags){
-                                    ticket.isolated_tags.push(myTags);
-                                })
-                            }
-
-                        })
-
-                    }
-
-                    ////////////////////////////////////////////////////////////////
-
-                    ticket.save(function (err, client) {
-                        if (err) {
-                            jsonString = messageFormatter.FormatMessage(err, "Ticket create failed", false, undefined);
-                        }
-                        else
-                        {
-
-                            var secondsDiff = moment().diff(dateNow, 'seconds');
-                            console.log("Ticket save time --- ->"+secondsDiff);
-                            //client._doc
-                            jsonString = messageFormatter.FormatMessage(undefined, "Ticket saved successfully", true, client);
-
-
-                            /////////////////////////////////////////recent tickets////////////////////////////////////////////////
-
-
-                            if(client) {
-                                ExecuteTrigger(client.id, "change_status", "new");
-                                ExecuteCase(client);
-                                InsertUserRecentTicket(company, tenant,user.id,client.id, "create");
-                                SetRelatedSlots(req,client.id,client.isolated_tags);
-                                if(req.body.requester)
-                                    AddExternalUserRecentTicket(company, tenant,req.body.requester,client.id);
-                            }
-
-                            /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-                            ////////////////////////////////////////add note to engagement session async//////////////////////////
-                            try {
-                                EngagementSession.findOneAndUpdate({
-                                    engagement_id: req.body.engagement_session,
-                                    company: company,
-                                    tenant: tenant
-                                }, {
-                                    $addToSet: {
-                                        notes: {
-                                            body: '#TID ' + ticket.reference,
-                                            author: req.user.iss,
-                                            created_at: Date.now(),
-                                        }
-                                    }
-                                }, function (err, notes) {
-                                    if (err) {
-
-                                        logger.error("Append Note To EngagementSession Failed", err);
-
-                                    } else {
-
-                                        logger.debug("Append Note To EngagementSession Success");
-
-                                    }
-
-                                });
-                            } catch (excep) {
-
-                                logger.error("Append Note To EngagementSession Failed", excep);
-                            }
-
-
-                            //////////////////////////////////////////////////////////////////////////////////////////////////////
-                            ExecuteSla(client.id, undefined);
-
-
-
-
-
-
-
-
-                        }
-                        res.end(jsonString);
-                    });
-                });
-
-            } else {
+            if (err) {
 
                 jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                 res.end(jsonString);
+
+            } else {
+
+                var secondsDiff = moment().diff(dateNow, 'seconds');
+                console.log("User pick time --- >" + secondsDiff);
+
+                var dataNow = moment();
+
+                if (useraccount && useraccount.userref) {
+
+                    var user = useraccount.userref.toObject();
+
+                    var time = new Date().toISOString();
+                    var tEvent = TicketEvent({
+                        type: 'status',
+                        "author": req.user.iss,
+                        "create_at": Date.now(),
+                        body: {
+
+                            "message": req.user.iss + " Created Ticket",
+                            "time": time
+                        }
+                    });
+
+                    reference.generate(company, tenant, function (done, id, key) {
+
+                        var secondsDiff = moment().diff(dateNow, 'seconds');
+                        console.log("Reference generate time --- >" + secondsDiff);
+
+
+                        var ticket = Ticket({
+                            created_at: Date.now(),
+                            updated_at: Date.now(),
+                            tid: key,
+                            active: true,
+                            is_sub_ticket: false,
+                            type: req.body.type,
+                            subject: req.body.subject,
+                            reference: id,
+                            description: req.body.description,
+                            priority: req.body.priority,
+                            status: "new",
+                            submitter: useraccount.userref.id,
+
+                            company: company,
+                            tenant: tenant,
+                            attachments: req.body.attachments,
+                            related_tickets: req.body.related_tickets,
+                            merged_tickets: req.body.merged_tickets,
+                            engagement_session: req.body.engagement_session,
+                            channel: req.body.channel,
+                            tags: req.body.tags,
+                            custom_fields: req.body.custom_fields,
+                            comments: req.body.comments,
+                            events: [tEvent],
+                            assignee: req.body.assignee,
+                            assignee_group: req.body.assignee_group,
+                            due_at: req.body.due_at,
+                            watchers: [user.id],
+                            businessUnit: req.body.businessUnit
+                        });
+
+                        if (req.body.requester) {
+                            ticket.requester = req.body.requester;
+                            //ticket.watchers.push(req.body.requester);
+
+                        }
+
+
+                        /////////////////////////////ticket matrix//////////////////////
+                        var matrix = {
+
+                            created_at: ticket.created_at,
+                            last_updated: ticket.created_at,
+                            last_status_changed: ticket.created_at,
+                            waited_time: 0,
+                            worked_time: 0,
+                            resolution_time: 0,
+                            sla_violated: false,
+                            reopens: 0,
+                            replies: 0,
+                            assignees: 0
+
+                        };
+
+                        if (req.body.assignee) {
+                            matrix.assignees = 1;
+                        } else {
+
+                            matrix.assignees = 0;
+                        }
+
+                        if (req.body.assignee_group) {
+                            matrix.groups = 1;
+                        } else {
+                            matrix.groups = 0;
+                        }
+
+
+                        ticket.ticket_matrix = matrix;
+
+
+                        if (req.body.tags && util.isArray(req.body.tags) && req.body.tags.length > 0) {
+
+
+                            var arr = [];
+                            req.body.tags.forEach(function (item) {
+
+                                var tagArr = item.split('.');
+                                if (tagArr && tagArr.length > 0) {
+
+                                    tagArr.forEach(function (myTags) {
+                                        ticket.isolated_tags.push(myTags);
+                                    })
+                                }
+
+                            })
+
+                        }
+
+                        ////////////////////////////////////////////////////////////////
+
+                        ticket.save(function (err, client) {
+                            if (err) {
+                                jsonString = messageFormatter.FormatMessage(err, "Ticket create failed", false, undefined);
+                            }
+                            else {
+
+                                var secondsDiff = moment().diff(dateNow, 'seconds');
+                                console.log("Ticket save time --- ->" + secondsDiff);
+                                //client._doc
+                                jsonString = messageFormatter.FormatMessage(undefined, "Ticket saved successfully", true, client);
+
+
+                                /////////////////////////////////////////recent tickets////////////////////////////////////////////////
+
+
+                                if (client) {
+                                    ExecuteTrigger(client.id, "change_status", "new");
+                                    ExecuteCase(client);
+                                    InsertUserRecentTicket(company, tenant, user.id, client.id, "create");
+                                    SetRelatedSlots(req, client.id, client.isolated_tags);
+                                    if (req.body.requester)
+                                        AddExternalUserRecentTicket(company, tenant, req.body.requester, client.id);
+                                }
+
+                                /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                                ////////////////////////////////////////add note to engagement session async//////////////////////////
+                                try {
+                                    EngagementSession.findOneAndUpdate({
+                                        engagement_id: req.body.engagement_session,
+                                        company: company,
+                                        tenant: tenant
+                                    }, {
+                                        $addToSet: {
+                                            notes: {
+                                                body: '#TID ' + ticket.reference,
+                                                author: req.user.iss,
+                                                created_at: Date.now(),
+                                            }
+                                        }
+                                    }, function (err, notes) {
+                                        if (err) {
+
+                                            logger.error("Append Note To EngagementSession Failed", err);
+
+                                        } else {
+
+                                            logger.debug("Append Note To EngagementSession Success");
+
+                                        }
+
+                                    });
+                                } catch (excep) {
+
+                                    logger.error("Append Note To EngagementSession Failed", excep);
+                                }
+
+
+                                //////////////////////////////////////////////////////////////////////////////////////////////////////
+                                ExecuteSla(client.id, undefined);
+
+
+                            }
+                            res.end(jsonString);
+                        });
+                    });
+
+                } else {
+
+                    jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+                    res.end(jsonString);
+                }
             }
-        }
-    });
+        });
 };
 
 module.exports.GetAllTickets = function (req, res) {
@@ -482,13 +479,17 @@ module.exports.GetAllTickets = function (req, res) {
         qObj.status = {$in: paramArr};
     }
 
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
     var sortQuery = {};
 
-    if(req.query.sorted_by){
+    if (req.query.sorted_by) {
 
         sortQuery[req.query.sorted_by] = -1;
 
-    }else{
+    } else {
         sortQuery = {created_at: -1}
     }
 
@@ -496,7 +497,7 @@ module.exports.GetAllTickets = function (req, res) {
         .populate('requester', 'name avatar firstname lastname phone email landnumber facebook twitter linkedin googleplus')
         .populate('submitter', 'name avatar firstname lastname')
         .populate('collaborators', 'name avatar firstname lastname')
-        .populate( {path: 'form_submission',populate : {path: 'form'}}).skip(skip)
+        .populate({path: 'form_submission', populate: {path: 'form'}}).skip(skip)
         .limit(size).sort(sortQuery).exec(function (err, tickets) {
         if (err) {
 
@@ -545,7 +546,7 @@ module.exports.GetTicketSchema = function (req, res) {
     //         }
 
     ///////////////////////////////////////get schema nad loop//////////////////////////////////////
-    Object.keys(Ticket.schema.paths).forEach(function(key){
+    Object.keys(Ticket.schema.paths).forEach(function (key) {
         console.log(key);
         console.log(Ticket.schema.paths[key]);
 
@@ -555,7 +556,7 @@ module.exports.GetTicketSchema = function (req, res) {
             type: Ticket.schema.paths[key].instance,
         };
 
-        if(Ticket.schema.paths[key].instance == 'ObjectID' && Ticket.schema.paths[key].options && Ticket.schema.paths[key].options.ref) {
+        if (Ticket.schema.paths[key].instance == 'ObjectID' && Ticket.schema.paths[key].options && Ticket.schema.paths[key].options.ref) {
 
             // if(Ticket.schema.paths[key].options.ref == 'User'){
 
@@ -569,7 +570,7 @@ module.exports.GetTicketSchema = function (req, res) {
             //}
         }
 
-        if(Ticket.schema.paths[key].enumValues && Ticket.schema.paths[key].enumValues.length > 0){
+        if (Ticket.schema.paths[key].enumValues && Ticket.schema.paths[key].enumValues.length > 0) {
             item["type"] = "Select";
             item["values"] = Ticket.schema.paths[key].enumValues;
         }
@@ -585,9 +586,6 @@ module.exports.GetTicketSchema = function (req, res) {
 //////////////////////get groups////////////////////////////////////////////////////////////////////////////
 
 
-
-
-
 };
 
 module.exports.GetTicketsByTimeRange = function (req, res) {
@@ -595,11 +593,18 @@ module.exports.GetTicketsByTimeRange = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    Ticket.find({
+
+    var qObj = {
         company: company,
-        tenant: tenant, active: true,
+        tenant: tenant,
+        active: true,
         "created_at": {"$gte": req.params.fromDate, "$lt": req.params.toDate}
-    }, function (err, tickets) {
+    };
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.find(qObj, function (err, tickets) {
         //db.posts.find( //query today up to tonight  {"created_on": {"$gte": new Date(2012, 7, 14), "$lt": new Date(2012, 7, 15)}})
         if (err) {
 
@@ -631,7 +636,13 @@ module.exports.GetAllTicketsWithStatus = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    Ticket.find({company: company, tenant: tenant, active: true, status: req.params.status}).skip(skip)
+
+    var qObj = {company: company, tenant: tenant, active: true, status: req.params.status};
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.find(qObj).skip(skip)
         .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
 
@@ -659,12 +670,18 @@ module.exports.GetAllTicketsWithStatusTimeRange = function (req, res) {
     var tenant = parseInt(req.user.tenant);
 
     var jsonString;
-    Ticket.find({
+
+    var qObj = {
         company: company,
         tenant: tenant,
         active: true,
         "created_at": {"$gte": req.params.fromDate, "$lt": req.params.toDate}
-    }).sort({created_at: -1}).exec(function (err, tickets) {
+    };
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.find(qObj).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get AllTickets With Status Failed", false, undefined);
@@ -695,9 +712,15 @@ module.exports.GetAllTicketsWithMatrix = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
+
+    var qObj = {company: company, tenant: tenant, active: true};
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
     TicketStatics.find().populate({
         path: 'ticket',
-        match: {company: company, tenant: tenant, active: true}
+        match: qObj
     }).skip(skip)
         .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
@@ -733,9 +756,15 @@ module.exports.GetAllTicketsInStatusWithMatrix = function (req, res) {
 
     var status = req.params.status;
     var jsonString;
+
+    var qObj = {company: company, tenant: tenant, active: true, status: status};
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
     TicketStatics.find().populate({
         path: 'ticket',
-        match: {company: company, tenant: tenant, active: true, status: status}
+        match: qObj
     }).skip(skip)
         .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
@@ -769,7 +798,13 @@ module.exports.GetAllTicketsByChannel = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    Ticket.find({company: company, tenant: tenant, channel: req.params.Channel, active: true}).skip(skip)
+
+    var qObj = {company: company, tenant: tenant, channel: req.params.Channel, active: true};
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.find(qObj).skip(skip)
         .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
 
@@ -799,12 +834,18 @@ module.exports.GetAllTicketsByChannelTimeRange = function (req, res) {
 
 
     var jsonString;
-    Ticket.find({
+
+    var qObj = {
         company: company,
         tenant: tenant,
         "created_at": {"$gte": req.params.fromDate, "$lt": req.params.toDate},
         active: true
-    }).sort({created_at: -1}).exec(function (err, tickets) {
+    };
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.find(qObj).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
@@ -836,12 +877,18 @@ module.exports.GetAllTicketsByRequester = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    Ticket.find({
+
+    var qObj = {
         company: company,
         tenant: tenant,
         requester: mongoose.Types.ObjectId(req.params.Requester),
         active: true
-    }).populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus').populate('submitter', 'name avatar').populate('assignee', 'name avatar').skip(skip)
+    };
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.find(qObj).populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus').populate('submitter', 'name avatar').populate('assignee', 'name avatar').skip(skip)
         .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
 
@@ -871,12 +918,18 @@ module.exports.GetAllTicketsByRequesterTimeRange = function (req, res) {
 
 
     var jsonString;
-    Ticket.find({
+
+    var qObj = {
         company: company,
         tenant: tenant,
         "created_at": {"$gte": req.params.fromDate, "$lt": req.params.toDate},
         active: true
-    }).sort({created_at: -1}).exec(function (err, tickets) {
+    };
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.find(qObj).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
@@ -908,7 +961,13 @@ module.exports.GetAllTicketsByPriority = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    Ticket.find({company: company, tenant: tenant, priority: req.params.Priority, active: true}).skip(skip)
+
+    var qObj = {company: company, tenant: tenant, priority: req.params.Priority, active: true};
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.find(qObj).skip(skip)
         .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
 
@@ -938,12 +997,18 @@ module.exports.GetAllTicketsByPriorityTimeRange = function (req, res) {
 
 
     var jsonString;
-    Ticket.find({
+
+    var qObj = {
         company: company,
         tenant: tenant,
         "created_at": {"$gte": req.params.fromDate, "$lt": req.params.toDate},
         active: true
-    }).sort({created_at: -1}).exec(function (err, tickets) {
+    };
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.find(qObj).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
@@ -975,7 +1040,13 @@ module.exports.GetAllGroupTickets = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    Ticket.find({company: company, tenant: tenant, assignee_group: req.params.GroupId, active: true}).skip(skip)
+
+    var qObj = {company: company, tenant: tenant, assignee_group: req.params.GroupId, active: true};
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.find(qObj).skip(skip)
         .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
 
@@ -999,7 +1070,6 @@ module.exports.GetAllGroupTickets = function (req, res) {
 };
 
 
-
 module.exports.GetMyGroupTicketList = function (req, res) {
     logger.info("DVP-LiteTicket.GetMyGroupTicketList Internal method ");
     var company = parseInt(req.user.company);
@@ -1011,55 +1081,63 @@ module.exports.GetMyGroupTicketList = function (req, res) {
 
     var jsonString;
 
+    UserAccount.findOne({
+        username: req.user.iss,
+        company: company,
+        tenant: tenant
+    }).populate('userref', '-password')
+        .exec(function (err, user) {
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
-        if (err) {
-            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
-            res.end(jsonString);
+            if (err) {
+                jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+                res.end(jsonString);
 
-        } else {
+            } else {
 
-            if(user && user.group) {
+                if (user && user.userref && user.group) {
 
-                var obj = {
+                    var obj = {
 
-                    "company": company,
-                    "tenant": tenant,
-                    "assignee_group": user.group,
-                    "active": true
-                }
+                        "company": company,
+                        "tenant": tenant,
+                        "assignee_group": user.group,
+                        "active": true
+                    }
+                    if (req.query.businessunit) {
+                        obj.businessUnit = req.query.businessunit;
+                    }
 
-                Ticket.find(obj).populate('assignee', 'name avatar firstname lastname')
-                    .populate('assignee', 'name avatar')
-                    .populate('assignee_group', 'name')
-                    .populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus')
-                    .populate('submitter', 'name').populate('collaborators', 'name')
-                    .skip(skip)
-                    .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
-                    if (err) {
+                    Ticket.find(obj).populate('assignee', 'name avatar firstname lastname')
+                        .populate('assignee', 'name avatar')
+                        .populate('assignee_group', 'name')
+                        .populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus')
+                        .populate('submitter', 'name').populate('collaborators', 'name')
+                        .skip(skip)
+                        .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
+                        if (err) {
 
-                        jsonString = messageFormatter.FormatMessage(err, "Get All Tickets and Status Failed", false, undefined);
+                            jsonString = messageFormatter.FormatMessage(err, "Get All Tickets and Status Failed", false, undefined);
 
-                    } else {
-
-                        if (tickets) {
-                            jsonString = messageFormatter.FormatMessage(undefined, "Get All Tickets By Group ID and Status Successful", true, tickets);
                         } else {
 
-                            jsonString = messageFormatter.FormatMessage(undefined, "No Tickets Found", false, tickets);
+                            if (tickets) {
+                                jsonString = messageFormatter.FormatMessage(undefined, "Get All Tickets By Group ID and Status Successful", true, tickets);
+                            } else {
+
+                                jsonString = messageFormatter.FormatMessage(undefined, "No Tickets Found", false, tickets);
+                            }
                         }
-                    }
+                        res.end(jsonString);
+                    });
+
+
+                } else {
+
+                    jsonString = messageFormatter.FormatMessage(undefined, "No User Found", false, undefined);
                     res.end(jsonString);
-                });
-
-
-            }else{
-
-                jsonString = messageFormatter.FormatMessage(undefined, "No User Found", false, undefined);
-                res.end(jsonString);
+                }
             }
-        }
-    });
+        });
 };
 
 module.exports.GetAllMyTickets = function (req, res) {
@@ -1072,68 +1150,77 @@ module.exports.GetAllMyTickets = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
-        if (err) {
-            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
-            res.end(jsonString);
 
-        } else {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
+        .exec( function (err, useraccount) {
 
-            if (user) {
-
-                var qObj = {
-                    company: company,
-                    tenant: tenant, active: true,
-                    assignee: user.id,
-                };
-
-                var sortQuery = {};
-
-                if(req.query.sorted_by){
-
-                    sortQuery[req.query.sorted_by] = -1;
-
-                }else{
-                    sortQuery = {created_at: -1}
-                }
-
-                if (req.query.status) {
-                    var paramArr;
-                    if (Array.isArray(req.query.status)) {
-                        paramArr = req.query.status;
-                    } else {
-
-                        paramArr = [req.query.status];
-                    }
-
-                    qObj.status = {$in: paramArr}
-                }
-                Ticket.find(qObj
-                ).populate('assignee', 'name avatar firstname lastname').populate('assignee_group', 'name').populate('requester', 'name avatar firstname lastname phone email landnumber facebook twitter linkedin googleplus').populate('submitter', 'name avatar firstname lastname').populate('collaborators', 'name avatar firstname lastname').skip(skip)
-                    .limit(size).sort(sortQuery).exec(function (err, tickets) {
-                    if (err) {
-
-                        jsonString = messageFormatter.FormatMessage(err, "Fail to Find Tickets", false, undefined);
-                        res.end(jsonString);
-                    }
-                    else {
-                        if (tickets) {
-                            jsonString = messageFormatter.FormatMessage(undefined, "Find Tickets", true, tickets);
-                        }
-                        else {
-                            jsonString = messageFormatter.FormatMessage(undefined, "Fail To Find Ticket", false, undefined);
-                        }
-                        res.end(jsonString);
-                    }
-                });
-
+            if (err) {
+                jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+                res.end(jsonString);
 
             } else {
-                jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
-                res.end(jsonString);
+
+                if (useraccount && useraccount.userref) {
+
+                    var user = useraccount.userref.toObject();
+
+                    var qObj = {
+                        company: company,
+                        tenant: tenant, active: true,
+                        assignee: user.id,
+                    };
+
+                    var sortQuery = {};
+
+                    if (req.query.sorted_by) {
+
+                        sortQuery[req.query.sorted_by] = -1;
+
+                    } else {
+                        sortQuery = {created_at: -1}
+                    }
+
+                    if (req.query.status) {
+                        var paramArr;
+                        if (Array.isArray(req.query.status)) {
+                            paramArr = req.query.status;
+                        } else {
+
+                            paramArr = [req.query.status];
+                        }
+
+                        qObj.status = {$in: paramArr}
+                    }
+                    if (req.query.businessunit) {
+                        qObj.businessUnit = req.query.businessunit;
+                    }
+
+                    Ticket.find(qObj
+                    ).populate('assignee', 'name avatar firstname lastname').populate('assignee_group', 'name').populate('requester', 'name avatar firstname lastname phone email landnumber facebook twitter linkedin googleplus').populate('submitter', 'name avatar firstname lastname').populate('collaborators', 'name avatar firstname lastname').skip(skip)
+                        .limit(size).sort(sortQuery).exec(function (err, tickets) {
+                        if (err) {
+
+                            jsonString = messageFormatter.FormatMessage(err, "Fail to Find Tickets", false, undefined);
+                            res.end(jsonString);
+                        }
+                        else {
+                            if (tickets) {
+                                jsonString = messageFormatter.FormatMessage(undefined, "Find Tickets", true, tickets);
+                            }
+                            else {
+                                jsonString = messageFormatter.FormatMessage(undefined, "Fail To Find Ticket", false, undefined);
+                            }
+                            res.end(jsonString);
+                        }
+                    });
+
+
+                } else {
+                    jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
+                    res.end(jsonString);
+                }
             }
-        }
-    });
+        });
 };
 
 module.exports.GetAllMyGroupTickets = function (req, res) {
@@ -1147,15 +1234,16 @@ module.exports.GetAllMyGroupTickets = function (req, res) {
 
     var jsonString;
 
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, user) {
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if(user && user.group) {
+            if (user && user.group) {
 
                 var obj = {
 
@@ -1163,7 +1251,7 @@ module.exports.GetAllMyGroupTickets = function (req, res) {
                     "tenant": tenant,
                     "assignee_group": user.group,
                     "active": true
-                }
+                };
 
                 if (req.query.status) {
                     var paramArr;
@@ -1179,12 +1267,15 @@ module.exports.GetAllMyGroupTickets = function (req, res) {
 
                 var sortQuery = {};
 
-                if(req.query.sorted_by){
+                if (req.query.sorted_by) {
 
                     sortQuery[req.query.sorted_by] = -1;
 
-                }else{
+                } else {
                     sortQuery = {created_at: -1}
+                }
+                if (req.query.businessunit) {
+                    obj.businessUnit = req.query.businessunit;
                 }
 
                 Ticket.find(obj).populate('assignee', 'name avatar firstname lastname')
@@ -1211,7 +1302,7 @@ module.exports.GetAllMyGroupTickets = function (req, res) {
                 });
 
 
-            }else{
+            } else {
 
                 jsonString = messageFormatter.FormatMessage(undefined, "No User Found", false, undefined);
                 res.end(jsonString);
@@ -1229,12 +1320,14 @@ module.exports.GetAllTicketSummeryByRequester = function (req, res) {
     var jsonString;
 
 
-
     var qObj = {
         company: company,
         tenant: tenant, active: true,
         requester: mongoose.Types.ObjectId(req.params.requester),
     };
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
 
     Ticket.find(qObj, {_id: true, subject: true, reference: true}, function (err, tickets) {
         if (err) {
@@ -1267,42 +1360,52 @@ module.exports.GetAllMyTicketsWithStatus = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
-        if (err) {
-            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
-            res.end(jsonString);
 
-        } else {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
+        .exec( function (err, useraccount) {
+            if (err) {
+                jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+                res.end(jsonString);
 
-            if (user) {
-                Ticket.find({
-                    company: company,
-                    tenant: tenant, active: true,
-                    submitter: user.id,
-                    status: req.params.status
-                }).skip(skip)
-                    .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
-                    if (err) {
+            } else {
 
-                        jsonString = messageFormatter.FormatMessage(err, "Fail to Find Tickets", false, undefined);
-                        res.end(jsonString);
+                if (useraccount && useraccount.userref) {
+
+                    var user = useraccount.userref.toObject();
+
+                    var qObj = {
+                        company: company,
+                        tenant: tenant, active: true,
+                        submitter: user.id,
+                        status: req.params.status
+                    };
+                    if (req.query.businessunit) {
+                        qObj.businessUnit = req.query.businessunit;
                     }
-                    else {
-                        if (tickets) {
-                            jsonString = messageFormatter.FormatMessage(undefined, "Find Tickets", true, tickets);
+
+                    Ticket.find(qObj).skip(skip)
+                        .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
+                        if (err) {
+
+                            jsonString = messageFormatter.FormatMessage(err, "Fail to Find Tickets", false, undefined);
+                            res.end(jsonString);
                         }
                         else {
-                            jsonString = messageFormatter.FormatMessage(undefined, "Fail To Find Ticket", false, undefined);
+                            if (tickets) {
+                                jsonString = messageFormatter.FormatMessage(undefined, "Find Tickets", true, tickets);
+                            }
+                            else {
+                                jsonString = messageFormatter.FormatMessage(undefined, "Fail To Find Ticket", false, undefined);
+                            }
+                            res.end(jsonString);
                         }
-                        res.end(jsonString);
-                    }
-                })
-            } else {
-                jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
-                res.end(jsonString);
+                    })
+                } else {
+                    jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
+                    res.end(jsonString);
+                }
             }
-        }
-    });
+        });
 };
 
 module.exports.GetTicket = function (req, res) {
@@ -1312,13 +1415,17 @@ module.exports.GetTicket = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-
-    Ticket.findOne({
+    var qObj = {
         company: company,
         tenant: tenant,
         active: true,
         _id: req.params.id
-    }).populate('assignee', 'name avatar firstname lastname').populate('submitter', 'name avatar').populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus').sort({created_at: -1}).exec(function (err, ticket) {
+    };
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.findOne(qObj).populate('assignee', 'name avatar firstname lastname').populate('submitter', 'name avatar').populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus').sort({created_at: -1}).exec(function (err, ticket) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Fail to Find Ticket", false, undefined);
         }
@@ -1345,13 +1452,17 @@ module.exports.GetTicketByIds = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-
-    Ticket.find({
+    var qObj = {
         company: company,
         tenant: tenant,
         active: true,
-        _id: { $in: req.params.ids }
-    }).populate('assignee', 'name avatar firstname lastname').populate('submitter', 'name avatar').populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus').sort({created_at: -1}).exec(function (err, ticket) {
+        _id: {$in: req.params.ids}
+    };
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.find(qObj).populate('assignee', 'name avatar firstname lastname').populate('submitter', 'name avatar').populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus').sort({created_at: -1}).exec(function (err, ticket) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Fail to Find Tickets", false, undefined);
         }
@@ -1372,7 +1483,7 @@ module.exports.GetTicketByIds = function (req, res) {
 };
 
 
-module.exports.GetRecentTicket = function(req, res){
+module.exports.GetRecentTicket = function (req, res) {
 
     logger.info("DVP-LiteTicket.GetTicketView Internal method ");
 
@@ -1381,51 +1492,60 @@ module.exports.GetRecentTicket = function(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
-        if (err) {
-            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
-            res.end(jsonString);
-        }
-        else {
-            if (user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
+        .exec( function (err, useraccount) {
 
-                RecentUserTicket.find({company: company, tenant: tenant, user: user.id}).populate('ticket').sort({"updated_at": -1}).limit(10).exec(function (err, resent) {
-                    if (err) {
-                        jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Failed", false, undefined);
-                        res.end(jsonString);
-                    } else {
+            if (err) {
+                jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+                res.end(jsonString);
+            }
+            else {
+                if (useraccount && useraccount.userref) {
 
-                        var resentTicketList = {};
+                    var user = useraccount.userref.toObject();
 
-                        resentTicketList.tickets = [];
 
-                        if(Array.isArray(resent)){
+                    RecentUserTicket.find({
+                        company: company,
+                        tenant: tenant,
+                        user: user.id
+                    }).populate('ticket').sort({"updated_at": -1}).limit(10).exec(function (err, resent) {
+                        if (err) {
+                            jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Failed", false, undefined);
+                            res.end(jsonString);
+                        } else {
 
-                            resent.forEach(function(obj){
+                            var resentTicketList = {};
 
-                                resentTicketList.tickets.push(obj.ticket);
+                            resentTicketList.tickets = [];
 
-                            })
+                            if (Array.isArray(resent)) {
 
+                                resent.forEach(function (obj) {
+
+                                    resentTicketList.tickets.push(obj.ticket);
+
+                                })
+
+                            }
+
+                            jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Success", true, resentTicketList);
+                            res.end(jsonString);
                         }
-
-                        jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Success", true, resentTicketList);
-                        res.end(jsonString);
-                    }
-                });
+                    });
 
 
+                }
+                else {
+                    jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
+                    res.end(jsonString);
+                }
             }
-            else {
-                jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
-                res.end(jsonString);
-            }
-        }
-    });
+        });
 
 }
 
-module.exports.GetRecentTicketx = function(req, res){
+module.exports.GetRecentTicketx = function (req, res) {
 
     logger.info("DVP-LiteTicket.GetTicketView Internal method ");
 
@@ -1434,36 +1554,44 @@ module.exports.GetRecentTicketx = function(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
-        if (err) {
-            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
-            res.end(jsonString);
-        }
-        else {
-            if (user) {
-
-                RecentTicket.findOne({company: company, tenant: tenant, user: user.id}).populate('tickets').exec(function (err, resent) {
-                    if (err) {
-                        jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Failed", false, undefined);
-                        res.end(jsonString);
-                    } else {
-                        jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Success", true, resent);
-                        res.end(jsonString);
-                    }
-                });
-
-
-            }
-            else {
-                jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
+        .exec( function (err, useraccount) {
+            if (err) {
+                jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                 res.end(jsonString);
             }
-        }
-    });
+            else {
+                if (useraccount && useraccount.userref) {
+
+                    var user = useraccount.userref.toObject();
+
+
+                    RecentTicket.findOne({
+                        company: company,
+                        tenant: tenant,
+                        user: user.id
+                    }).populate('tickets').exec(function (err, resent) {
+                        if (err) {
+                            jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Failed", false, undefined);
+                            res.end(jsonString);
+                        } else {
+                            jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Success", true, resent);
+                            res.end(jsonString);
+                        }
+                    });
+
+
+                }
+                else {
+                    jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
+                    res.end(jsonString);
+                }
+            }
+        });
 
 }
 
-module.exports.GetExternalUSerRecentTicket = function(req, res) {
+module.exports.GetExternalUSerRecentTicket = function (req, res) {
 
     logger.info("DVP-LiteTicket.GetTicketView Internal method ");
 
@@ -1515,10 +1643,10 @@ module.exports.MapTicketToProfile = function (req, res) {
                 }
                 else {
                     ticket.requester = req.params.Requester;
-                    ticket.updated_at=time;
+                    ticket.updated_at = time;
 
 
-                    ticket.save( function (ex, obj) {
+                    ticket.save(function (ex, obj) {
                         if (err) {
 
                             jsonString = messageFormatter.FormatMessage(err, "Fail to Find Ticket", false, undefined);
@@ -1538,33 +1666,47 @@ module.exports.MapTicketToProfile = function (req, res) {
     })
 };
 
+
+
 module.exports.GetTicketWithDetails = function (req, res) {
     logger.info("DVP-LiteTicket.GetTicketWithDetails Internal method ");
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    Ticket.findOne({
+
+    var qObj = {
         company: company,
         tenant: tenant,
         active: true,
         _id: req.params.id
-    }).populate('attachments')
-        .populate({path: 'sub_tickets', populate :{path: 'assignee', select: 'name avatar firstname lastname'}})
-        .populate({path: 'sub_tickets', populate :{path: 'assignee_group', select: 'name'}})
-        .populate({path:'related_tickets',populate:{path: 'assignee' , select : 'name avatar firstname lastname'}})
-        .populate({path:'related_tickets',populate:{path: 'assignee_group' , select : 'name'}})
-        .populate('assignee', 'name avatar firstname lastname group')
+    };
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.findOne(qObj).populate('attachments')
+        .populate({path: 'sub_tickets', populate: {path: 'assignee', select: 'name avatar firstname lastname'}})
+        .populate({path: 'sub_tickets', populate: {path: 'assignee_group', select: 'name'}})
+        .populate({path: 'related_tickets', populate: {path: 'assignee', select: 'name avatar firstname lastname'}})
+        .populate({path: 'related_tickets', populate: {path: 'assignee_group', select: 'name'}})
+        .populate('assignee', 'name avatar firstname lastname ')
         .populate('assignee_group', 'name')
         .populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus contacts firstname lastname')
         .populate('submitter', 'name avatar firstname lastname')
         .populate('collaborators', 'name avatar firstname lastname')
-        .populate({path: 'merged_tickets', populate :{path: 'assignee', select: 'name avatar'}})
-        .populate({path: 'merged_tickets', populate :{path: 'assignee_group', select: 'name'}})
+        .populate({path: 'merged_tickets', populate: {path: 'assignee', select: 'name avatar'}})
+        .populate({path: 'merged_tickets', populate: {path: 'assignee_group', select: 'name'}})
         .populate('engagement_session')
-        .populate( {path: 'form_submission',populate : {path: 'form'}})
-        .populate({path: 'comments',populate : [{path: 'author', select:'name avatar firstname lastname'},{path: 'author_external', select:'name avatar firstname lastname'},{path: 'attachments'},{path:'engagement_session'}]})
-        .populate({path:'slot_attachment.attachment',populate:'file url type'})
+        .populate({path: 'form_submission', populate: {path: 'form'}})
+        .populate({
+            path: 'comments',
+            populate: [{path: 'author', select: 'name avatar firstname lastname'}, {
+                path: 'author_external',
+                select: 'name avatar firstname lastname'
+            }, {path: 'attachments'}, {path: 'engagement_session'}]
+        })
+        .populate({path: 'slot_attachment.attachment', populate: 'file url type'})
 
 
         .exec(function (err, ticket) {
@@ -1579,66 +1721,155 @@ module.exports.GetTicketWithDetails = function (req, res) {
 
                     try {
 
-                        User.findOne({
-                            username: req.user.iss,
-                            company: company,
-                            tenant: tenant
-                        }, function (err, user) {
-                            if (err) {
-                                jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
-                                res.end(jsonString);
+                        if(ticket.assignee && ticket.assignee._id)
+                        {
+                            UserAccount.findOne({userref: ticket.assignee._id, company: company, tenant: tenant}).populate('group').exec(function (errAssgn, resAssgn) {
 
-                            } else {
-                                if (user) {
+                                if(resAssgn && resAssgn.group)
+                                {
+                                    ticket.assignee.group = resAssgn.group._id;
+                                }
+
+                                UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
+                                    .exec( function (err, useraccount) {
+                                        if (err) {
+                                            jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
+                                            res.end(jsonString);
+
+                                        } else {
+                                            if (useraccount && useraccount.userref) {
+
+                                                var user = useraccount.userref.toObject();
 
 
-                                    InsertUserRecentTicket(company, tenant,user.id,ticket.id, "get");
+
+                                                InsertUserRecentTicket(company, tenant, user.id, ticket.id, "get");
 
 
-                                    if(ticket.comments)
-                                    {
-                                        var commentArray = ticket.comments.filter(function(comment) {
-                                            var updatedComment;
-                                            if (!(comment.public === 'private' && comment.author.id!==user.id))
-                                            {
-                                                updatedComment = comment;
+                                                if (ticket.comments) {
+                                                    var commentArray = ticket.comments.filter(function (comment) {
+                                                        var updatedComment;
+                                                        if (!(comment.public === 'private' && comment.author.id !== user.id)) {
+                                                            updatedComment = comment;
+                                                        }
+                                                        else {
+                                                            comment.body = "Content unavailable";
+                                                            updatedComment = comment;
+                                                        }
+                                                        return updatedComment;
+                                                    });
+
+                                                    ticket.comments = commentArray;
+
+                                                    jsonString = messageFormatter.FormatMessage(undefined, "Ticket found", true, ticket);
+                                                    res.end(jsonString);
+                                                }
+                                                else {
+                                                    jsonString = messageFormatter.FormatMessage(undefined, "Ticket found, But no comment object found", true, ticket);
+                                                    res.end(jsonString);
+                                                }
+
+
                                             }
                                             else
                                             {
-                                                comment.body="Content unavailable";
-                                                updatedComment =comment;
+                                                jsonString = messageFormatter.FormatMessage(new Error("No user Account found"), "No user Account found", false, undefined);
+                                                res.end(jsonString);
+
                                             }
-                                            return updatedComment;
-                                        });
+                                        }
+                                    });
 
-                                        ticket.comments=commentArray;
-
-                                        jsonString = messageFormatter.FormatMessage(undefined, "Ticket found", true, ticket);
+                            });
+                        }
+                        else
+                        {
+                            UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password')
+                                .exec( function (err, useraccount) {
+                                    if (err) {
+                                        jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                                         res.end(jsonString);
-                                    }
-                                    else
-                                    {
-                                        jsonString = messageFormatter.FormatMessage(undefined, "Ticket found, But no comment object found", true, ticket);
-                                        res.end(jsonString);
-                                    }
+
+                                    } else {
+                                        if (useraccount && useraccount.userref) {
+
+                                            var user = useraccount.userref.toObject();
 
 
-                                }
-                            }
-                        });
+
+                                            InsertUserRecentTicket(company, tenant, user.id, ticket.id, "get");
+
+
+                                            if (ticket.comments) {
+                                                var commentArray = ticket.comments.filter(function (comment) {
+                                                    var updatedComment;
+                                                    if (!(comment.public === 'private' && comment.author.id !== user.id)) {
+                                                        updatedComment = comment;
+                                                    }
+                                                    else {
+                                                        comment.body = "Content unavailable";
+                                                        updatedComment = comment;
+                                                    }
+                                                    return updatedComment;
+                                                });
+
+                                                ticket.comments = commentArray;
+
+                                                jsonString = messageFormatter.FormatMessage(undefined, "Ticket found", true, ticket);
+                                                res.end(jsonString);
+                                            }
+                                            else {
+                                                jsonString = messageFormatter.FormatMessage(undefined, "Ticket found, But no comment object found", true, ticket);
+                                                res.end(jsonString);
+                                            }
+
+
+                                        }
+                                        else
+                                        {
+                                            jsonString = messageFormatter.FormatMessage(new Error("No user Account found"), "No user Account found", false, undefined);
+                                            res.end(jsonString);
+
+                                        }
+                                    }
+                                });
+                        }
+
+
+
+
+
+
+
+                        /*var funcArr=[];
+
+                         funcArr.push(loadComments.bind(req.user.iss,company,tenant,ticket));
+                         funcArr.push(loadAssigneeData.bind(company,tenant,ticket));
+
+                         async.parallel(funcArr,function (err,result) {
+
+                         if(err)
+                         {
+
+                         }
+                         else
+                         {
+
+                         }
+                         });*/
                     }
 
                     catch (exe) {
 
                         logger.error(exe);
                         jsonString = messageFormatter.FormatMessage(exe, "Error in user search", false, undefined);
-                        res.end(jsonString);
+
                     }
 
                 }
                 else {
                     jsonString = messageFormatter.FormatMessage(undefined, "Fail To Find Ticket", false, undefined);
-                    res.end(jsonString);
+
                 }
             }
 
@@ -1713,7 +1944,11 @@ module.exports.PickTicket = function (req, res) {
     var tenant = parseInt(req.user.tenant);
 
     var jsonString;
-    Ticket.findOne({company: company, tenant: tenant, _id: req.params.id}).populate('assignee' , '-password').populate('assignee_group').exec(function (err, ticket) {
+    Ticket.findOne({
+        company: company,
+        tenant: tenant,
+        _id: req.params.id
+    }).populate('assignee', '-password').populate('assignee_group').exec(function (err, ticket) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Fail Find Ticket", false, undefined);
@@ -1726,13 +1961,16 @@ module.exports.PickTicket = function (req, res) {
                     res.end(jsonString);
                 }
                 else {
-                    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+                    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                         if (err) {
                             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                             res.end(jsonString);
 
                         } else {
-                            if (user) {
+                            if (useraccount && useraccount.userref) {
+
+                                var user = useraccount.userref.toObject();
+
                                 var oldTicket = deepcopy(ticket.toJSON());
                                 var assigneeGroup = deepcopy(ticket.toJSON().assignee_group);
                                 var time = new Date().toISOString();
@@ -1753,14 +1991,14 @@ module.exports.PickTicket = function (req, res) {
 
                                 ////////////////////////////////////////////////ticket matrix/////////////////////////////////////////
 
-                                if(ticket.ticket_matrix) {
+                                if (ticket.ticket_matrix) {
                                     ticket.ticket_matrix.last_assigned = time;
                                     ticket.ticket_matrix.last_updated = time;
 
-                                    if(ticket.ticket_matrix.assignees)
+                                    if (ticket.ticket_matrix.assignees)
                                         ticket.ticket_matrix.assignees += 1;
                                     else
-                                        ticket.ticket_matrix.assignees =1;
+                                        ticket.ticket_matrix.assignees = 1;
                                 }
 
                                 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1806,12 +2044,18 @@ module.exports.GetTicketAudit = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    Ticket.findOne({
+
+    var qObj = {
         company: company,
         tenant: tenant,
         active: true,
         _id: req.params.id
-    }, '_id requester events', function (err, ticket) {
+    };
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.findOne(qObj, '_id requester events', function (err, ticket) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Fail to Find Ticket", false, undefined);
@@ -1882,7 +2126,7 @@ module.exports.UpdateTicket = function (req, res) {
 
                 ////////////////////////////////////////////////ticket matrix/////////////////////////////////////////
 
-                if(ticket.ticket_matrix) {
+                if (ticket.ticket_matrix) {
                     ticket.ticket_matrix.last_updated = time;
                 }
 
@@ -1950,9 +2194,9 @@ module.exports.UpdateFormSubmission = function (req, res) {
                     }
                 });
                 ticket.events.push(tEvent);
-                ticket.updated_at=time;
+                ticket.updated_at = time;
 
-                ticket.save( function (err, rUser) {
+                ticket.save(function (err, rUser) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Fail Update Ticket", false, undefined);
                     }
@@ -1990,7 +2234,7 @@ module.exports.AddCommentByEngagement = function (req, res) {
     try {
         if (req.body.author)
             author = req.body.author;
-        console.log("Author "+author);
+        console.log("Author " + author);
     } catch (exx) {
 
     }
@@ -2001,29 +2245,27 @@ module.exports.AddCommentByEngagement = function (req, res) {
         engagement_session: req.params.engagementid
     }, function (err, ticket) {
         if (err) {
-            console.log("No ticket found for engagement "+req.params.engagementid+" checking comments for engagement");
+            console.log("No ticket found for engagement " + req.params.engagementid + " checking comments for engagement");
             //////////////////////////////////////check for comment/////////////////////////////////////////////////////////
             Comment.findOne({engagement_session: req.params.engagementid}, function (err, comment) {
                 if (err) {
-                    console.log("No ticket or parent comment found for engagement "+req.params.engagementid);
+                    console.log("No ticket or parent comment found for engagement " + req.params.engagementid);
                     jsonString = messageFormatter.FormatMessage(err, "Fail To Find Comment", false, undefined);
                     res.end(jsonString);
                 }
                 else {
-                    console.log("No ticket by parent comment found for engagement "+req.params.engagementid);
+                    console.log("No ticket by parent comment found for engagement " + req.params.engagementid);
                     if (comment) {
-                        User.findOne({
-                            username: author,
-                            company: company,
-                            tenant: tenant
-                        }, function (err, user) {
+                        UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                             if (err) {
-                                console.log("Error searching user to add comment "+req.body.author);
+                                console.log("Error searching user to add comment " + req.body.author);
                                 jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                                 res.end(jsonString);
                             }
                             else {
-                                if (user) {
+                                if (useraccount && useraccount.userref) {
+
+                                    var user = useraccount.userref.toObject();
                                     var comment = Comment({
                                         body: req.body.body,
                                         body_type: req.body.body_type,
@@ -2042,22 +2284,22 @@ module.exports.AddCommentByEngagement = function (req, res) {
                                     logger.debug("Object to save as a comment is" + comment);
                                     comment.save(function (err, obj) {
                                         if (err) {
-                                            console.log("Error in saving comment for eng.session "+req.body.engagement_session._id);
+                                            console.log("Error in saving comment for eng.session " + req.body.engagement_session._id);
                                             jsonString = messageFormatter.FormatMessage(err, "Fail To Save Comment", false, undefined);
                                             res.end(jsonString);
                                         }
                                         else {
-                                            console.log("Comment saved for eng.session "+req.body.engagement_session._id);
+                                            console.log("Comment saved for eng.session " + req.body.engagement_session._id);
                                             if (obj.id) {
                                                 Comment.findOneAndUpdate({_id: req.params.commentid},
                                                     {$addToSet: {sub_comment: obj.id}}
                                                     , function (err, rOrg) {
                                                         if (err) {
-                                                            console.log("Comment updating failed for eng.session, sub comment "+obj.id);
+                                                            console.log("Comment updating failed for eng.session, sub comment " + obj.id);
                                                             jsonString = messageFormatter.FormatMessage(err, "Fail To Map Sub-Comment With Comment.", false, undefined);
                                                         } else {
                                                             if (rOrg) {
-                                                                console.log("Comment updated for eng.session, sub comment "+obj.id);
+                                                                console.log("Comment updated for eng.session, sub comment " + obj.id);
                                                                 jsonString = messageFormatter.FormatMessage(undefined, "Sub-Comment Successfully Save", true, obj);
                                                             }
                                                             else {
@@ -2103,15 +2345,18 @@ module.exports.AddCommentByEngagement = function (req, res) {
         }
         else {
             if (ticket) {
-                console.log("Ticket found for engagement "+req.params.engagementid+" checking User");
-                User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+                console.log("Ticket found for engagement " + req.params.engagementid + " checking User");
+                UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                     if (err) {
-                        console.log("Ticket found for engagement "+req.params.engagementid+" No User found");
+                        console.log("Ticket found for engagement " + req.params.engagementid + " No User found");
                         jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                         res.end(jsonString);
                     }
                     else {
-                        if (user) {
+                        if (useraccount && useraccount.userref) {
+
+                            var user = useraccount.userref.toObject();
+
                             var comment = Comment({
                                 body: req.body.body,
                                 body_type: req.body.body_type,
@@ -2130,13 +2375,13 @@ module.exports.AddCommentByEngagement = function (req, res) {
                             logger.debug("Object to save as a comment is" + comment);
                             comment.save(function (err, obj) {
                                 if (err) {
-                                    console.log("Ticket found for engagement "+req.params.engagementid+" Comment save failed");
+                                    console.log("Ticket found for engagement " + req.params.engagementid + " Comment save failed");
                                     jsonString = messageFormatter.FormatMessage(err, "Fail To Save Comment", false, undefined);
                                     res.end(jsonString);
                                 }
                                 else {
                                     if (obj.id) {
-                                        console.log("Ticket found for engagement "+req.params.engagementid+" Comment saved");
+                                        console.log("Ticket found for engagement " + req.params.engagementid + " Comment saved");
                                         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
                                         var time = new Date().toISOString();
@@ -2155,29 +2400,29 @@ module.exports.AddCommentByEngagement = function (req, res) {
 
 
                                         /////////////////////////////////ticket matrix///////////////////////////////////////
-                                        if(ticket.ticket_matrix) {
+                                        if (ticket.ticket_matrix) {
                                             ticket.ticket_matrix.last_updated = time;
                                             ticket.ticket_matrix.last_commented = time;
 
-                                            if(comment.author_external){
+                                            if (comment.author_external) {
 
-                                                if(ticket.ticket_matrix.external_replies)
+                                                if (ticket.ticket_matrix.external_replies)
                                                     ticket.ticket_matrix.external_replies += 1;
                                                 else
-                                                    ticket.ticket_matrix.external_replies =1;
+                                                    ticket.ticket_matrix.external_replies = 1;
 
-                                            }else{
-                                                if(ticket.ticket_matrix.replies)
+                                            } else {
+                                                if (ticket.ticket_matrix.replies)
                                                     ticket.ticket_matrix.replies += 1;
                                                 else
-                                                    ticket.ticket_matrix.replies =1;
+                                                    ticket.ticket_matrix.replies = 1;
 
-                                                if(ticket.collaborators && util.isArray(ticket.collaborators)){
+                                                if (ticket.collaborators && util.isArray(ticket.collaborators)) {
 
-                                                    if(ticket.collaborators.indexOf(user._id) == -1) {
+                                                    if (ticket.collaborators.indexOf(user._id) == -1) {
                                                         ticket.collaborators.push(user._id);
                                                     }
-                                                }else{
+                                                } else {
                                                     ticket.collaborators = [user._id];
                                                 }
                                             }
@@ -2187,7 +2432,7 @@ module.exports.AddCommentByEngagement = function (req, res) {
                                         /////////////////////////////////ticket matrix///////////////////////////////////////
 
 
-                                        ticket.save( function (err, rOrg) {
+                                        ticket.save(function (err, rOrg) {
                                             if (err) {
                                                 console.log("Ticket Updation failed");
                                                 jsonString = messageFormatter.FormatMessage(err, "Fail To Map With Ticket.", false, undefined);
@@ -2225,25 +2470,23 @@ module.exports.AddCommentByEngagement = function (req, res) {
                 //////////////////////////////////////check for comment/////////////////////////////////////////////////////////
                 Comment.findOne({engagement_session: req.params.engagementid}, function (err, comment) {
                     if (err) {
-                        console.log("No Ticket found for engagement "+req.params.engagementid+" checking comment failed");
+                        console.log("No Ticket found for engagement " + req.params.engagementid + " checking comment failed");
                         jsonString = messageFormatter.FormatMessage(err, "Fail To Find Comment", false, undefined);
                         res.end(jsonString);
                     }
                     else {
-                        console.log("No Ticket found for engagement "+req.params.engagementid+" Comment found");
+                        console.log("No Ticket found for engagement " + req.params.engagementid + " Comment found");
                         if (comment) {
-                            User.findOne({
-                                username: req.user.iss,
-                                company: company,
-                                tenant: tenant
-                            }, function (err, user) {
+                            UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                                 if (err) {
-                                    console.log("No Ticket found for engagement "+req.params.engagementid+" Comment found, Invalid user");
+                                    console.log("No Ticket found for engagement " + req.params.engagementid + " Comment found, Invalid user");
                                     jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                                     res.end(jsonString);
                                 }
                                 else {
-                                    if (user) {
+                                    if (useraccount && useraccount.userref) {
+
+                                        var user = useraccount.userref.toObject();
                                         var comment = Comment({
                                             body: req.body.body,
                                             body_type: req.body.body_type,
@@ -2261,32 +2504,32 @@ module.exports.AddCommentByEngagement = function (req, res) {
 
                                         comment.save(function (err, obj) {
                                             if (err) {
-                                                console.log("No Ticket found for engagement "+req.params.engagementid+" Comment found, Sub comment saving failed");
+                                                console.log("No Ticket found for engagement " + req.params.engagementid + " Comment found, Sub comment saving failed");
                                                 jsonString = messageFormatter.FormatMessage(err, "Fail To Save Comment", false, undefined);
                                                 res.end(jsonString);
                                             }
                                             else {
 
                                                 if (obj.id) {
-                                                    console.log("No Ticket found for engagement "+req.params.engagementid+" Comment found, Sub comment saving succceded");
+                                                    console.log("No Ticket found for engagement " + req.params.engagementid + " Comment found, Sub comment saving succceded");
                                                     Comment.findOneAndUpdate({engagement_session: req.params.engagementid},
                                                         {$addToSet: {sub_comment: obj.id}}
                                                         , function (err, rOrg) {
                                                             if (err) {
-                                                                console.log("No Ticket found for engagement "+req.params.engagementid+" Comment found, Sub comment saving succceded,Parent comment updation failed");
+                                                                console.log("No Ticket found for engagement " + req.params.engagementid + " Comment found, Sub comment saving succceded,Parent comment updation failed");
                                                                 jsonString = messageFormatter.FormatMessage(err, "Fail To Map Sub-Comment With Comment.", false, undefined);
                                                             } else {
                                                                 if (rOrg) {
-                                                                    console.log("No Ticket found for engagement "+req.params.engagementid+" Comment found, Sub comment saving succceded,Parent comment updation succeeded");
+                                                                    console.log("No Ticket found for engagement " + req.params.engagementid + " Comment found, Sub comment saving succceded,Parent comment updation succeeded");
                                                                     jsonString = messageFormatter.FormatMessage(undefined, "Sub-Comment Successfully Save", true, obj);
 
-                                                                    Ticket.findOneAndUpdate({comments: {'$in':[rOrg.id]}},{$addToSet: {comments: obj.id}},function(err, comm){
+                                                                    Ticket.findOneAndUpdate({comments: {'$in': [rOrg.id]}}, {$addToSet: {comments: obj.id}}, function (err, comm) {
 
-                                                                        if(err){
-                                                                            console.log("No Ticket found for engagement "+req.params.engagementid+" Comment found, Sub comment saving succceded,Parent comment updation succeeded, Error updating ticket");
+                                                                        if (err) {
+                                                                            console.log("No Ticket found for engagement " + req.params.engagementid + " Comment found, Sub comment saving succceded,Parent comment updation succeeded, Error updating ticket");
                                                                             jsonString = messageFormatter.FormatMessage(undefined, "Sub-Comment Successfully Save but failed to push ticket", true, obj);
-                                                                        }else{
-                                                                            console.log("No Ticket found for engagement "+req.params.engagementid+" Comment found, Sub comment saving succceded,Parent comment updation succeeded, Ticket updated");
+                                                                        } else {
+                                                                            console.log("No Ticket found for engagement " + req.params.engagementid + " Comment found, Sub comment saving succceded,Parent comment updation succeeded, Ticket updated");
                                                                             jsonString = messageFormatter.FormatMessage(undefined, "Sub-Comment Successfully Save", true, obj);
 
                                                                         }
@@ -2296,7 +2539,7 @@ module.exports.AddCommentByEngagement = function (req, res) {
                                                                     });
                                                                 }
                                                                 else {
-                                                                    console.log("No Ticket found for engagement "+req.params.engagementid+" Comment found, Sub comment saving succceded,Parent comment updation failed, invalid comment id,");
+                                                                    console.log("No Ticket found for engagement " + req.params.engagementid + " Comment found, Sub comment saving succceded,Parent comment updation failed, invalid comment id,");
                                                                     jsonString = messageFormatter.FormatMessage(undefined, "Invalid Comment ID.", true, obj);
                                                                     res.end(jsonString);
                                                                 }
@@ -2341,7 +2584,6 @@ module.exports.AddCommentByEngagement = function (req, res) {
 //////////////////////////////////////external method//////////////////////////////////////////////
 
 
-
 module.exports.CreateSlotArray = function (req, res) {
 
     logger.info("DVP-LiteTicket.CreateSlotArray Internal method ");
@@ -2351,22 +2593,19 @@ module.exports.CreateSlotArray = function (req, res) {
     var jsonString;
 
 
-
-    var fileSlotArray =FileSlotArray({
-        company:company,
-        tenant:tenant,
-        tags:req.body.tags,
-        name:req.body.name
+    var fileSlotArray = FileSlotArray({
+        company: company,
+        tenant: tenant,
+        tags: req.body.tags,
+        name: req.body.name
     });
 
     fileSlotArray.save(function (err, response) {
-        if(err)
-        {
+        if (err) {
             jsonString = messageFormatter.FormatMessage(err, "File Slot saving failed ", false, undefined);
             res.end(jsonString);
         }
-        else
-        {
+        else {
             jsonString = messageFormatter.FormatMessage(undefined, "File Slot saving succeeded ", true, response);
             res.end(jsonString);
         }
@@ -2415,7 +2654,7 @@ module.exports.GetSlotArray = function (req, res) {
     FileSlotArray.findOne({
         company: company,
         tenant: tenant,
-        name:req.params.name
+        name: req.params.name
 
     }).populate('slots').exec(function (err, respFSlot) {
         if (err) {
@@ -2446,7 +2685,7 @@ module.exports.DeleteSlotArray = function (req, res) {
     FileSlotArray.findOneAndRemove({
         company: company,
         tenant: tenant,
-        name:req.params.name
+        name: req.params.name
 
     }, function (err, respFSlot) {
         if (err) {
@@ -2478,13 +2717,17 @@ module.exports.AddSlotToArray = function (req, res) {
     FileSlotArray.findOneAndUpdate({
         company: company,
         tenant: tenant,
-        name:req.params.name
+        name: req.params.name
 
-    },{$addToSet: {slots:{
-        name: req.body.name,
-        fileType: req.body.fileType
+    }, {
+        $addToSet: {
+            slots: {
+                name: req.body.name,
+                fileType: req.body.fileType
 
-    }}}, function (err, respFSlot) {
+            }
+        }
+    }, function (err, respFSlot) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Fail to add FileSlot to Array", false, undefined);
@@ -2513,13 +2756,13 @@ module.exports.RemoveSlotFromArray = function (req, res) {
     FileSlotArray.findOneAndUpdate({
         company: company,
         tenant: tenant,
-        name:req.params.name
+        name: req.params.name
 
     }, {
 
-        $pull: {slots:{"name":req.params.slotname}}
+        $pull: {slots: {"name": req.params.slotname}}
 
-    },function (err, respFSlot) {
+    }, function (err, respFSlot) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Fail to find FileSlotArrays", false, undefined);
@@ -2537,7 +2780,7 @@ module.exports.RemoveSlotFromArray = function (req, res) {
 
 };
 
-module.exports.TicketAddAtachmentSlot= function(req, res){
+module.exports.TicketAddAtachmentSlot = function (req, res) {
     logger.info("DVP-LiteTicket.AddSlotToArray Internal method ");
 
     var company = parseInt(req.user.company);
@@ -2552,7 +2795,7 @@ module.exports.TicketAddAtachmentSlot= function(req, res){
         _id: req.params.id,
         'slot_attachment.slot.name': req.params.slot,
 
-    },{$set:  { 'slot_attachment.$.attachment': req.params.attachment }}, function (err, respFSlot) {
+    }, {$set: {'slot_attachment.$.attachment': req.params.attachment}}, function (err, respFSlot) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Fail to add FileSlot to Array", false, undefined);
@@ -2570,7 +2813,7 @@ module.exports.TicketAddAtachmentSlot= function(req, res){
 
 };
 
-module.exports.TicketDeleteAtachmentSlot = function(req, res){
+module.exports.TicketDeleteAtachmentSlot = function (req, res) {
     logger.info("DVP-LiteTicket.AddSlotToArray Internal method ");
 
     var company = parseInt(req.user.company);
@@ -2585,7 +2828,7 @@ module.exports.TicketDeleteAtachmentSlot = function(req, res){
         _id: req.params.id,
         'slot_attachment.slot.name': req.params.slot,
 
-    },{$unset:  { 'slot_attachment.$.attachment': 1 }}, function (err, respFSlot) {
+    }, {$unset: {'slot_attachment.$.attachment': 1}}, function (err, respFSlot) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Fail to add FileSlot to Array", false, undefined);
@@ -2634,13 +2877,15 @@ module.exports.AddCommentByReference = function (req, res) {
         }
         else {
             if (ticket) {
-                User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+                UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                         res.end(jsonString);
                     }
                     else {
-                        if (user) {
+                        if (useraccount && useraccount.userref) {
+
+                            var user = useraccount.userref.toObject();
                             var comment = Comment({
                                 body: req.body.body,
                                 body_type: req.body.body_type,
@@ -2656,7 +2901,7 @@ module.exports.AddCommentByReference = function (req, res) {
                                 meta_data: req.body.meta_data
                             });
 
-                            if(req.body.author){
+                            if (req.body.author) {
 
                                 comment.author = req.body.author;
                             }
@@ -2687,29 +2932,29 @@ module.exports.AddCommentByReference = function (req, res) {
 
 
                                         /////////////////////////////////ticket matrix///////////////////////////////////////
-                                        if(ticket.ticket_matrix) {
+                                        if (ticket.ticket_matrix) {
                                             ticket.ticket_matrix.last_updated = time;
                                             ticket.ticket_matrix.last_commented = time;
 
-                                            if(comment.author_external){
+                                            if (comment.author_external) {
 
-                                                if(ticket.ticket_matrix.external_replies)
+                                                if (ticket.ticket_matrix.external_replies)
                                                     ticket.ticket_matrix.external_replies += 1;
                                                 else
-                                                    ticket.ticket_matrix.external_replies =1;
+                                                    ticket.ticket_matrix.external_replies = 1;
 
-                                            }else{
-                                                if(ticket.ticket_matrix.replies)
+                                            } else {
+                                                if (ticket.ticket_matrix.replies)
                                                     ticket.ticket_matrix.replies += 1;
                                                 else
-                                                    ticket.ticket_matrix.replies =1;
+                                                    ticket.ticket_matrix.replies = 1;
 
-                                                if(ticket.collaborators && util.isArray(ticket.collaborators)){
+                                                if (ticket.collaborators && util.isArray(ticket.collaborators)) {
 
-                                                    if(ticket.collaborators.indexOf(user._id) == -1) {
+                                                    if (ticket.collaborators.indexOf(user._id) == -1) {
                                                         ticket.collaborators.push(user._id);
                                                     }
-                                                }else{
+                                                } else {
                                                     ticket.collaborators = [user._id];
                                                 }
                                             }
@@ -2718,29 +2963,29 @@ module.exports.AddCommentByReference = function (req, res) {
                                         /////////////////////////////////ticket matrix///////////////////////////////////////
 
                                         //////////////////////ticket attachments//////////////////////////////////////////////
-                                        if(req.body.attachments && req.body.attachments.length > 0){
+                                        if (req.body.attachments && req.body.attachments.length > 0) {
 
-                                            if(!ticket.attachments)
+                                            if (!ticket.attachments)
                                                 ticket.attachments = [];
 
 
-                                            req.body.attachments.forEach(function(at) {
+                                            req.body.attachments.forEach(function (at) {
                                                 ticket.attachments.push(at);
                                             });
                                         }
                                         /////////////////////////////////////////////////////////////////////////////////////////////////
 
                                         ///////////////////ticket status///////////////////////////////////////////////////////////////
-                                        if(req.body.status){
-                                            GetAvailableTicketTypes(company, tenant, function(msg, types){
+                                        if (req.body.status) {
+                                            GetAvailableTicketTypes(company, tenant, function (msg, types) {
 
-                                                if(types && types.length > 0 && types.indexOf(req.body.status) > -1){
+                                                if (types && types.length > 0 && types.indexOf(req.body.status) > -1) {
 
                                                     ticket.status = req.body.status;
 
                                                 }
 
-                                                ticket.save( function (err, rOrg) {
+                                                ticket.save(function (err, rOrg) {
                                                     if (err) {
                                                         jsonString = messageFormatter.FormatMessage(err, "Fail To Map With Ticket.", false, undefined);
                                                     } else {
@@ -2756,9 +3001,9 @@ module.exports.AddCommentByReference = function (req, res) {
                                                 });
 
                                             });
-                                        }else{
+                                        } else {
 
-                                            ticket.save( function (err, rOrg) {
+                                            ticket.save(function (err, rOrg) {
                                                 if (err) {
                                                     jsonString = messageFormatter.FormatMessage(err, "Fail To Map With Ticket.", false, undefined);
                                                 } else {
@@ -2776,7 +3021,6 @@ module.exports.AddCommentByReference = function (req, res) {
                                         }
 
                                         ///////////////////////////////////////////////////////////////////////////////////////////////
-
 
 
                                     }
@@ -2823,13 +3067,15 @@ module.exports.AddComment = function (req, res) {
         else {
             if (ticket) {
 
-                User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+                UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                         res.end(jsonString);
                     }
                     else {
-                        if (user) {
+                        if (useraccount && useraccount.userref) {
+
+                            var user = useraccount.userref.toObject();
 
 
                             var comment = Comment({
@@ -2846,8 +3092,8 @@ module.exports.AddComment = function (req, res) {
                                 meta_data: req.body.meta_data
                             });
 
-                            if(req.body.channel){
-                                comment.channel= req.body.channel;
+                            if (req.body.channel) {
+                                comment.channel = req.body.channel;
                             }
 
                             comment.save(function (err, obj) {
@@ -2860,7 +3106,7 @@ module.exports.AddComment = function (req, res) {
 
                                         ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-                                        if(req.body.public == 'public') {
+                                        if (req.body.public == 'public') {
 
                                             var queueName;
                                             var message = {
@@ -2870,6 +3116,7 @@ module.exports.AddComment = function (req, res) {
                                                 comment: comment._id,
                                                 update_comment: true,
                                                 reply_session: req.body.reply_session,
+                                                attachments: req.body.attachments,
                                                 company: company,
                                                 tenant: tenant,
                                                 author: req.user.iss,
@@ -2880,35 +3127,35 @@ module.exports.AddComment = function (req, res) {
                                                 queueName = 'TWEETOUT';
                                             } else if (req.body.channel == 'sms') {
                                                 queueName = 'SMSOUT';
-                                            }else if (req.body.channel == 'email') {
+                                            } else if (req.body.channel == 'email') {
                                                 queueName = 'EMAILOUT';
-                                            }else if (req.body.channel == 'facebook-post') {
+                                            } else if (req.body.channel == 'facebook-post') {
                                                 queueName = 'FACEBOOKOUT';
 
-                                                if(req.body.contact && req.body.contact && req.body.contact.raw && req.body.contact.raw.id){
+                                                if (req.body.contact && req.body.contact && req.body.contact.raw && req.body.contact.raw.id) {
 
                                                     message.from = req.body.contact.raw.id;
                                                 }
 
                                             } else if (req.body.channel == 'facebook-chat') {
                                                 queueName = 'FACEBOOKOUT';
-                                                if(req.body.contact && req.body.contact && req.body.contact.raw && req.body.contact.raw.id){
+                                                if (req.body.contact && req.body.contact && req.body.contact.raw && req.body.contact.raw.id) {
 
                                                     message.from = req.body.contact.raw.id;
                                                 }
 
-                                            }else {
+                                            } else {
                                                 //   jsonString = messageFormatter.FormatMessage(undefined, "Given channel doesn,t support public comments", false, undefined);
                                                 //   res.end(jsonString);
                                                 //   return;
                                             }
                                             try {
 
-                                                if(queueName)
+                                                if (queueName)
                                                     queueConnection.publish(queueName, message, {
                                                         contentType: 'application/json'
                                                     });
-                                            }catch(exp){
+                                            } catch (exp) {
 
                                                 console.log(exp);
                                             }
@@ -2934,30 +3181,30 @@ module.exports.AddComment = function (req, res) {
 
 
                                         /////////////////////////////////ticket matrix///////////////////////////////////////
-                                        if(ticket.ticket_matrix) {
+                                        if (ticket.ticket_matrix) {
                                             ticket.ticket_matrix.last_updated = time;
                                             ticket.ticket_matrix.last_commented = time;
 
-                                            if(comment.author_external){
+                                            if (comment.author_external) {
 
-                                                if(ticket.ticket_matrix.external_replies)
+                                                if (ticket.ticket_matrix.external_replies)
                                                     ticket.ticket_matrix.external_replies += 1;
                                                 else
-                                                    ticket.ticket_matrix.external_replies =1;
+                                                    ticket.ticket_matrix.external_replies = 1;
 
-                                            }else{
-                                                if(ticket.ticket_matrix.replies)
+                                            } else {
+                                                if (ticket.ticket_matrix.replies)
                                                     ticket.ticket_matrix.replies += 1;
                                                 else
-                                                    ticket.ticket_matrix.replies =1;
+                                                    ticket.ticket_matrix.replies = 1;
 
 
-                                                if(ticket.collaborators && util.isArray(ticket.collaborators)){
+                                                if (ticket.collaborators && util.isArray(ticket.collaborators)) {
 
-                                                    if(ticket.collaborators.indexOf(user._id) == -1) {
+                                                    if (ticket.collaborators.indexOf(user._id) == -1) {
                                                         ticket.collaborators.push(user._id);
                                                     }
-                                                }else{
+                                                } else {
                                                     ticket.collaborators = [user._id];
                                                 }
                                             }
@@ -2974,10 +3221,9 @@ module.exports.AddComment = function (req, res) {
                                                     jsonString = messageFormatter.FormatMessage(undefined, "Comment Successfully Attach To Ticket", true, obj);
                                                     ExecuteTrigger(req.params.id, "add_comment", comment);
 
-                                                    if(req.body.public == 'public' || req.body.public == 'internal' ) {
+                                                    if (req.body.public == 'public' || req.body.public == 'internal') {
                                                         SendTicketNotification(ticket, "comment", req.user.iss)
                                                     }
-
 
 
                                                 }
@@ -3048,13 +3294,16 @@ module.exports.AddAttachment = function (req, res) {
         }
         else {
             if (ticket) {
-                User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+                UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                         res.end(jsonString);
                     } else {
 
-                        if (user) {
+                        if (useraccount && useraccount.userref) {
+
+                            var user = useraccount.userref.toObject();
+
 
                             var attachment = Attachment({
                                 file: req.body.file,
@@ -3087,13 +3336,13 @@ module.exports.AddAttachment = function (req, res) {
 
 
                                         ///////////////////////////////////ticket matrix////////////////////////////////
-                                        if(ticket.ticket_matrix) {
+                                        if (ticket.ticket_matrix) {
                                             ticket.ticket_matrix.last_updated = time;
                                         }
 
                                         /////////////////////////////////////////////////////////////////////////////////////////
 
-                                        ticket.save( function (err, rOrg) {
+                                        ticket.save(function (err, rOrg) {
                                             if (err) {
                                                 jsonString = messageFormatter.FormatMessage(err, "Fail To Map With Ticket.", false, undefined);
                                             } else {
@@ -3147,7 +3396,7 @@ module.exports.RemoveAttachment = function (req, res) {
         else {
             if (ticket) {
 
-                Attachment.findOneAndRemove({_id: req.params.id},function (err, obj) {
+                Attachment.findOneAndRemove({_id: req.params.id}, function (err, obj) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Fail To Delete Attachment.", false, undefined);
                         res.end(jsonString);
@@ -3237,17 +3486,16 @@ module.exports.AddCommentToComment = function (req, res) {
                     }
                     else {
                         if (ticket) {
-                            User.findOne({
-                                username: req.user.iss,
-                                company: company,
-                                tenant: tenant
-                            }, function (err, user) {
+                            UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                                 if (err) {
                                     jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                                     res.end(jsonString);
                                 }
                                 else {
-                                    if (user) {
+                                    if (useraccount && useraccount.userref) {
+
+                                        var user = useraccount.userref.toObject();
+
 
 
                                         var comment = Comment({
@@ -3275,7 +3523,7 @@ module.exports.AddCommentToComment = function (req, res) {
 
 
                                                     ////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                    if(req.body.public == 'public') {
+                                                    if (req.body.public == 'public') {
 
                                                         var queueName;
 
@@ -3295,23 +3543,24 @@ module.exports.AddCommentToComment = function (req, res) {
                                                             queueName = 'TWEETOUT';
                                                         } else if (req.body.channel == 'sms') {
                                                             queueName = 'SMSOUT';
-                                                        } if (req.body.channel == 'email') {
+                                                        }
+                                                        if (req.body.channel == 'email') {
                                                             queueName = 'EMAILOUT';
-                                                        }else if (req.body.channel == 'facebook-post') {
+                                                        } else if (req.body.channel == 'facebook-post') {
                                                             queueName = 'FACEBOOKOUT';
 
-                                                            if(req.body.contact && req.body.contact && req.body.contact.raw && req.body.contact.raw.id){
+                                                            if (req.body.contact && req.body.contact && req.body.contact.raw && req.body.contact.raw.id) {
 
                                                                 message.from = req.body.contact.raw.id;
                                                             }
                                                         } else if (req.body.channel == 'facebook-chat') {
                                                             queueName = 'FACEBOOKOUT';
 
-                                                            if(req.body.contact && req.body.contact && req.body.contact.raw && req.body.contact.raw.id){
+                                                            if (req.body.contact && req.body.contact && req.body.contact.raw && req.body.contact.raw.id) {
 
                                                                 message.from = req.body.contact.raw.id;
                                                             }
-                                                        }else {
+                                                        } else {
                                                             //jsonString = messageFormatter.FormatMessage(undefined, "Given channel doesn,t support public comments", false, undefined);
                                                             //res.end(jsonString);
                                                             //return;
@@ -3357,29 +3606,29 @@ module.exports.AddCommentToComment = function (req, res) {
 
 
                                                     /////////////////////////////////////ticket matrix//////////////////////////////////
-                                                    if(ticket.ticket_matrix) {
+                                                    if (ticket.ticket_matrix) {
                                                         ticket.ticket_matrix.last_updated = time;
                                                         ticket.ticket_matrix.last_commented = time;
 
-                                                        if(comment.author_external){
+                                                        if (comment.author_external) {
 
-                                                            if(ticket.ticket_matrix.external_replies)
+                                                            if (ticket.ticket_matrix.external_replies)
                                                                 ticket.ticket_matrix.external_replies += 1;
                                                             else
-                                                                ticket.ticket_matrix.external_replies =1;
+                                                                ticket.ticket_matrix.external_replies = 1;
 
-                                                        }else{
-                                                            if(ticket.ticket_matrix.replies)
+                                                        } else {
+                                                            if (ticket.ticket_matrix.replies)
                                                                 ticket.ticket_matrix.replies += 1;
                                                             else
-                                                                ticket.ticket_matrix.replies =1;
+                                                                ticket.ticket_matrix.replies = 1;
 
-                                                            if(ticket.collaborators && util.isArray(ticket.collaborators)){
+                                                            if (ticket.collaborators && util.isArray(ticket.collaborators)) {
 
-                                                                if(ticket.collaborators.indexOf(user._id) == -1) {
+                                                                if (ticket.collaborators.indexOf(user._id) == -1) {
                                                                     ticket.collaborators.push(user._id);
                                                                 }
-                                                            }else{
+                                                            } else {
                                                                 ticket.collaborators = [user._id];
                                                             }
 
@@ -3388,7 +3637,7 @@ module.exports.AddCommentToComment = function (req, res) {
 
                                                     //////////////////////////////////////////////////////////////////////////////////////
 
-                                                    ticket.save( function (ex, nTick) {
+                                                    ticket.save(function (ex, nTick) {
                                                         if (err) {
                                                             jsonString = messageFormatter.FormatMessage(err, "Ticket Updated Fail", false, undefined);
                                                         } else {
@@ -3438,7 +3687,7 @@ module.exports.ChangeStatus = function (req, res) {
 
     var jsonString;
     if (req.body.status) {
-        Ticket.findOne({company: company, tenant: tenant,  _id: req.params.id}, function (err, ticket) {
+        Ticket.findOne({company: company, tenant: tenant, _id: req.params.id}, function (err, ticket) {
             if (err) {
 
                 jsonString = messageFormatter.FormatMessage(err, "Fail Find Ticket", false, undefined);
@@ -3453,7 +3702,7 @@ module.exports.ChangeStatus = function (req, res) {
                     ValidateStatusChangeRequest(tenant, company, ticket.type, old_state, req.body.status, function (response) {
 
                         var validatedResponse = JSON.parse(response);
-                        if(validatedResponse && validatedResponse.IsSuccess){
+                        if (validatedResponse && validatedResponse.IsSuccess) {
                             var time = new Date().toISOString();
                             ticket.updated_at = time;
                             var tEvent = TicketEvent({
@@ -3468,21 +3717,21 @@ module.exports.ChangeStatus = function (req, res) {
                             ticket.events.push(tEvent);
 
                             ///////////////////////////////////ticket matrix////////////////////////////////
-                            if(ticket.ticket_matrix) {
+                            if (ticket.ticket_matrix) {
                                 ticket.ticket_matrix.last_updated = time;
 
-                                if(ticket.status == 'open'){
+                                if (ticket.status == 'open') {
 
-                                    if(old_state != 'new'){
+                                    if (old_state != 'new') {
 
-                                        ticket.ticket_matrix.reopens =  ticket.ticket_matrix.reopens+1;
+                                        ticket.ticket_matrix.reopens = ticket.ticket_matrix.reopens + 1;
                                     }
-                                    else{
+                                    else {
                                         ticket.ticket_matrix.opened_at = time;
                                         ticket.ticket_matrix.waited_time = time - ticket.ticket_matrix.created_at;
                                     }
 
-                                }else if(ticket.status == 'closed' ||ticket.status == 'solved'){
+                                } else if (ticket.status == 'closed' || ticket.status == 'solved') {
 
                                     ticket.ticket_matrix.solved_at = time;
                                     ticket.ticket_matrix.resolution_time = time - ticket.ticket_matrix.created_at;
@@ -3509,7 +3758,6 @@ module.exports.ChangeStatus = function (req, res) {
                                     }
                                     else {
                                         if (docs && (ticket.sub_tickets.length == docs.length)) {
-
 
 
                                             ticket.save(function (err, rUser) {
@@ -3561,7 +3809,7 @@ module.exports.ChangeStatus = function (req, res) {
                                     res.end(jsonString);
                                 });
                             }
-                        }else{
+                        } else {
                             jsonString = messageFormatter.FormatMessage(undefined, "Invalid Status Change Request", false, undefined);
                             res.end(jsonString);
                         }
@@ -3593,165 +3841,167 @@ module.exports.ChangeStatusByUser = function (req, res) {
     var jsonString;
     if (req.body.status && req.body.user) {
 
-        User.findOne({_id: req.body.user, company: company, tenant: tenant}, function (err, user) {
+        // UserAccount.findOne({userref: req.body.user, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, user) {
+
+        // User.findOne({_id: req.body.user, company: company, tenant: tenant}, function (err, user) {
 
 
-            Ticket.findOne({
-                company: company,
-                tenant: tenant,
-                reference: req.params.reference,
-                assignee: mongoose.Types.ObjectId(req.body.user)
-            }).populate('assignee', '-password').exec(function (err, ticket) {
-                if (err) {
+        Ticket.findOne({
+            company: company,
+            tenant: tenant,
+            reference: req.params.reference,
+            assignee: mongoose.Types.ObjectId(req.body.user)
+        }).populate('assignee', '-password').exec(function (err, ticket) {
+            if (err) {
 
-                    jsonString = messageFormatter.FormatMessage(err, "Fail Find Ticket", false, undefined);
-                    res.end(jsonString);
-                }
-                else {
-                    if (ticket) {
-                        var oldTicket = deepcopy(ticket.toJSON());
-                        var old_state = ticket.status;
-                        ticket.status = req.body.status;
+                jsonString = messageFormatter.FormatMessage(err, "Fail Find Ticket", false, undefined);
+                res.end(jsonString);
+            }
+            else {
+                if (ticket) {
+                    var oldTicket = deepcopy(ticket.toJSON());
+                    var old_state = ticket.status;
+                    ticket.status = req.body.status;
 
-                        ValidateStatusChangeRequest(tenant, company, ticket.type, old_state, req.body.status, function (response) {
+                    ValidateStatusChangeRequest(tenant, company, ticket.type, old_state, req.body.status, function (response) {
 
-                            var validatedResponse = JSON.parse(response);
-                            if (validatedResponse && validatedResponse.IsSuccess) {
-                                var time = new Date().toISOString();
-                                ticket.updated_at = time;
-                                var tEvent = TicketEvent({
-                                    type: 'status',
-                                    "author": ticket.assignee.username,
-                                    "create_at": Date.now(),
-                                    body: {
-                                        "message": req.user.iss + " Status Update ",
-                                        "time": time
+                        var validatedResponse = JSON.parse(response);
+                        if (validatedResponse && validatedResponse.IsSuccess) {
+                            var time = new Date().toISOString();
+                            ticket.updated_at = time;
+                            var tEvent = TicketEvent({
+                                type: 'status',
+                                "author": ticket.assignee.username,
+                                "create_at": Date.now(),
+                                body: {
+                                    "message": req.user.iss + " Status Update ",
+                                    "time": time
+                                }
+                            });
+                            ticket.events.push(tEvent);
+
+                            ///////////////////////////////////ticket matrix////////////////////////////////
+                            if (ticket.ticket_matrix) {
+                                ticket.ticket_matrix.last_updated = time;
+
+                                if (ticket.status == 'open') {
+
+                                    if (old_state != 'new') {
+
+                                        ticket.ticket_matrix.reopens = ticket.ticket_matrix.reopens + 1;
                                     }
-                                });
-                                ticket.events.push(tEvent);
-
-                                ///////////////////////////////////ticket matrix////////////////////////////////
-                                if (ticket.ticket_matrix) {
-                                    ticket.ticket_matrix.last_updated = time;
-
-                                    if (ticket.status == 'open') {
-
-                                        if (old_state != 'new') {
-
-                                            ticket.ticket_matrix.reopens = ticket.ticket_matrix.reopens + 1;
-                                        }
-                                        else {
-                                            ticket.ticket_matrix.opened_at = time;
-                                            ticket.ticket_matrix.waited_time = time - ticket.ticket_matrix.created_at;
-                                        }
-
-                                    } else if (ticket.status == 'closed' || ticket.status == 'solved') {
-
-                                        ticket.ticket_matrix.solved_at = time;
-                                        ticket.ticket_matrix.resolution_time = time - ticket.ticket_matrix.created_at;
+                                    else {
+                                        ticket.ticket_matrix.opened_at = time;
+                                        ticket.ticket_matrix.waited_time = time - ticket.ticket_matrix.created_at;
                                     }
 
-                                    ticket.ticket_matrix.last_status_changed = time;
+                                } else if (ticket.status == 'closed' || ticket.status == 'solved') {
 
+                                    ticket.ticket_matrix.solved_at = time;
+                                    ticket.ticket_matrix.resolution_time = time - ticket.ticket_matrix.created_at;
                                 }
 
-                                /////////////////////////////////////////////////////////////////////////////////////////
+                                ticket.ticket_matrix.last_status_changed = time;
+
+                            }
+
+                            /////////////////////////////////////////////////////////////////////////////////////////
 
 
-                                if (ticket.sub_tickets.length > 0 && req.body.status == "closed") {
-                                    Ticket.find({
-                                        id: {
-                                            $in: ticket.sub_tickets.map(function (o) {
-                                                return ObjectId(o);
-                                            })
-                                        }, status: "closed"
-                                    }, function (err, docs) {
-                                        if (err) {
-                                            jsonString = messageFormatter.FormatMessage(err, "Fail To Check Sub Ticket Status.", false, undefined);
-                                            res.end(jsonString);
-                                        }
-                                        else {
-                                            if (docs && (ticket.sub_tickets.length == docs.length)) {
+                            if (ticket.sub_tickets.length > 0 && req.body.status == "closed") {
+                                Ticket.find({
+                                    id: {
+                                        $in: ticket.sub_tickets.map(function (o) {
+                                            return ObjectId(o);
+                                        })
+                                    }, status: "closed"
+                                }, function (err, docs) {
+                                    if (err) {
+                                        jsonString = messageFormatter.FormatMessage(err, "Fail To Check Sub Ticket Status.", false, undefined);
+                                        res.end(jsonString);
+                                    }
+                                    else {
+                                        if (docs && (ticket.sub_tickets.length == docs.length)) {
 
 
-                                                ticket.save(function (err, rUser) {
-                                                    if (err) {
-                                                        jsonString = messageFormatter.FormatMessage(err, "Fail Update Status.", false, undefined);
+                                            ticket.save(function (err, rUser) {
+                                                if (err) {
+                                                    jsonString = messageFormatter.FormatMessage(err, "Fail Update Status.", false, undefined);
+                                                }
+                                                else {
+                                                    if (rUser) {
+                                                        jsonString = messageFormatter.FormatMessage(undefined, "Status Update Successfully", true, rUser);
+                                                        ExecuteTrigger(req.params.id, "change_status", oldTicket.status);
                                                     }
                                                     else {
-                                                        if (rUser) {
-                                                            jsonString = messageFormatter.FormatMessage(undefined, "Status Update Successfully", true, rUser);
-                                                            ExecuteTrigger(req.params.id, "change_status", oldTicket.status);
-                                                        }
-                                                        else {
-                                                            jsonString = messageFormatter.FormatMessage(undefined, "Invalid Ticket ID.", true, rUser);
-                                                        }
+                                                        jsonString = messageFormatter.FormatMessage(undefined, "Invalid Ticket ID.", true, rUser);
                                                     }
-                                                    res.end(jsonString);
-                                                });
-                                            }
-                                            else {
-                                                jsonString = messageFormatter.FormatMessage(undefined, "Sub Ticket Not Completed.", false, undefined);
+                                                }
                                                 res.end(jsonString);
-                                            }
-                                        }
-                                    });
-
-                                }
-                                else {
-
-                                    Ticket.findOneAndUpdate({
-                                        reference: req.params.reference,
-                                        company: company,
-                                        tenant: tenant
-                                    }, ticket, function (err, rUser) {
-                                        if (err) {
-                                            jsonString = messageFormatter.FormatMessage(err, "Fail Update Ticket", false, undefined);
+                                            });
                                         }
                                         else {
-                                            if (rUser) {
-                                                jsonString = messageFormatter.FormatMessage(undefined, "Status Update Successfully", true, rUser);
-                                                ExecuteTrigger(req.params.id, "change_status", oldTicket.status);
-                                            }
-                                            else {
-                                                jsonString = messageFormatter.FormatMessage(undefined, "Invalid Ticket ID.", true, rUser);
-                                            }
+                                            jsonString = messageFormatter.FormatMessage(undefined, "Sub Ticket Not Completed.", false, undefined);
+                                            res.end(jsonString);
                                         }
-                                        res.end(jsonString);
-                                    });
-                                }
-                            } else {
-
-                                var queueName = "EMAILOUT";
-                                var message = {
-                                    from: "no-reply",
-                                    to: ticket.assignee.email.contact,
-                                    subject: "Resp:"+req.params.reference+" status update request "+req.body.status,
-                                    //template: "By-User Registration Confirmation",
-                                    body: "The status is invalid",
-                                    company: 0,
-                                    tenant: 1
-                                }
-
-                                queueConnection.publish(queueName, message, {
-                                    contentType: 'application/json'
+                                    }
                                 });
 
-
-                                jsonString = messageFormatter.FormatMessage(undefined, "Invalid Status Change Request", false, undefined);
-                                res.end(jsonString);
                             }
-                        });
+                            else {
 
-                    }
-                    else {
-                        jsonString = messageFormatter.FormatMessage(undefined, "Fail Find Ticket", false, undefined);
-                        res.end(jsonString);
-                    }
+                                Ticket.findOneAndUpdate({
+                                    reference: req.params.reference,
+                                    company: company,
+                                    tenant: tenant
+                                }, ticket, function (err, rUser) {
+                                    if (err) {
+                                        jsonString = messageFormatter.FormatMessage(err, "Fail Update Ticket", false, undefined);
+                                    }
+                                    else {
+                                        if (rUser) {
+                                            jsonString = messageFormatter.FormatMessage(undefined, "Status Update Successfully", true, rUser);
+                                            ExecuteTrigger(req.params.id, "change_status", oldTicket.status);
+                                        }
+                                        else {
+                                            jsonString = messageFormatter.FormatMessage(undefined, "Invalid Ticket ID.", true, rUser);
+                                        }
+                                    }
+                                    res.end(jsonString);
+                                });
+                            }
+                        } else {
+
+                            var queueName = "EMAILOUT";
+                            var message = {
+                                from: "no-reply",
+                                to: ticket.assignee.email.contact,
+                                subject: "Resp:" + req.params.reference + " status update request " + req.body.status,
+                                //template: "By-User Registration Confirmation",
+                                body: "The status is invalid",
+                                company: 0,
+                                tenant: 1
+                            }
+
+                            queueConnection.publish(queueName, message, {
+                                contentType: 'application/json'
+                            });
+
+
+                            jsonString = messageFormatter.FormatMessage(undefined, "Invalid Status Change Request", false, undefined);
+                            res.end(jsonString);
+                        }
+                    });
+
                 }
+                else {
+                    jsonString = messageFormatter.FormatMessage(undefined, "Fail Find Ticket", false, undefined);
+                    res.end(jsonString);
+                }
+            }
 
-            });
         });
+        //});
     }
     else {
         jsonString = messageFormatter.FormatMessage(undefined, "Invalid Status.", false, undefined);
@@ -3767,13 +4017,21 @@ module.exports.AssignToUser = function (req, res) {
     var jsonString;
 
     if (req.params.user) {
-        User.findOne({_id: req.params.user, company: company, tenant: tenant}, function (err, user) {
+
+        UserAccount.findOne({userref: req.params.user, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
+            //User.findOne({_id: req.params.user, company: company, tenant: tenant}, function (err, user) {
             if (err) {
                 jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                 res.end(jsonString);
             } else {
-                if (user) {
-                    Ticket.findOne({company: company, tenant: tenant, _id: req.params.id}).populate('assignee' , '-password').populate('assignee_group').exec(function (err, ticket) {
+                if (useraccount && useraccount.userref) {
+
+                    var user = useraccount.userref.toObject();
+                    Ticket.findOne({
+                        company: company,
+                        tenant: tenant,
+                        _id: req.params.id
+                    }).populate('assignee', '-password').populate('assignee_group').exec(function (err, ticket) {
                         if (err) {
                             jsonString = messageFormatter.FormatMessage(err, "Fail Find Ticket", false, undefined);
                             res.end(jsonString);
@@ -3797,15 +4055,15 @@ module.exports.AssignToUser = function (req, res) {
 
                                 ////////////////////////////////////////////////ticket matrix/////////////////////////////////////////
 
-                                if(ticket.ticket_matrix) {
+                                if (ticket.ticket_matrix) {
                                     ticket.ticket_matrix.last_assigned = time;
                                     ticket.ticket_matrix.last_updated = time;
 
 
-                                    if(ticket.ticket_matrix.assignees)
+                                    if (ticket.ticket_matrix.assignees)
                                         ticket.ticket_matrix.assignees += 0;
                                     else
-                                        ticket.ticket_matrix.assignees =1;
+                                        ticket.ticket_matrix.assignees = 1;
                                 }
 
                                 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3813,17 +4071,17 @@ module.exports.AssignToUser = function (req, res) {
 
                                 //ticket.assignee = user.id;
                                 ticket.assignee = user;
-                                ticket.updated_at= time;
-                                ticket.$addToSet={"events": tEvent};
+                                ticket.updated_at = time;
+                                ticket.$addToSet = {"events": tEvent};
 
 
-                                ticket.save( function (err, obj) {
+                                ticket.save(function (err, obj) {
                                     if (err) {
                                         jsonString = messageFormatter.FormatMessage(err, "Fail Find Ticket", false, undefined);
-                                    }else {
+                                    } else {
                                         if (obj) {
                                             jsonString = messageFormatter.FormatMessage(undefined, "Ticket Assign To User.", true, undefined);
-                                            var PreAssignee = oldTicket.assignee? oldTicket.assignee.username: "";
+                                            var PreAssignee = oldTicket.assignee ? oldTicket.assignee.username : "";
                                             ExecuteTrigger(req.params.id, "change_assignee", PreAssignee);
 
                                             SendTicketNotification(ticket, "assignuser", req.user.iss);
@@ -3869,7 +4127,11 @@ module.exports.AssignToGroup = function (req, res) {
                 res.end(jsonString);
             } else {
                 if (group) {
-                    Ticket.findOne({company: company, tenant: tenant, _id: req.params.id}).populate('assignee' , '-password').populate('assignee_group').exec(function (err, ticket) {
+                    Ticket.findOne({
+                        company: company,
+                        tenant: tenant,
+                        _id: req.params.id
+                    }).populate('assignee', '-password').populate('assignee_group').exec(function (err, ticket) {
                         if (err) {
                             jsonString = messageFormatter.FormatMessage(err, "Fail Find Ticket", false, undefined);
                             res.end(jsonString);
@@ -3894,33 +4156,33 @@ module.exports.AssignToGroup = function (req, res) {
 
                                 ticket.assignee_group = group;
                                 ticket.assignee = undefined;
-                                ticket.updated_at= time;
-                                ticket.$addToSet={"events": tEvent};
+                                ticket.updated_at = time;
+                                ticket.$addToSet = {"events": tEvent};
 
 
                                 ////////////////////////////////////////////////ticket matrix/////////////////////////////////////////
 
-                                if(ticket.ticket_matrix) {
+                                if (ticket.ticket_matrix) {
                                     ticket.ticket_matrix.last_assigned = time;
                                     ticket.ticket_matrix.last_updated = time;
 
 
-                                    if(ticket.ticket_matrix.assignees)
+                                    if (ticket.ticket_matrix.assignees)
                                         ticket.ticket_matrix.assignees += 1;
                                     else
-                                        ticket.ticket_matrix.assignees =1;
+                                        ticket.ticket_matrix.assignees = 1;
                                 }
 
                                 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-                                ticket.save( function (err, obj) {
+                                ticket.save(function (err, obj) {
                                     if (err) {
                                         jsonString = messageFormatter.FormatMessage(err, "Fail Find Ticket", false, undefined);
                                     }
                                     if (obj) {
                                         jsonString = messageFormatter.FormatMessage(undefined, "Ticket Assign To Group.", true, undefined);
-                                        var PreAssigneeGroup = oldTicket.assignee_group? oldTicket.assignee_group.name: "";
+                                        var PreAssigneeGroup = oldTicket.assignee_group ? oldTicket.assignee_group.name : "";
                                         ExecuteTrigger(req.params.id, "change_assignee_groups", PreAssigneeGroup);
                                         SendTicketNotification(obj, "assigngroup", req.user.iss);
                                     }
@@ -3962,9 +4224,19 @@ module.exports.GetAllTicketsBy = function (req, res) {
         size = parseInt(req.params.Size),
         skip = page > 0 ? ((page - 1) * size) : 0;
 
+    var qObj = {};
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
 
     if (FieldName == "assignee") {
-        Ticket.find({company: company, tenant: tenant, active: true, assignee: fieldValue}).skip(skip)
+
+        qObj.company = company;
+        qObj.tenant = tenant;
+        qObj.active = true;
+        qObj.assignee = fieldValue;
+
+        Ticket.find(qObj).skip(skip)
             .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
             if (err) {
 
@@ -3986,12 +4258,13 @@ module.exports.GetAllTicketsBy = function (req, res) {
         });
     }
     else if (FieldName == "assignee_group") {
-        Ticket.find({
-            company: company,
-            tenant: tenant,
-            active: true,
-            assignee_group: fieldValue
-        }).skip(skip)
+
+        qObj.company = company;
+        qObj.tenant = tenant;
+        qObj.active = true;
+        qObj.assignee_group = fieldValue;
+
+        Ticket.find(qObj).skip(skip)
             .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
             if (err) {
 
@@ -4013,7 +4286,13 @@ module.exports.GetAllTicketsBy = function (req, res) {
         });
     }
     else if (FieldName == "submitter") {
-        Ticket.find({company: company, tenant: tenant, active: true, submitter: fieldValue}).skip(skip)
+
+        qObj.company = company;
+        qObj.tenant = tenant;
+        qObj.active = true;
+        qObj.submitter = fieldValue;
+
+        Ticket.find(qObj).skip(skip)
             .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
             if (err) {
 
@@ -4070,11 +4349,16 @@ module.exports.TicketSearch = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     if (searchBy == "subject") {
-        Ticket.find({
+        var subject_qObj = {
             'subject': new RegExp(searchValue, 'i'), active: true,
             company: company,
             tenant: tenant
-        }).skip(skip)
+        };
+        if (req.query.businessunit) {
+            subject_qObj.businessUnit = req.query.businessunit;
+        }
+
+        Ticket.find(subject_qObj).skip(skip)
             .limit(size).sort({created_at: -1}).populate('submitter', 'name avatar').exec(function (err, tickets) {
             if (err) {
 
@@ -4096,11 +4380,17 @@ module.exports.TicketSearch = function (req, res) {
         });
     }
     else if (searchBy == "reference") {
-        Ticket.find({
+
+        var ref_qObj = {
             'reference': new RegExp(searchValue, 'i'), active: true,
             company: company,
             tenant: tenant
-        }).skip(skip)
+        };
+        if (req.query.businessunit) {
+            ref_qObj.businessUnit = req.query.businessunit;
+        }
+
+        Ticket.find(ref_qObj).skip(skip)
             .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
             if (err) {
 
@@ -4122,11 +4412,17 @@ module.exports.TicketSearch = function (req, res) {
         });
     }
     else if (searchBy == "channel") {
-        Ticket.find({
+
+        var channel_qObj = {
             'reference': new RegExp(searchValue, 'i'), active: true,
             company: company,
             tenant: tenant
-        }).skip(skip)
+        };
+        if (req.query.businessunit) {
+            channel_qObj.businessUnit = req.query.businessunit;
+        }
+
+        Ticket.find(channel_qObj).skip(skip)
             .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
             if (err) {
 
@@ -4163,17 +4459,22 @@ module.exports.SearchTickets = function (req, res) {
         size = parseInt(req.params.Size),
         skip = page > 0 ? ((page - 1) * size) : 0;
 
-    Ticket.find({
+    var qObj = {
         $text: {$search: req.params.text},
         company: company,
         tenant: tenant
-    }, {score: {$meta: "textScore"}}).skip(skip)
+    };
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.find(qObj, {score: {$meta: "textScore"}}).skip(skip)
         .limit(size).sort({score: {$meta: 'textScore'}})
         .populate('assignee', 'name avatar firstname lastname')
         .populate('assignee_group', 'name')
         .populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus')
         .populate('submitter', 'name avatar').populate('collaborators', 'name avatar')
-        .populate( {path: 'form_submission',populate : {path: 'form'}})
+        .populate({path: 'form_submission', populate: {path: 'form'}})
         .exec(function (err, tickets) {
             if (err) {
 
@@ -4281,12 +4582,17 @@ module.exports.GetMergeTickets = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    Ticket.findOne({
+    var qObj = {
         company: company,
         tenant: tenant,
         active: true,
         _id: req.params.id
-    }, function (err, sticket) {
+    };
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.findOne(qObj, function (err, sticket) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Fail to Find Ticket", false, undefined);
             res.end(jsonString);
@@ -4345,7 +4651,7 @@ module.exports.CreateSubTicket = function (req, res) {
         }
         else if (parentTicket) {
 
-            User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+            UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                 if (err) {
 
                     jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -4354,7 +4660,10 @@ module.exports.CreateSubTicket = function (req, res) {
                 } else {
 
 
-                    if (user) {
+                    if (useraccount && useraccount.userref) {
+
+                        var user = useraccount.userref.toObject();
+
 
                         var time = new Date().toISOString();
                         var tEvent = TicketEvent({
@@ -4368,7 +4677,7 @@ module.exports.CreateSubTicket = function (req, res) {
                         });
 
 
-                        reference.generate(company,tenant, function (done, id, key) {
+                        reference.generate(company, tenant, function (done, id, key) {
 
                             var ticket = Ticket({
                                 created_at: time,
@@ -4396,7 +4705,8 @@ module.exports.CreateSubTicket = function (req, res) {
                                 tags: req.body.tags,
                                 custom_fields: req.body.custom_fields,
                                 comments: req.body.comments,
-                                events: [tEvent]
+                                events: [tEvent],
+                                businessUnit: req.body.businessUnit
                             });
 
 
@@ -4426,16 +4736,16 @@ module.exports.CreateSubTicket = function (req, res) {
 
                             ticket.ticket_matrix = matrix;
 
-                            if(req.body.tags && util.isArray(req.body.tags) &&  req.body.tags.length > 0){
+                            if (req.body.tags && util.isArray(req.body.tags) && req.body.tags.length > 0) {
 
 
                                 var arr = [];
-                                req.body.tags.forEach(function(item){
+                                req.body.tags.forEach(function (item) {
 
                                     var tagArr = item.split('.');
-                                    if(tagArr && tagArr.length > 0){
+                                    if (tagArr && tagArr.length > 0) {
 
-                                        tagArr.forEach(function(myTags){
+                                        tagArr.forEach(function (myTags) {
                                             ticket.isolated_tags.push(myTags);
                                         })
                                     }
@@ -4453,7 +4763,7 @@ module.exports.CreateSubTicket = function (req, res) {
                                     res.end(jsonString);
                                 }
                                 else {
-                                    SetRelatedSlots(req,obj.id,obj.isolated_tags);
+                                    SetRelatedSlots(req, obj.id, obj.isolated_tags);
                                     parentTicket.update({$addToSet: {sub_tickets: obj._doc._id}}
                                         , function (err, rOrg) {
                                             if (err) {
@@ -4497,7 +4807,12 @@ module.exports.GetSubTickets = function (req, res) {
         size = parseInt(req.params.Size),
         skip = page > 0 ? ((page - 1) * size) : 0;
 
-    Ticket.find({company: company, tenant: tenant, is_sub_ticket: true}).skip(skip)
+    var qObj = {company: company, tenant: tenant, is_sub_ticket: true};
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.find(qObj).skip(skip)
         .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
 
@@ -4527,12 +4842,17 @@ module.exports.GetAttachTickets = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    Ticket.findOne({
+    var qObj = {
         company: company,
         tenant: tenant,
         active: true,
         _id: req.params.id
-    }, function (err, sticket) {
+    };
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.findOne(qObj, function (err, sticket) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Fail to Find Ticket", false, undefined);
             res.end(jsonString);
@@ -4792,11 +5112,17 @@ module.exports.GetTicketsByEngagementId = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    Ticket.find({
+
+    var qObj = {
         engagement_session: req.params.EngagementId,
         company: company,
         tenant: tenant
-    }, function (err, ticket) {
+    };
+    if (req.query.businessunit) {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    Ticket.find(qObj, function (err, ticket) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Fail To Find Ticket", false, undefined);
             res.end(jsonString);
@@ -4810,7 +5136,7 @@ module.exports.GetTicketsByEngagementId = function (req, res) {
 
 };
 
-module.exports.GetJobId = function(req,res){
+module.exports.GetJobId = function (req, res) {
     logger.info("DVP-LiteTicket.GetJobId Internal method ");
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
@@ -4837,7 +5163,7 @@ module.exports.GetJobId = function(req,res){
     });
 };
 
-module.exports.GetAllJobs = function(req,res){
+module.exports.GetAllJobs = function (req, res) {
     logger.info("DVP-LiteTicket.GetAllJobs Internal method ");
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
@@ -4846,7 +5172,7 @@ module.exports.GetAllJobs = function(req,res){
     BulkOperation.find({
         company: company,
         tenant: tenant
-    }).exec(function(err, bulkOperations) {
+    }).exec(function (err, bulkOperations) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Fail to Find Bulk Operations", false, undefined);
             res.end(jsonString);
@@ -4869,7 +5195,7 @@ module.exports.GetAllJobs = function(req,res){
     });
 };
 
-module.exports.GetJobsByReference = function(req,res){
+module.exports.GetJobsByReference = function (req, res) {
     logger.info("DVP-LiteTicket.GetAllJobs Internal method ");
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
@@ -4879,7 +5205,7 @@ module.exports.GetJobsByReference = function(req,res){
         company: company,
         tenant: tenant,
         JobReference: {$in: req.query.jobReference}
-    }).exec(function(err, bulkOperations) {
+    }).exec(function (err, bulkOperations) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Fail to Find Bulk Operations", false, undefined);
             res.end(jsonString);
@@ -4903,7 +5229,7 @@ module.exports.GetJobsByReference = function(req,res){
     });
 };
 
-module.exports.RemoveJob = function(req,res){
+module.exports.RemoveJob = function (req, res) {
     logger.info("DVP-LiteTicket.RemoveJob Internal method ");
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
@@ -4913,7 +5239,7 @@ module.exports.RemoveJob = function(req,res){
         company: company,
         tenant: tenant,
         _id: req.params.jobId
-    }).exec(function(err, bulkOperations) {
+    }).exec(function (err, bulkOperations) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Fail to Remove Bulk Operation", false, undefined);
             res.end(jsonString);
@@ -4925,7 +5251,7 @@ module.exports.RemoveJob = function(req,res){
     });
 };
 
-module.exports.StartBulkOperationJob = function(req,res){
+module.exports.StartBulkOperationJob = function (req, res) {
     logger.info("DVP-LiteTicket.StartBulkOperationJob Internal method ");
     var jsonString;
     var company = parseInt(req.user.company);
@@ -4937,15 +5263,15 @@ module.exports.StartBulkOperationJob = function(req,res){
         tenant: tenant,
         _id: req.params.jobId,
         JobStatus: "uploading"
-    }).exec(function(err, bulkOperation) {
+    }).exec(function (err, bulkOperation) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Fail to Find Bulk Operations", false, undefined);
         }
         else {
-            if(bulkOperation) {
+            if (bulkOperation) {
                 ExecuteTriggerBulkOperation(req.params.jobId);
                 jsonString = messageFormatter.FormatMessage(undefined, "Start Bulk Operation Success", true, bulkOperation);
-            }else{
+            } else {
                 jsonString = messageFormatter.FormatMessage(undefined, "Fail to Find Bulk Operations", false, undefined);
             }
         }
@@ -4961,10 +5287,10 @@ module.exports.BulkStatusUpdate = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jobId = undefined;
     var uploadStatus = undefined;
-    if(req.query.jobId){
+    if (req.query.jobId) {
         jobId = req.query.jobId;
     }
-    if(req.query.uploadStatus){
+    if (req.query.uploadStatus) {
         uploadStatus = req.query.uploadStatus;
     }
 
@@ -4976,7 +5302,7 @@ module.exports.BulkStatusUpdate = function (req, res) {
         _id: {
             $in: req.body.TicketIds
         }
-    }).lean().exec(function(err, tickets) {
+    }).lean().exec(function (err, tickets) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Fail to Find Related Ticket", false, undefined);
             res.end(jsonString);
@@ -5015,14 +5341,18 @@ module.exports.BulkStatusUpdate = function (req, res) {
                             BulkOperation.update({
                                     _id: jobId
                                 },
-                                {$set: {CommonData: req.body.specificOperations}, $addToSet: {OperationData: { $each:bulkOperations}}, $inc: { JobCount: bulkOperations.length}},
+                                {
+                                    $set: {CommonData: req.body.specificOperations},
+                                    $addToSet: {OperationData: {$each: bulkOperations}},
+                                    $inc: {JobCount: bulkOperations.length}
+                                },
                                 {multi: true}, function (err, bulkObj) {
                                     if (err) {
                                         jsonString = messageFormatter.FormatMessage(err, "Fail to Update Bulk Operation", false, undefined);
                                         res.end(jsonString);
                                     }
                                     else {
-                                        if(!uploadStatus || uploadStatus === 'done'){
+                                        if (!uploadStatus || uploadStatus === 'done') {
                                             ExecuteTriggerBulkOperation(jobId);
                                         }
                                         jsonString = messageFormatter.FormatMessage(err, "Update Bulk Operation Success", true, undefined);
@@ -5046,19 +5376,21 @@ module.exports.BulkStatusUpdate = function (req, res) {
     });
 };
 
-module.exports.WatchTicket = function (req, res){
+module.exports.WatchTicket = function (req, res) {
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var time = new Date().toISOString();
 
@@ -5068,10 +5400,10 @@ module.exports.WatchTicket = function (req, res){
                     _id: req.params.id,
                 }, {
 
-                    $addToSet: {watchers:user._id},
-                    updated_at:time
+                    $addToSet: {watchers: user._id},
+                    updated_at: time
 
-                },function (err, recentticket) {
+                }, function (err, recentticket) {
                     if (err) {
 
                         logger.error("Add to resent ticket failed ", err);
@@ -5085,7 +5417,7 @@ module.exports.WatchTicket = function (req, res){
                     }
 
                 });
-            }else{
+            } else {
 
                 jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
                 res.end(jsonString);
@@ -5094,19 +5426,21 @@ module.exports.WatchTicket = function (req, res){
     });
 }
 
-module.exports.StopWatchTicket = function (req, res){
+module.exports.StopWatchTicket = function (req, res) {
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
                 var time = new Date().toISOString();
                 Ticket.findOneAndUpdate({
                     company: company,
@@ -5114,10 +5448,10 @@ module.exports.StopWatchTicket = function (req, res){
                     _id: req.params.id
                 }, {
 
-                    $pull: {watchers:user._id},
-                    updated_at:time
+                    $pull: {watchers: user._id},
+                    updated_at: time
 
-                },function (err, recentticket) {
+                }, function (err, recentticket) {
                     if (err) {
 
                         logger.error("Add to resent ticket failed ", err);
@@ -5131,7 +5465,7 @@ module.exports.StopWatchTicket = function (req, res){
                     }
 
                 });
-            }else{
+            } else {
 
                 jsonString = messageFormatter.FormatMessage(undefined, "Get User Failed", false, undefined);
                 res.end(jsonString);
@@ -5140,7 +5474,7 @@ module.exports.StopWatchTicket = function (req, res){
     });
 };
 
-module.exports.setEstimatedTime = function (req, res){
+module.exports.setEstimatedTime = function (req, res) {
 
     console.log("Hit");
     var company = parseInt(req.user.company);
@@ -5151,7 +5485,7 @@ module.exports.setEstimatedTime = function (req, res){
         company: company,
         tenant: tenant,
         _id: req.params.id
-    },{$set:{time_estimation:req.body.time_estimation}},{new: true}, function (err, resTicket) {
+    }, {$set: {time_estimation: req.body.time_estimation}}, {new: true}, function (err, resTicket) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Fail to Find Related Ticket", false, undefined);
             res.end(jsonString);
@@ -5171,13 +5505,15 @@ module.exports.AddCommonAttachment = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var attachment = Attachment({
                     file: req.body.file,
@@ -5213,12 +5549,7 @@ module.exports.AddCommonAttachment = function (req, res) {
     });
 
 
-
-
 };
-
-
-
 
 
 function ExecuteTriggerSpecificOperationsAsync(ticketId, eventType, data, operations) {
@@ -5258,20 +5589,20 @@ function ExecuteTriggerSpecificOperations(ticketId, eventType, data, operations)
 
 }
 
-function ExecuteTriggerBulkOperation(bulkOperationId){
+function ExecuteTriggerBulkOperation(bulkOperationId) {
     logger.info("DVP-LiteTicket.ExecuteTriggerBulkOperation Internal method ");
 
-    BulkOperation.findOneAndUpdate({_id: bulkOperationId}, { $set: { JobStatus: 'Running'} }, {multi: true}, function (err, bulkObj) {
+    BulkOperation.findOneAndUpdate({_id: bulkOperationId}, {$set: {JobStatus: 'Running'}}, {multi: true}, function (err, bulkObj) {
         if (err) {
             logger.error("DVP-LiteTicket.ExecuteTriggerBulkOperation Internal method Err:: %s", err);
         } else {
-            if(bulkObj){
+            if (bulkObj) {
 
-                function BatchUploader(array, executionType){
+                function BatchUploader(array, executionType) {
                     var index = 0;
 
 
-                    return new Promise(function(resolve, reject) {
+                    return new Promise(function (resolve, reject) {
 
                         function next() {
                             if (index < array.length) {
@@ -5290,12 +5621,13 @@ function ExecuteTriggerBulkOperation(bulkOperationId){
                                 resolve();
                             }
                         }
+
                         next();
                     });
                 }
 
                 //var asyncTasks = [];
-                if(bulkObj.CommonData && bulkObj.CommonData.length >0){
+                if (bulkObj.CommonData && bulkObj.CommonData.length > 0) {
 
                     logger.info("DVP-LiteTicket.ExecuteTriggerSpecificOperations Internal method.");
 
@@ -5327,7 +5659,7 @@ function ExecuteTriggerBulkOperation(bulkOperationId){
 
                         BulkOperation.update({
                             _id: bulkOperationId
-                        }, { $set: { JobStatus: 'done', OperationData: []} }, {multi: true}, function (err, sticket) {
+                        }, {$set: {JobStatus: 'done', OperationData: []}}, {multi: true}, function (err, sticket) {
                             logger.info("DVP-LiteTicket.ExecuteTriggerBulkOperation: Remove Bulk Operation");
                         });
                     }, function (reason) {
@@ -5335,11 +5667,10 @@ function ExecuteTriggerBulkOperation(bulkOperationId){
                     });
 
 
-                }else {
+                } else {
 
                     logger.info("DVP-LiteTicket.ExecuteTrigger Internal method.");
                     jsonString = messageFormatter.FormatMessage(undefined, "Successfully Update.", true, undefined);
-
 
 
                     BatchUploader(bulkObj.OperationData, 'trigger').then(function () {
@@ -5348,7 +5679,7 @@ function ExecuteTriggerBulkOperation(bulkOperationId){
 
                         BulkOperation.update({
                             _id: bulkOperationId
-                        }, { $set: { JobStatus: 'done', OperationData: []} }, {multi: true}, function (err, sticket) {
+                        }, {$set: {JobStatus: 'done', OperationData: []}}, {multi: true}, function (err, sticket) {
                             logger.info("DVP-LiteTicket.ExecuteTriggerBulkOperation: Remove Bulk Operation");
                         });
                     }, function (reason) {
@@ -5370,14 +5701,11 @@ function ExecuteTriggerBulkOperation(bulkOperationId){
                 //}
 
 
-
-            }else{
+            } else {
                 logger.error("DVP-LiteTicket.ExecuteTriggerBulkOperation No Bulk Operation Found");
             }
         }
     });
-
-
 
 
 }
@@ -5420,7 +5748,7 @@ function ExecuteSla(ticketId, previousPriority) {
 }
 
 
-function InsertUserRecentTicket(company, tenant, user, ticket, operation){
+function InsertUserRecentTicket(company, tenant, user, ticket, operation) {
 
 
     RecentUserTicket.findOneAndUpdate({
@@ -5439,7 +5767,7 @@ function InsertUserRecentTicket(company, tenant, user, ticket, operation){
             ticket: ticket,
             created_at: Date.now(),
         },
-        $set:{
+        $set: {
             updated_at: Date.now(),
             operation: operation
         }
@@ -5477,7 +5805,7 @@ function InsertUserRecentTicket(company, tenant, user, ticket, operation){
 }
 
 
-function AddUserRecentTicket(company, tenant, id, tid){
+function AddUserRecentTicket(company, tenant, id, tid) {
     RecentTicket.findOneAndUpdate({
         company: company,
         tenant: tenant,
@@ -5489,7 +5817,7 @@ function AddUserRecentTicket(company, tenant, id, tid){
             tenant: tenant
         },
         $push: {
-            tickets: {$each:[tid], $slice: -10}
+            tickets: {$each: [tid], $slice: -10}
         }
     }, {upsert: true, new: true}, function (err, recentticket) {
         if (err) {
@@ -5503,7 +5831,7 @@ function AddUserRecentTicket(company, tenant, id, tid){
     });
 }
 
-function AddExternalUserRecentTicket(company,tenant,id, tid){
+function AddExternalUserRecentTicket(company, tenant, id, tid) {
     try {
         ExternalUserRecentTicket.findOneAndUpdate({
             company: company,
@@ -5516,7 +5844,7 @@ function AddExternalUserRecentTicket(company,tenant,id, tid){
                 tenant: tenant
             },
             $push: {
-                tickets: {$each:[tid], $slice: -10}
+                tickets: {$each: [tid], $slice: -10}
             }
         }, {upsert: true, new: true}, function (err, recentticket) {
             if (err) {
@@ -5529,7 +5857,7 @@ function AddExternalUserRecentTicket(company,tenant,id, tid){
 
         });
     }
-    catch (ex){
+    catch (ex) {
         logger.error("Add to resent ticket failed ", ex);
     }
 
@@ -5618,7 +5946,7 @@ module.exports.AddCaseConfiguration = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -5626,7 +5954,9 @@ module.exports.AddCaseConfiguration = function (req, res) {
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
 
                 CaseConfiguration.findOne({
@@ -5643,7 +5973,7 @@ module.exports.AddCaseConfiguration = function (req, res) {
                         if (caseConfiguration) {
                             jsonString = messageFormatter.FormatMessage(undefined, "Case Configuration already exists", false, caseConfiguration);
                             res.end(jsonString);
-                        }else{
+                        } else {
                             var time = new Date().toISOString();
                             var tEvent = TicketEvent({
                                 type: 'status',
@@ -5822,7 +6152,7 @@ module.exports.CreateCase = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -5830,7 +6160,10 @@ module.exports.CreateCase = function (req, res) {
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 var time = new Date().toISOString();
                 var tEvent = TicketEvent({
@@ -5982,7 +6315,7 @@ module.exports.AddTicketToCase = function (req, res) {
                     "$set": {
                         "updated_at": Date.now()
                     },
-                    "$addToSet": {"events": tEvent, "related_tickets": {$each:req.body.ticketid}}
+                    "$addToSet": {"events": tEvent, "related_tickets": {$each: req.body.ticketid}}
                 }, function (err, rUser) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Fail Update Case.", false, undefined);
@@ -6039,7 +6372,7 @@ module.exports.RemoveTicketFromCase = function (req, res) {
                         "updated_at": Date.now()
                     },
                     "$addToSet": {"events": tEvent},
-                    "$pull": {"related_tickets": {$in : req.body.ticketid}}
+                    "$pull": {"related_tickets": {$in: req.body.ticketid}}
                 }, function (err, rUser) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Fail To Remove Ticket.", false, undefined);
@@ -6069,7 +6402,11 @@ module.exports.GetCase = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    Case.findOne({_id: req.params.id, company: company, tenant: tenant}).populate('related_tickets').populate('caseConfiguration').exec(function (err, cases) {
+    Case.findOne({
+        _id: req.params.id,
+        company: company,
+        tenant: tenant
+    }).populate('related_tickets').populate('caseConfiguration').exec(function (err, cases) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get Case Failed", false, undefined);
@@ -6097,7 +6434,11 @@ module.exports.GetCase = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    Case.findOne({_id: req.params.id, company: company, tenant: tenant}).populate('related_tickets').populate('caseConfiguration').exec(function (err, cases) {
+    Case.findOne({
+        _id: req.params.id,
+        company: company,
+        tenant: tenant
+    }).populate('related_tickets').populate('caseConfiguration').exec(function (err, cases) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get Case Failed", false, undefined);
@@ -6246,7 +6587,7 @@ module.exports.CreateTicketWithComment = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -6254,7 +6595,9 @@ module.exports.CreateTicketWithComment = function (req, res) {
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var time = new Date().toISOString();
                 var tEvent = TicketEvent({
@@ -6300,37 +6643,37 @@ module.exports.CreateTicketWithComment = function (req, res) {
                 /////////////////////////////ticket matrix//////////////////////
                 var matrix = {
                     created_at: ticket.created_at,
-                    last_updated:ticket.created_at,
-                    last_status_changed:ticket.created_at,
+                    last_updated: ticket.created_at,
+                    last_status_changed: ticket.created_at,
                     waited_time: 0,
                     worked_time: 0,
-                    resolution_time:0,
+                    resolution_time: 0,
                     sla_violated: false,
                     reopens: 0,
                     replies: 0,
                     assignees: 0
                 };
 
-                if(req.body.assignee){
+                if (req.body.assignee) {
                     matrix.assignees = 1;
-                }else{
+                } else {
                     matrix.assignees = 0;
                 }
 
-                if(req.body.assignee_group){
+                if (req.body.assignee_group) {
                     matrix.groups = 1;
-                }else{
+                } else {
                     matrix.groups = 0;
                 }
                 ticket.ticket_matrix = matrix;
-                if(req.body.tags && util.isArray(req.body.tags) &&  req.body.tags.length > 0){
+                if (req.body.tags && util.isArray(req.body.tags) && req.body.tags.length > 0) {
                     var arr = [];
-                    req.body.tags.forEach(function(item){
+                    req.body.tags.forEach(function (item) {
 
                         var tagArr = item.split('.');
-                        if(tagArr && tagArr.length > 0){
+                        if (tagArr && tagArr.length > 0) {
 
-                            tagArr.forEach(function(myTags){
+                            tagArr.forEach(function (myTags) {
                                 ticket.isolated_tags.push(myTags);
                             })
                         }
@@ -6345,10 +6688,10 @@ module.exports.CreateTicketWithComment = function (req, res) {
                         res.end(jsonString);
                     }
                     else {
-                        if(client) {
-                            InsertUserRecentTicket(company, tenant,user.id,client.id, "comment");
-                            if(req.body.requester)
-                                AddExternalUserRecentTicket(company, tenant,req.body.requester,client.id);
+                        if (client) {
+                            InsertUserRecentTicket(company, tenant, user.id, client.id, "comment");
+                            if (req.body.requester)
+                                AddExternalUserRecentTicket(company, tenant, req.body.requester, client.id);
                         }
                         ////////////////////////////////////////add note to engagement session async//////////////////////////
                         try {
@@ -6412,29 +6755,29 @@ module.exports.CreateTicketWithComment = function (req, res) {
                                                 });
                                                 ticket.events.push(tEvent);
                                                 /////////////////////////////////ticket matrix///////////////////////////////////////
-                                                if(ticket.ticket_matrix) {
+                                                if (ticket.ticket_matrix) {
                                                     ticket.ticket_matrix.last_updated = time;
                                                     ticket.ticket_matrix.last_commented = time;
 
-                                                    if(comment.author_external){
+                                                    if (comment.author_external) {
 
-                                                        if(ticket.ticket_matrix.external_replies)
+                                                        if (ticket.ticket_matrix.external_replies)
                                                             ticket.ticket_matrix.external_replies += 1;
                                                         else
-                                                            ticket.ticket_matrix.external_replies =1;
+                                                            ticket.ticket_matrix.external_replies = 1;
 
-                                                    }else{
-                                                        if(ticket.ticket_matrix.replies)
+                                                    } else {
+                                                        if (ticket.ticket_matrix.replies)
                                                             ticket.ticket_matrix.replies += 1;
                                                         else
-                                                            ticket.ticket_matrix.replies =1;
+                                                            ticket.ticket_matrix.replies = 1;
 
-                                                        if(ticket.collaborators && util.isArray(ticket.collaborators)){
+                                                        if (ticket.collaborators && util.isArray(ticket.collaborators)) {
 
-                                                            if(ticket.collaborators.indexOf(user._id) == -1) {
+                                                            if (ticket.collaborators.indexOf(user._id) == -1) {
                                                                 ticket.collaborators.push(user._id);
                                                             }
-                                                        }else{
+                                                        } else {
                                                             ticket.collaborators = [user._id];
                                                         }
                                                     }
@@ -6503,7 +6846,7 @@ module.exports.CreateStatusNode = function (req, res) {
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -6511,7 +6854,9 @@ module.exports.CreateStatusNode = function (req, res) {
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
 
                 var ticketStatusNode = TicketStatusNode({
@@ -6521,7 +6866,7 @@ module.exports.CreateStatusNode = function (req, res) {
                     name: req.body.status_node,
                     description: req.body.description,
                     node_type: 'custom',
-                    category:req.body.category,
+                    category: req.body.category,
                     created_at: Date.now(),
                     updated_at: Date.now()
                 });
@@ -6555,8 +6900,8 @@ module.exports.GetStatusNodes = function (req, res) {
 
     TicketStatusNode.find({
         $and: [
-            { $or: [{company: company}, {company: -1}] },
-            { $or: [{tenant: tenant}, {tenant: -1}] }
+            {$or: [{company: company}, {company: -1}]},
+            {$or: [{tenant: tenant}, {tenant: -1}]}
         ]
     }, function (err, stn) {
         if (err) {
@@ -6568,23 +6913,23 @@ module.exports.GetStatusNodes = function (req, res) {
     });
 };
 
-module.exports.UpdateStatusNode = function(req,res){
+module.exports.UpdateStatusNode = function (req, res) {
     logger.info("DVP-LiteTicket.UpdateStatusNode Internal method ");
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    TicketStatusNode.findOne({_id: req.params.id, company: company, tenant: tenant}, function(err, sNode){
-        if(err){
+    TicketStatusNode.findOne({_id: req.params.id, company: company, tenant: tenant}, function (err, sNode) {
+        if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Find Status Node Failed", false, undefined);
             res.end(jsonString);
-        }else{
-            if(sNode){
+        } else {
+            if (sNode) {
                 sNode.status_node = req.body.status_node;
                 sNode.name = req.body.status_node;
                 sNode.description = req.body.description;
-                sNode.category=req.body.category;
+                sNode.category = req.body.category;
                 sNode.updated_at = Date.now();
 
                 sNode.update(sNode, function (err, newSNode) {
@@ -6601,7 +6946,7 @@ module.exports.UpdateStatusNode = function(req,res){
                     }
                     res.end(jsonString);
                 });
-            }else{
+            } else {
                 jsonString = messageFormatter.FormatMessage(err, "No Status Node Found", false, undefined);
                 res.end(jsonString);
             }
@@ -6609,7 +6954,7 @@ module.exports.UpdateStatusNode = function(req,res){
     });
 };
 
-module.exports.RemoveStatusNode = function(req,res){
+module.exports.RemoveStatusNode = function (req, res) {
     logger.info("DVP-LiteTicket.RemoveStatusNode Internal method ");
 
     var company = parseInt(req.user.company);
@@ -6644,7 +6989,7 @@ module.exports.CreateStatusFlow = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -6652,7 +6997,9 @@ module.exports.CreateStatusFlow = function (req, res) {
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 if (req.body && req.body.type) {
                     TicketStatusFlow.findOne({
@@ -6672,9 +7019,9 @@ module.exports.CreateStatusFlow = function (req, res) {
                                         jsonString = messageFormatter.FormatMessage(err, "Check Ticket Types Availability", false, undefined);
                                         res.end(jsonString);
                                     } else {
-                                        if(ticketTypes){
+                                        if (ticketTypes) {
 
-                                            if(ticketTypes.default_types.indexOf(req.body.type) > -1 || ticketTypes.custom_types.indexOf(req.body.type) > -1){
+                                            if (ticketTypes.default_types.indexOf(req.body.type) > -1 || ticketTypes.custom_types.indexOf(req.body.type) > -1) {
 
                                                 var ticketStatusFlow = TicketStatusFlow({
                                                     created_at: Date.now(),
@@ -6696,12 +7043,12 @@ module.exports.CreateStatusFlow = function (req, res) {
                                                     }
                                                     res.end(jsonString);
                                                 });
-                                            }else{
+                                            } else {
                                                 jsonString = messageFormatter.FormatMessage(err, "No Ticket Types Found", false, undefined);
                                                 res.end(jsonString);
                                             }
 
-                                        }else {
+                                        } else {
                                             jsonString = messageFormatter.FormatMessage(err, "No Ticket Types Found", false, undefined);
                                             res.end(jsonString);
                                         }
@@ -6750,7 +7097,10 @@ module.exports.GetStatusFlow = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    TicketStatusFlow.find({company: company, tenant: tenant}).populate({path: 'flow_nodes.node',populate : {path: 'TicketStatusNode'}})
+    TicketStatusFlow.find({company: company, tenant: tenant}).populate({
+        path: 'flow_nodes.node',
+        populate: {path: 'TicketStatusNode'}
+    })
         .populate('flow_connections.source').populate('flow_connections.targets').exec(function (err, stf) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get StatusFlow Failed", false, undefined);
@@ -6767,7 +7117,11 @@ module.exports.GetStatusFlowByType = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    TicketStatusFlow.findOne({company: company, tenant: tenant, type:req.params.type}).populate({path: 'flow_nodes.node',populate : {path: 'TicketStatusNode'}})
+    TicketStatusFlow.findOne({
+        company: company,
+        tenant: tenant,
+        type: req.params.type
+    }).populate({path: 'flow_nodes.node', populate: {path: 'TicketStatusNode'}})
         .populate('flow_connections.source').populate('flow_connections.targets').exec(function (err, stf) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get StatusFlow Failed", false, undefined);
@@ -6784,7 +7138,11 @@ module.exports.GetStatusFlowNodesByType = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    TicketStatusFlow.findOne({company: company, tenant: tenant, type:req.params.type}).populate({path: 'flow_nodes.node',populate : {path: 'TicketStatusNode'}}).exec(function (err, stf) {
+    TicketStatusFlow.findOne({
+        company: company,
+        tenant: tenant,
+        type: req.params.type
+    }).populate({path: 'flow_nodes.node', populate: {path: 'TicketStatusNode'}}).exec(function (err, stf) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get StatusFlow Failed", false, undefined);
         } else {
@@ -6800,7 +7158,11 @@ module.exports.GetStatusFlowNodesByConnections = function (req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    TicketStatusFlow.findOne({company: company, tenant: tenant, type:req.params.type}).populate('flow_connections.source').populate('flow_connections.targets').exec(function (err, stf) {
+    TicketStatusFlow.findOne({
+        company: company,
+        tenant: tenant,
+        type: req.params.type
+    }).populate('flow_connections.source').populate('flow_connections.targets').exec(function (err, stf) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get StatusFlow Failed", false, undefined);
         } else {
@@ -6816,7 +7178,7 @@ module.exports.AddNodeToStatusFlow = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -6824,7 +7186,9 @@ module.exports.AddNodeToStatusFlow = function (req, res) {
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
 
                 TicketStatusFlow.findOneAndUpdate({_id: req.params.id, company: company, tenant: tenant}, {
@@ -6835,7 +7199,7 @@ module.exports.AddNodeToStatusFlow = function (req, res) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Add NodeToStatusFlow Failed", false, undefined);
                     } else {
-                        if(tsf){
+                        if (tsf) {
                             tsf.flow_nodes.push(req.params.flownodeid);
                         }
                         jsonString = messageFormatter.FormatMessage(undefined, "Add NodeToStatusFlow Successful", true, tsf);
@@ -6858,7 +7222,7 @@ module.exports.AddConnectionToStatusFlow = function (req, res) {
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
@@ -6866,7 +7230,9 @@ module.exports.AddConnectionToStatusFlow = function (req, res) {
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
 
                 TicketStatusFlow.findOneAndUpdate({_id: req.params.id, company: company, tenant: tenant}, {
@@ -6903,7 +7269,7 @@ module.exports.RemoveNodeFromStatusFlow = function (req, res) {
             jsonString = messageFormatter.FormatMessage(err, "Get Node Failed", false, undefined);
             res.end(jsonString);
         } else {
-            if(fnode) {
+            if (fnode) {
                 TicketStatusFlow.findOneAndUpdate({_id: req.params.id, company: company, tenant: tenant}, {
                     $pull: {
                         flow_nodes: {_id: req.params.flownodeid}
@@ -6916,7 +7282,7 @@ module.exports.RemoveNodeFromStatusFlow = function (req, res) {
                     }
                     res.end(jsonString);
                 });
-            }else{
+            } else {
                 jsonString = messageFormatter.FormatMessage(err, "No Node Found", false, undefined);
                 res.end(jsonString);
             }
@@ -6936,7 +7302,7 @@ module.exports.RemoveConnectionFromStatusFlow = function (req, res) {
             jsonString = messageFormatter.FormatMessage(err, "Get Node Failed", false, undefined);
             res.end(jsonString);
         } else {
-            if(fnode) {
+            if (fnode) {
                 TicketStatusFlow.findOneAndUpdate({_id: req.params.id, company: company, tenant: tenant}, {
                     $pull: {
                         flow_nodes: {
@@ -6951,7 +7317,7 @@ module.exports.RemoveConnectionFromStatusFlow = function (req, res) {
                     }
                     res.end(jsonString);
                 });
-            }else{
+            } else {
                 jsonString = messageFormatter.FormatMessage(err, "No Node Found", false, undefined);
                 res.end(jsonString);
             }
@@ -6994,7 +7360,7 @@ var GetNextAvailableStatusList = function (tenant, company, type, currentStatus,
             if (stf) {
                 for (var i = 0; i < stf.flow_connections.length; i++) {
                     if (stf.flow_connections[i].source.status_node === currentStatus) {
-                        if(nextAvailableStatus.indexOf(stf.flow_connections[i].targets.status_node) === -1) {
+                        if (nextAvailableStatus.indexOf(stf.flow_connections[i].targets.status_node) === -1) {
                             nextAvailableStatus.push(stf.flow_connections[i].targets.status_node);
                         }
                     }
@@ -7031,7 +7397,7 @@ module.exports.GetNextAvailableStatusList = GetNextAvailableStatusList;
 
 module.exports.ValidateStatusChangeRequest = ValidateStatusChangeRequest;
 
-module.exports.GetTicketReport= function(req, res){
+module.exports.GetTicketReport = function (req, res) {
 
     logger.info("DVP-LiteTicket.GetTicketsByView Internal method ");
     var company = parseInt(req.user.company);
@@ -7039,20 +7405,20 @@ module.exports.GetTicketReport= function(req, res){
     var jsonString;
 
 
-    if(req.query && req.query['from']&& req.query['to']) {
+    if (req.query && req.query['from'] && req.query['to']) {
         var from = req.query['from'];
         var to = req.query['to'];
 
         try {
             from = new Date(from);
             to = new Date(to);
-        }catch(ex){
+        } catch (ex) {
             jsonString = messageFormatter.FormatMessage(ex, "From and To dates are require", false, undefined);
             res.end(jsonString);
             return;
         }
 
-        if(from > to){
+        if (from > to) {
 
             jsonString = messageFormatter.FormatMessage(undefined, "From should less than To", false, undefined);
             res.end(jsonString);
@@ -7062,23 +7428,23 @@ module.exports.GetTicketReport= function(req, res){
 
         var tempQuery = {company: company, tenant: tenant};
 
-        tempQuery['created_at'] = { $gte: from, $lte: to };
+        tempQuery['created_at'] = {$gte: from, $lte: to};
 
-        if(req.body){
+        if (req.body) {
 
-            if(req.body.tag){
+            if (req.body.tag) {
                 tempQuery.isolated_tags = {$in: [req.body.tag]};
             }
 
-            if(req.body.channel){
-                tempQuery.channel =  req.body.channel;
+            if (req.body.channel) {
+                tempQuery.channel = req.body.channel;
             }
 
-            if(req.body.priority){
+            if (req.body.priority) {
                 tempQuery.priority = req.body.priority;
             }
 
-            if(req.body.type){
+            if (req.body.type) {
                 tempQuery.type = req.body.type;
             }
 
@@ -7113,40 +7479,40 @@ module.exports.GetTicketReport= function(req, res){
                     },
                     new: {
                         $sum: {
-                            $cond: [{$eq:["$status","new"]}, 1, 0]
+                            $cond: [{$eq: ["$status", "new"]}, 1, 0]
                         }
                     },
                     progressing: {
                         $sum: {
-                            $cond: [{$or:[{$eq:["$status","open"]},{$eq:["$status","progressing"]}]}, 1, 0]
+                            $cond: [{$or: [{$eq: ["$status", "open"]}, {$eq: ["$status", "progressing"]}]}, 1, 0]
                         }
-                    },closed: {
+                    }, closed: {
                         $sum: {
-                            $cond: [{$eq:["$status","closed"]}, 1, 0]
+                            $cond: [{$eq: ["$status", "closed"]}, 1, 0]
                         }
-                    },resolved: {
+                    }, resolved: {
                         $sum: {
-                            $cond: [{$eq:["$status","solved"]}, 1, 0]
+                            $cond: [{$eq: ["$status", "solved"]}, 1, 0]
                         }
-                    },first_call_resolved: {
+                    }, first_call_resolved: {
                         $sum: {
-                            $cond: [{$eq:['$ticket_matrix.external_replies',0]}, 1, 0]
+                            $cond: [{$eq: ['$ticket_matrix.external_replies', 0]}, 1, 0]
                         }
                     },
                     overdue_done: {
                         $sum: {
-                            $cond: [{$and : [{$gt: ["$ticket_matrix.solved_at", "$due_at" ]}, {$eq:["$status","closed"]}]}, 1, 0]
+                            $cond: [{$and: [{$gt: ["$ticket_matrix.solved_at", "$due_at"]}, {$eq: ["$status", "closed"]}]}, 1, 0]
                         }
                     },
                     overdue_working: {
                         $sum: {
-                            $cond: [{$and : [{$gt: [ new Date(), "$due_at" ]}, {$and:[{$ne:["$status","closed"]},{$ne:["$status","solved"]}]}]}, 1, 0]
+                            $cond: [{$and: [{$gt: [new Date(), "$due_at"]}, {$and: [{$ne: ["$status", "closed"]}, {$ne: ["$status", "solved"]}]}]}, 1, 0]
                         }
                     },
                     average_response: {
                         $avg: {
 
-                            $cond: [{$ne:["$status","new"]}, "$ticket_matrix.waited_time", null]
+                            $cond: [{$ne: ["$status", "new"]}, "$ticket_matrix.waited_time", null]
 
                         }
                     },
@@ -7154,12 +7520,12 @@ module.exports.GetTicketReport= function(req, res){
 
                         $avg: {
 
-                            $cond: [{$and : [{$eq:["$status","closed"]},{$eq:["$status","solved"]}]}, "$ticket_matrix.resolution_time", null]
+                            $cond: [{$and: [{$eq: ["$status", "closed"]}, {$eq: ["$status", "solved"]}]}, "$ticket_matrix.resolution_time", null]
 
                         }
                     }
                 }
-            },{
+            }, {
                 $project: {
                     _id: 0,
                     statistics: {
@@ -7181,7 +7547,7 @@ module.exports.GetTicketReport= function(req, res){
             }
         ];
 
-        Ticket.aggregate( aggregator, function (err, tickets) {
+        Ticket.aggregate(aggregator, function (err, tickets) {
             if (err) {
                 jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
             } else {
@@ -7190,7 +7556,7 @@ module.exports.GetTicketReport= function(req, res){
             res.end(jsonString);
         });
 
-    }else{
+    } else {
 
         jsonString = messageFormatter.FormatMessage(undefined, "From and To dates are require", false, undefined);
         res.end(jsonString);
@@ -7198,7 +7564,7 @@ module.exports.GetTicketReport= function(req, res){
 
 }
 
-module.exports.GetTicketReportTagBased= function(req, res){
+module.exports.GetTicketReportTagBased = function (req, res) {
 
     logger.info("DVP-LiteTicket.GetTicketReportTagBased Internal method ");
     var company = parseInt(req.user.company);
@@ -7206,20 +7572,20 @@ module.exports.GetTicketReportTagBased= function(req, res){
     var jsonString;
 
 
-    if(req.query && req.query['from']&& req.query['to']) {
+    if (req.query && req.query['from'] && req.query['to']) {
         var from = req.query['from'];
         var to = req.query['to'];
 
         try {
             from = new Date(from);
             to = new Date(to);
-        }catch(ex){
+        } catch (ex) {
             jsonString = messageFormatter.FormatMessage(ex, "From and To dates are require", false, undefined);
             res.end(jsonString);
             return;
         }
 
-        if(from > to){
+        if (from > to) {
 
             jsonString = messageFormatter.FormatMessage(undefined, "From should less than To", false, undefined);
             res.end(jsonString);
@@ -7229,9 +7595,9 @@ module.exports.GetTicketReportTagBased= function(req, res){
 
         var tempQuery = {company: company, tenant: tenant};
 
-        tempQuery['created_at'] = { $gte: from, $lte: to };
+        tempQuery['created_at'] = {$gte: from, $lte: to};
 
-        if(req.body && req.body.direction){
+        if (req.body && req.body.direction) {
 
             tempQuery['direction'] = req.body.direction;
         }
@@ -7244,28 +7610,28 @@ module.exports.GetTicketReportTagBased= function(req, res){
 
             }, {
                 $unwind: "$isolated_tags"
-            },{
+            }, {
                 $group: {
                     _id: "$isolated_tags",
                     count: {
                         $sum: 1
                     }
                 }
-            },{
+            }, {
                 $project: {
                     _id: 0,
                     tag: '$_id',
                     count: 1
 
                 }
-            },{
-                $sort:{
+            }, {
+                $sort: {
                     count: -1
                 }
             }
         ];
 
-        Ticket.aggregate( aggregator, function (err, tickets) {
+        Ticket.aggregate(aggregator, function (err, tickets) {
             if (err) {
                 jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
             } else {
@@ -7274,7 +7640,7 @@ module.exports.GetTicketReportTagBased= function(req, res){
             res.end(jsonString);
         });
 
-    }else{
+    } else {
 
         jsonString = messageFormatter.FormatMessage(undefined, "From and To dates are require", false, undefined);
         res.end(jsonString);
@@ -7825,15 +8191,22 @@ module.exports.GetTicketReportTagBased= function(req, res){
  };*/
 
 
-var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz, tagCount, callback)
-{
-    var newLine= "\r\n";
+var appendToCSVFile = function (uniqueId, fileName, tempQuery, offset, limit, tz, tagCount, callback) {
+    var newLine = "\r\n";
     var ticketListForCSV = [];
 
 
     var tagHeaders = ['Reference', 'Subject', 'Phone Number', 'Email', 'SSN', 'First Name', 'Last Name', 'Address', 'Customer Number', 'Created Date', 'Assignee', 'Submitter', 'Requester', 'Channel', 'Status', 'Priority', 'Type', 'SLA Violated', 'Description', 'Comments'];
     var tagOrder = ['reference', 'subject', 'phoneNumber', 'email', 'ssn', 'firstname', 'lastname', 'address', 'fromNumber', 'createdDate', 'assignee', 'submitter', 'requester', 'channel', 'status', 'priority', 'type', 'slaViolated', 'description', 'comments'];
 
+    if(tagCount)
+    {
+        for (j = 0; j < tagCount; j++)
+        {
+            tagHeaders.push('Tag' + (j + 1));
+            tagOrder.push('Tag' + (j + 1));
+        }
+    }
 
     Ticket.find(tempQuery)
         .skip(offset)
@@ -7844,21 +8217,17 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
         .populate('engagement_session', 'channel_from')
         .populate('submitter', 'name')
         .populate('comments', 'body')
-        .populate( {path: 'form_submission',populate : {path: 'form'}})
+        .populate({path: 'form_submission', populate: {path: 'form'}})
         .maxTime(300000)
         .lean()
-        .exec(function (err, tickets)
-        {
-            if (err)
-            {
+        .exec(function (err, tickets) {
+            if (err) {
                 tickets = null;
                 global.gc();
                 callback(err, false);
             }
-            else
-            {
-                if(tickets && tickets.length > 0)
-                {
+            else {
+                if (tickets && tickets.length > 0) {
                     tickets.forEach(function (ticketInfo) {
                         var ticketInfoTemp =
                             {
@@ -7884,52 +8253,40 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
 
                             };
 
-                        if(ticketInfo.engagement_session && ticketInfo.engagement_session.direction === 'outbound')
-                        {
+                        if (ticketInfo.engagement_session && ticketInfo.engagement_session.direction === 'outbound') {
                             ticketInfoTemp.fromNumber = ticketInfo.engagement_session.channel_to;
                         }
 
-                        if(ticketInfo.requester && ticketInfo.requester.address)
-                        {
-                            if(ticketInfo.requester.address.number)
-                            {
+                        if (ticketInfo.requester && ticketInfo.requester.address) {
+                            if (ticketInfo.requester.address.number) {
                                 ticketInfoTemp.address = ticketInfoTemp.address + ticketInfo.requester.address.number + ', '
                             }
-                            if(ticketInfo.requester.address.street)
-                            {
+                            if (ticketInfo.requester.address.street) {
                                 ticketInfoTemp.address = ticketInfoTemp.address + ticketInfo.requester.address.street + ', '
                             }
-                            if(ticketInfo.requester.address.city)
-                            {
+                            if (ticketInfo.requester.address.city) {
                                 ticketInfoTemp.address = ticketInfoTemp.address + ticketInfo.requester.address.city + ', '
                             }
-                            if(ticketInfo.requester.address.province)
-                            {
+                            if (ticketInfo.requester.address.province) {
                                 ticketInfoTemp.address = ticketInfoTemp.address + ticketInfo.requester.address.province + ', '
                             }
-                            if(ticketInfo.requester.address.country)
-                            {
+                            if (ticketInfo.requester.address.country) {
                                 ticketInfoTemp.address = ticketInfoTemp.address + ticketInfo.requester.address.country + ', '
                             }
                         }
 
                         var tempComments = '';
 
-                        if(ticketInfo.comments && ticketInfo.comments.length > 0)
-                        {
-                            ticketInfo.comments.forEach(function(comment){
-                                if(tempComments)
-                                {
-                                    if(comment.body)
-                                    {
+                        if (ticketInfo.comments && ticketInfo.comments.length > 0) {
+                            ticketInfo.comments.forEach(function (comment) {
+                                if (tempComments) {
+                                    if (comment.body) {
                                         tempComments = tempComments + ',' + comment.body;
                                     }
 
                                 }
-                                else
-                                {
-                                    if(comment.body)
-                                    {
+                                else {
+                                    if (comment.body) {
                                         tempComments = comment.body;
                                     }
 
@@ -7941,26 +8298,20 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
                         ticketInfoTemp.comments = tempComments;
 
 
-                        for(i=0; i < tagCount; i++)
-                        {
+                        for (i = 0; i < tagCount; i++) {
                             var tagName = 'Tag' + (i + 1);
                             ticketInfoTemp[tagName] = '';
 
-                            if (ticketInfo.isolated_tags && ticketInfo.isolated_tags.length >= i)
-                            {
+                            if (ticketInfo.isolated_tags && ticketInfo.isolated_tags.length >= i) {
                                 ticketInfoTemp[tagName] = ticketInfo.isolated_tags[i];
                             }
                         }
 
-                        if(ticketInfo.form_submission && ticketInfo.form_submission.fields)
-                        {
-                            ticketInfo.form_submission.fields.forEach(function(field)
-                            {
-                                if(field.field)
-                                {
+                        if (ticketInfo.form_submission && ticketInfo.form_submission.fields) {
+                            ticketInfo.form_submission.fields.forEach(function (field) {
+                                if (field.field) {
                                     var tempFieldName = 'DYNAMICFORM_' + field.field;
-                                    if(tagHeaders.indexOf(tempFieldName) < 0)
-                                    {
+                                    if (tagHeaders.indexOf(tempFieldName) < 0) {
                                         tagHeaders.push(tempFieldName);
                                         tagOrder.push(tempFieldName);
 
@@ -7976,24 +8327,24 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
 
                     });
 
-                    fs.stat(fileName, function (err)
-                    {
-                        if (err == null)
-                        {
+                    fs.stat(fileName, function (err) {
+                        if (err == null) {
                             //write the actual data and end with newline
-                            var csv = json2csv({ data: ticketListForCSV, fields: tagOrder, hasCSVColumnTitle: false }) + newLine;
+                            var csv = json2csv({
+                                    data: ticketListForCSV,
+                                    fields: tagOrder,
+                                    hasCSVColumnTitle: false
+                                }) + newLine;
 
                             fs.appendFile(fileName, csv, function (err) {
-                                if (err)
-                                {
+                                if (err) {
                                     ticketListForCSV = null;
                                     tickets = null;
                                     global.gc();
                                     callback(err, false);
 
                                 }
-                                else
-                                {
+                                else {
                                     ticketListForCSV = null;
                                     tickets = null;
                                     global.gc();
@@ -8002,34 +8353,32 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
 
                             });
                         }
-                        else
-                        {
+                        else {
                             var headerFields = tagOrder + newLine;
 
-                            fs.writeFile(fileName, headerFields, function (err, stat)
-                            {
-                                if (err)
-                                {
+                            fs.writeFile(fileName, headerFields, function (err, stat) {
+                                if (err) {
                                     ticketListForCSV = null;
                                     tickets = null;
                                     global.gc();
                                     callback(err, false);
                                 }
-                                else
-                                {
-                                    var csv = json2csv({ data: ticketListForCSV, fields: tagOrder, hasCSVColumnTitle: false }) + newLine;
+                                else {
+                                    var csv = json2csv({
+                                            data: ticketListForCSV,
+                                            fields: tagOrder,
+                                            hasCSVColumnTitle: false
+                                        }) + newLine;
 
                                     fs.appendFile(fileName, csv, function (err) {
-                                        if (err)
-                                        {
+                                        if (err) {
                                             ticketListForCSV = null;
                                             tickets = null;
                                             global.gc();
                                             callback(err, false);
 
                                         }
-                                        else
-                                        {
+                                        else {
                                             ticketListForCSV = null;
                                             tickets = null;
                                             global.gc();
@@ -8042,13 +8391,11 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
                         }
                     });
                 }
-                else
-                {
+                else {
                     tickets = null;
                     global.gc();
                     callback(null, true);
                 }
-
 
 
             }
@@ -8057,7 +8404,7 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
 
 };
 
-module.exports.GetTicketDetailReportDownload = function(req, res){
+module.exports.GetTicketDetailReportDownload = function (req, res) {
 
 
     logger.info("DVP-LiteTicket.GetTicketDetailReportDownload Internal method ");
@@ -8065,7 +8412,7 @@ module.exports.GetTicketDetailReportDownload = function(req, res){
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    if(req.query && req.query['from']&& req.query['to']) {
+    if (req.query && req.query['from'] && req.query['to']) {
         var from = req.query['from'];
         var to = req.query['to'];
 
@@ -8073,13 +8420,13 @@ module.exports.GetTicketDetailReportDownload = function(req, res){
         try {
             from = new Date(from);
             to = new Date(to);
-        }catch(ex){
+        } catch (ex) {
             jsonString = messageFormatter.FormatMessage(ex, "From and To dates are require", false, undefined);
             res.end(jsonString);
             return;
         }
 
-        if(from > to){
+        if (from > to) {
 
             jsonString = messageFormatter.FormatMessage(undefined, "From should less than To", false, undefined);
             res.end(jsonString);
@@ -8092,7 +8439,7 @@ module.exports.GetTicketDetailReportDownload = function(req, res){
 
         var tempQuery = {company: company, tenant: tenant};
 
-        tempQuery['created_at'] = { $gte: from, $lte: to };
+        tempQuery['created_at'] = {$gte: from, $lte: to};
 
         var fromDate = moment(from).format("YYYY-MM-DD");
         var toDate = moment(to).format("YYYY-MM-DD");
@@ -8104,109 +8451,92 @@ module.exports.GetTicketDetailReportDownload = function(req, res){
         var tz = '';
         var tagCount = 0;
 
-        if(req.body)
-        {
+        if (req.body) {
 
             tz = req.body.tz;
 
             tagCount = req.body.tagCount;
 
-            if(tagCount)
-            {
-                for (j = 0; j < tagCount; j++)
-                {
+            if (tagCount) {
+                for (j = 0; j < tagCount; j++) {
                     tagHeaders.push('Tag' + (j + 1));
                     tagOrder.push('Tag' + (j + 1));
                 }
             }
 
-            if(req.body.tag)
-            {
+            if (req.body.tag) {
                 tempQuery.isolated_tags = {$in: [req.body.tag]};
             }
 
-            if(req.body.channel){
-                tempQuery.channel =  req.body.channel;
+            if (req.body.channel) {
+                tempQuery.channel = req.body.channel;
             }
 
-            if(req.body.priority){
+            if (req.body.priority) {
                 tempQuery.priority = req.body.priority;
             }
 
-            if(req.body.type){
+            if (req.body.type) {
                 tempQuery.type = req.body.type;
             }
 
-            if(req.body.requester){
+            if (req.body.requester) {
                 tempQuery.requester = req.body.requester;
             }
 
-            if(req.body.submitter){
+            if (req.body.submitter) {
                 tempQuery.submitter = req.body.submitter;
             }
 
-            if(req.body.assignee){
+            if (req.body.assignee) {
                 tempQuery.assignee = req.body.assignee;
             }
 
-            if(req.body.status){
+            if (req.body.status) {
                 tempQuery.status = req.body.status;
             }
 
-            if(req.body.type){
+            if (req.body.type) {
                 tempQuery.type = req.body.type;
             }
 
-            if(req.body.sla_violated){
+            if (req.body.sla_violated) {
                 tempQuery.ticket_matrix.type = req.body.sla_violated;
             }
         }
 
         var fileCheckKey = 'TICKETFILE:' + fromDate + ':' + toDate;
 
-        redisClient.getset(fileCheckKey, true, function(err, redisResp)
-        {
-            if(redisResp)
-            {
+        redisClient.getset(fileCheckKey, true, function (err, redisResp) {
+            if (redisResp) {
                 jsonString = messageFormatter.FormatMessage(new Error('Another user generating same file, please try again'), "ERROR", false, null);
                 logger.debug('[DVP-LiteTicket.GetTicketDetailReportDownload] - API RESPONSE : %s', jsonString);
                 res.end(jsonString);
             }
-            else
-            {
-                externalApi.RemoteGetFileMetadata(null, fileName, company, tenant, function(err, fileData)
-                {
-                    if(err)
-                    {
+            else {
+                externalApi.RemoteGetFileMetadata(null, fileName, company, tenant, function (err, fileData) {
+                    if (err) {
                         redisClient.del(fileCheckKey);
                         jsonString = messageFormatter.FormatMessage(err, "error getting file metadata", false, null);
                         res.end(jsonString);
                     }
-                    else
-                    {
-                        if(fileData)
-                        {
+                    else {
+                        if (fileData) {
                             //delete file
-                            externalApi.DeleteFile(null, fileData.UniqueId, company, tenant, function(err, delResp)
-                            {
-                                if(err)
-                                {
+                            externalApi.DeleteFile(null, fileData.UniqueId, company, tenant, function (err, delResp) {
+                                if (err) {
                                     redisClient.del(fileCheckKey);
                                     jsonString = messageFormatter.FormatMessage(err, "error deleting file", false, null);
                                     res.end(jsonString);
                                 }
-                                else
-                                {
-                                    externalApi.FileUploadReserve(null, fileName, company, tenant, function(err, fileResResp)
-                                    {
-                                        if(err || !fileResResp)
-                                        {
+                                else {
+                                    externalApi.FileUploadReserve(null, fileName, company, tenant, function (err, fileResResp) {
+                                        if (err || !fileResResp) {
                                             redisClient.del(fileCheckKey);
                                             jsonString = messageFormatter.FormatMessage(err, "error reserving file", false, null);
                                             res.end(jsonString);
                                         }
-                                        else
-                                        {
+                                        else {
                                             var uniqueId = fileResResp;
 
                                             jsonString = messageFormatter.FormatMessage(null, "SUCCESS", true, fileName);
@@ -8215,42 +8545,32 @@ module.exports.GetTicketDetailReportDownload = function(req, res){
                                             var offset = 0;
                                             var limit = 5000;
 
-                                            Ticket.count(tempQuery, function (err, ticketCnt)
-                                            {
-                                                if(!err && ticketCnt)
-                                                {
+                                            Ticket.count(tempQuery, function (err, ticketCnt) {
+                                                if (!err && ticketCnt) {
                                                     var arr = [];
-                                                    while(ticketCnt > offset)
-                                                    {
+                                                    while (ticketCnt > offset) {
                                                         arr.push(appendToCSVFile.bind(this, uniqueId, fileName, tempQuery, offset, limit, tz, tagCount));
                                                         offset = offset + limit;
 
                                                     }
 
-                                                    async.series(arr, function(err, results)
-                                                    {
-                                                        if(err)
-                                                        {
+                                                    async.series(arr, function (err, results) {
+                                                        if (err) {
                                                             redisClient.del(fileCheckKey);
-                                                            externalApi.DeleteFile(null, uniqueId, company, tenant, function(err, delData){
+                                                            externalApi.DeleteFile(null, uniqueId, company, tenant, function (err, delData) {
 
                                                             });
                                                         }
-                                                        else
-                                                        {
-                                                            externalApi.UploadFile(null, uniqueId, fileName, company, tenant, function(err, uploadResp)
-                                                            {
+                                                        else {
+                                                            externalApi.UploadFile(null, uniqueId, fileName, company, tenant, function (err, uploadResp) {
                                                                 redisClient.del(fileCheckKey);
                                                                 fs.unlink(fileName);
-                                                                if(!err && uploadResp)
-                                                                {
+                                                                if (!err && uploadResp) {
 
                                                                 }
-                                                                else
-                                                                {
-                                                                    externalApi.DeleteFile(null, uniqueId, company, tenant, function(err, delData){
-                                                                        if(err)
-                                                                        {
+                                                                else {
+                                                                    externalApi.DeleteFile(null, uniqueId, company, tenant, function (err, delData) {
+                                                                        if (err) {
                                                                             logger.error('[DVP-LiteTicket.GetTicketDetailReportDownload] - [%s] - Delete Failed : %s', null, err);
                                                                         }
                                                                     });
@@ -8263,18 +8583,14 @@ module.exports.GetTicketDetailReportDownload = function(req, res){
 
 
                                                 }
-                                                else
-                                                {
+                                                else {
                                                     redisClient.del(fileCheckKey);
-                                                    externalApi.DeleteFile(null, uniqueId, company, tenant, function(err, delData){
+                                                    externalApi.DeleteFile(null, uniqueId, company, tenant, function (err, delData) {
 
                                                     });
 
                                                 }
                                             });
-
-
-
 
 
                                         }
@@ -8283,18 +8599,14 @@ module.exports.GetTicketDetailReportDownload = function(req, res){
                                 }
                             })
                         }
-                        else
-                        {
-                            externalApi.FileUploadReserve(null, fileName, company, tenant, function(err, fileResResp)
-                            {
-                                if(err || !fileResResp)
-                                {
+                        else {
+                            externalApi.FileUploadReserve(null, fileName, company, tenant, function (err, fileResResp) {
+                                if (err || !fileResResp) {
                                     redisClient.del(fileCheckKey);
                                     jsonString = messageFormatter.FormatMessage(err, "error reserving file", false, null);
                                     res.end(jsonString);
                                 }
-                                else
-                                {
+                                else {
                                     var uniqueId = fileResResp;
 
                                     jsonString = messageFormatter.FormatMessage(null, "SUCCESS", true, fileName);
@@ -8303,42 +8615,32 @@ module.exports.GetTicketDetailReportDownload = function(req, res){
                                     var offset = 0;
                                     var limit = 5000;
 
-                                    Ticket.count(tempQuery, function (err, ticketCnt)
-                                    {
-                                        if(!err && ticketCnt)
-                                        {
+                                    Ticket.count(tempQuery, function (err, ticketCnt) {
+                                        if (!err && ticketCnt) {
                                             var arr = [];
-                                            while(ticketCnt > offset)
-                                            {
+                                            while (ticketCnt > offset) {
                                                 arr.push(appendToCSVFile.bind(this, uniqueId, fileName, tempQuery, offset, limit, tz, tagCount));
                                                 offset = offset + limit;
 
                                             }
 
-                                            async.series(arr, function(err, results)
-                                            {
-                                                if(err)
-                                                {
+                                            async.series(arr, function (err, results) {
+                                                if (err) {
                                                     redisClient.del(fileCheckKey);
-                                                    externalApi.DeleteFile(null, uniqueId, company, tenant, function(err, delData){
+                                                    externalApi.DeleteFile(null, uniqueId, company, tenant, function (err, delData) {
 
                                                     });
                                                 }
-                                                else
-                                                {
-                                                    externalApi.UploadFile(null, uniqueId, fileName, company, tenant, function(err, uploadResp)
-                                                    {
+                                                else {
+                                                    externalApi.UploadFile(null, uniqueId, fileName, company, tenant, function (err, uploadResp) {
                                                         redisClient.del(fileCheckKey);
                                                         fs.unlink(fileName);
-                                                        if(!err && uploadResp)
-                                                        {
+                                                        if (!err && uploadResp) {
 
                                                         }
-                                                        else
-                                                        {
-                                                            externalApi.DeleteFile(null, uniqueId, company, tenant, function(err, delData){
-                                                                if(err)
-                                                                {
+                                                        else {
+                                                            externalApi.DeleteFile(null, uniqueId, company, tenant, function (err, delData) {
+                                                                if (err) {
                                                                     logger.error('[DVP-LiteTicket.GetTicketDetailReportDownload] - [%s] - Delete Failed : %s', null, err);
                                                                 }
                                                             });
@@ -8351,10 +8653,9 @@ module.exports.GetTicketDetailReportDownload = function(req, res){
 
 
                                         }
-                                        else
-                                        {
+                                        else {
                                             redisClient.del(fileCheckKey);
-                                            externalApi.DeleteFile(null, uniqueId, company, tenant, function(err, delData){
+                                            externalApi.DeleteFile(null, uniqueId, company, tenant, function (err, delData) {
 
                                             });
 
@@ -8374,21 +8675,17 @@ module.exports.GetTicketDetailReportDownload = function(req, res){
         });
 
 
-
     }
-    else
-    {
+    else {
 
         jsonString = messageFormatter.FormatMessage(new Error('insufficient query parameters'), "insufficient query parameters", false, null);
         res.end(jsonString);
     }
 
 
-
-
 };
 
-module.exports.GetTicketDetailReportAll = function(req, res){
+module.exports.GetTicketDetailReportAll = function (req, res) {
 
 
     logger.info("DVP-LiteTicket.GetTicketsByView Internal method ");
@@ -8397,20 +8694,20 @@ module.exports.GetTicketDetailReportAll = function(req, res){
     var jsonString;
 
 
-    if(req.query && req.query['from']&& req.query['to']) {
+    if (req.query && req.query['from'] && req.query['to']) {
         var from = req.query['from'];
         var to = req.query['to'];
 
         try {
             from = new Date(from);
             to = new Date(to);
-        }catch(ex){
+        } catch (ex) {
             jsonString = messageFormatter.FormatMessage(ex, "From and To dates are require", false, undefined);
             res.end(jsonString);
             return;
         }
 
-        if(from > to){
+        if (from > to) {
 
             jsonString = messageFormatter.FormatMessage(undefined, "From should less than To", false, undefined);
             res.end(jsonString);
@@ -8420,59 +8717,59 @@ module.exports.GetTicketDetailReportAll = function(req, res){
 
         var tempQuery = {company: company, tenant: tenant};
 
-        tempQuery['created_at'] = { $gte: from, $lte: to };
+        tempQuery['created_at'] = {$gte: from, $lte: to};
 
-        if(req.body){
+        if (req.body) {
 
-            if(req.body.tag){
+            if (req.body.tag) {
                 tempQuery.isolated_tags = {$in: [req.body.tag]};
             }
 
-            if(req.body.channel){
-                tempQuery.channel =  req.body.channel;
+            if (req.body.channel) {
+                tempQuery.channel = req.body.channel;
             }
 
-            if(req.body.priority){
+            if (req.body.priority) {
                 tempQuery.priority = req.body.priority;
             }
 
-            if(req.body.type){
+            if (req.body.type) {
                 tempQuery.type = req.body.type;
             }
 
-            if(req.body.requester){
+            if (req.body.requester) {
                 tempQuery.requester = req.body.requester;
             }
 
-            if(req.body.submitter){
+            if (req.body.submitter) {
                 tempQuery.submitter = req.body.submitter;
             }
 
-            if(req.body.assignee){
+            if (req.body.assignee) {
                 tempQuery.assignee = req.body.assignee;
             }
 
-            if(req.body.status){
+            if (req.body.status) {
                 tempQuery.status = req.body.status;
             }
 
-            if(req.body.type){
+            if (req.body.type) {
                 tempQuery.type = req.body.type;
             }
 
-            if(req.body.sla_violated){
+            if (req.body.sla_violated) {
                 tempQuery.ticket_matrix.type = req.body.sla_violated;
             }
         }
 
-        Ticket.find( tempQuery)
+        Ticket.find(tempQuery)
             .populate('assignee', 'name avatar')
             .populate('assignee_group', 'name')
             .populate('requester', 'title gender name firstname lastname ssn address avatar phone email landnumber facebook twitter linkedin googleplus contacts tags')
             .populate('engagement_session')
             .populate('submitter', 'name avatar')
             .populate('collaborators', 'name avatar')
-            .populate( {path: 'form_submission',populate : {path: 'form'}})
+            .populate({path: 'form_submission', populate: {path: 'form'}})
             .exec(function (err, tickets) {
                 if (err) {
                     jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
@@ -8482,18 +8779,16 @@ module.exports.GetTicketDetailReportAll = function(req, res){
                 res.end(jsonString);
             });
 
-    }else{
+    } else {
 
         jsonString = messageFormatter.FormatMessage(undefined, "From and To dates are require", false, undefined);
         res.end(jsonString);
     }
 
 
-
-
 }
 
-module.exports.GetTicketDetailReport = function(req, res){
+module.exports.GetTicketDetailReport = function (req, res) {
 
 
     logger.info("DVP-LiteTicket.GetTicketsByView Internal method ");
@@ -8502,20 +8797,20 @@ module.exports.GetTicketDetailReport = function(req, res){
     var jsonString;
 
 
-    if(req.query && req.query['from']&& req.query['to']) {
+    if (req.query && req.query['from'] && req.query['to']) {
         var from = req.query['from'];
         var to = req.query['to'];
 
         try {
             from = new Date(from);
             to = new Date(to);
-        }catch(ex){
+        } catch (ex) {
             jsonString = messageFormatter.FormatMessage(ex, "From and To dates are require", false, undefined);
             res.end(jsonString);
             return;
         }
 
-        if(from > to){
+        if (from > to) {
 
             jsonString = messageFormatter.FormatMessage(undefined, "From should less than To", false, undefined);
             res.end(jsonString);
@@ -8525,47 +8820,47 @@ module.exports.GetTicketDetailReport = function(req, res){
 
         var tempQuery = {company: company, tenant: tenant};
 
-        tempQuery['created_at'] = { $gte: from, $lte: to };
+        tempQuery['created_at'] = {$gte: from, $lte: to};
 
-        if(req.body){
+        if (req.body) {
 
-            if(req.body.tag){
+            if (req.body.tag) {
                 tempQuery.isolated_tags = {$in: [req.body.tag]};
             }
 
-            if(req.body.channel){
-                tempQuery.channel =  req.body.channel;
+            if (req.body.channel) {
+                tempQuery.channel = req.body.channel;
             }
 
-            if(req.body.priority){
+            if (req.body.priority) {
                 tempQuery.priority = req.body.priority;
             }
 
-            if(req.body.type){
+            if (req.body.type) {
                 tempQuery.type = req.body.type;
             }
 
-            if(req.body.requester){
+            if (req.body.requester) {
                 tempQuery.requester = req.body.requester;
             }
 
-            if(req.body.submitter){
+            if (req.body.submitter) {
                 tempQuery.submitter = req.body.submitter;
             }
 
-            if(req.body.assignee){
+            if (req.body.assignee) {
                 tempQuery.assignee = req.body.assignee;
             }
 
-            if(req.body.status){
+            if (req.body.status) {
                 tempQuery.status = req.body.status;
             }
 
-            if(req.body.type){
+            if (req.body.type) {
                 tempQuery.type = req.body.type;
             }
 
-            if(req.body.sla_violated){
+            if (req.body.sla_violated) {
                 tempQuery.ticket_matrix.type = req.body.sla_violated;
             }
         }
@@ -8573,7 +8868,7 @@ module.exports.GetTicketDetailReport = function(req, res){
         var tempLimit = parseInt(req.params.limit);
         var tempSkip = parseInt(req.params.skip);
 
-        Ticket.find( tempQuery)
+        Ticket.find(tempQuery)
             .skip(tempSkip)
             .limit(tempLimit)
             .populate('assignee', 'name avatar')
@@ -8590,7 +8885,7 @@ module.exports.GetTicketDetailReport = function(req, res){
                 res.end(jsonString);
             });
 
-    }else{
+    } else {
 
         jsonString = messageFormatter.FormatMessage(undefined, "From and To dates are require", false, undefined);
         res.end(jsonString);
@@ -8598,7 +8893,7 @@ module.exports.GetTicketDetailReport = function(req, res){
 
 }
 
-module.exports.GetTicketDetailReportCount = function(req, res){
+module.exports.GetTicketDetailReportCount = function (req, res) {
 
     logger.info("DVP-LiteTicket.GetTicketsByView Internal method ");
     var company = parseInt(req.user.company);
@@ -8606,20 +8901,20 @@ module.exports.GetTicketDetailReportCount = function(req, res){
     var jsonString;
 
 
-    if(req.query && req.query['from']&& req.query['to']) {
+    if (req.query && req.query['from'] && req.query['to']) {
         var from = req.query['from'];
         var to = req.query['to'];
 
         try {
             from = new Date(from);
             to = new Date(to);
-        }catch(ex){
+        } catch (ex) {
             jsonString = messageFormatter.FormatMessage(ex, "From and To dates are require", false, undefined);
             res.end(jsonString);
             return;
         }
 
-        if(from > to){
+        if (from > to) {
 
             jsonString = messageFormatter.FormatMessage(undefined, "From should less than To", false, undefined);
             res.end(jsonString);
@@ -8629,53 +8924,53 @@ module.exports.GetTicketDetailReportCount = function(req, res){
 
         var tempQuery = {company: company, tenant: tenant};
 
-        tempQuery['created_at'] = { $gte: from, $lte: to };
+        tempQuery['created_at'] = {$gte: from, $lte: to};
 
-        if(req.body){
+        if (req.body) {
 
-            if(req.body.tag){
+            if (req.body.tag) {
                 tempQuery.isolated_tags = {$in: [req.body.tag]};
             }
 
-            if(req.body.channel){
-                tempQuery.channel =  req.body.channel;
+            if (req.body.channel) {
+                tempQuery.channel = req.body.channel;
             }
 
-            if(req.body.priority){
+            if (req.body.priority) {
                 tempQuery.priority = req.body.priority;
             }
 
-            if(req.body.type){
+            if (req.body.type) {
                 tempQuery.type = req.body.type;
             }
 
-            if(req.body.requester){
+            if (req.body.requester) {
                 tempQuery.requester = req.body.requester;
             }
 
-            if(req.body.submitter){
+            if (req.body.submitter) {
                 tempQuery.submitter = req.body.submitter;
             }
 
-            if(req.body.assignee){
+            if (req.body.assignee) {
                 tempQuery.assignee = req.body.assignee;
             }
 
-            if(req.body.status){
+            if (req.body.status) {
                 tempQuery.status = req.body.status;
             }
 
-            if(req.body.type){
+            if (req.body.type) {
                 tempQuery.type = req.body.type;
             }
 
-            if(req.body.sla_violated){
+            if (req.body.sla_violated) {
                 tempQuery.ticket_matrix.type = req.body.sla_violated;
             }
 
         }
 
-        Ticket.count( tempQuery, function (err, tickets) {
+        Ticket.count(tempQuery, function (err, tickets) {
             if (err) {
                 jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
             } else {
@@ -8687,7 +8982,7 @@ module.exports.GetTicketDetailReportCount = function(req, res){
             res.end(jsonString);
         });
 
-    }else{
+    } else {
 
         jsonString = messageFormatter.FormatMessage(undefined, "From and To dates are require", false, undefined);
         res.end(jsonString);
@@ -8696,7 +8991,7 @@ module.exports.GetTicketDetailReportCount = function(req, res){
 
 }
 
-module.exports.GetTicketsByField = function(req, res) {
+module.exports.GetTicketsByField = function (req, res) {
 
 
     logger.info("DVP-LiteTicket.GetTicketsByView Internal method ");
@@ -8725,7 +9020,7 @@ module.exports.GetTicketsByField = function(req, res) {
 
 };
 
-module.exports.GetExternalUserTicketCounts = function(req,res) {
+module.exports.GetExternalUserTicketCounts = function (req, res) {
 
 
     logger.debug("DVP-Interactions.GetEngagement Internal method ");
@@ -8763,20 +9058,20 @@ module.exports.GetExternalUserTicketCounts = function(req,res) {
 
 //---------------------------------TicketTypes-------------------------------------------
 
-module.exports.CreateTicketTypes = function(req,res){
+module.exports.CreateTicketTypes = function (req, res) {
     logger.info("DVP-LiteTicket.CreateTicketTypes Internal method ");
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    var customTypes = req.body.custom_types? req.body.custom_types: [];
+    var customTypes = req.body.custom_types ? req.body.custom_types : [];
 
     var tTypes = TicketTypes({
         company: company,
         tenant: tenant,
         activate_default: true,
-        default_types: ['question','complain','incident','action'],
+        default_types: ['question', 'complain', 'incident', 'action'],
         custom_types: customTypes,
         created_at: Date.now(),
         updated_at: Date.now()
@@ -8791,7 +9086,7 @@ module.exports.CreateTicketTypes = function(req,res){
         updated_at: Date.now()
     });
 
-    try{
+    try {
         tTypes.save(function (err, ticketTypes) {
             if (err) {
                 jsonString = messageFormatter.FormatMessage(err, "Ticket types create failed", false, undefined);
@@ -8801,25 +9096,25 @@ module.exports.CreateTicketTypes = function(req,res){
             }
             res.end(jsonString);
         });
-    }catch(ex){
+    } catch (ex) {
         console.log(ex);
         jsonString = messageFormatter.FormatMessage(ex, "Ticket types create failed", false, undefined);
     }
 };
 
-module.exports.UpdateTicketTypes = function(req,res){
+module.exports.UpdateTicketTypes = function (req, res) {
     logger.info("DVP-LiteTicket.UpdateTicketTypes Internal method ");
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    TicketTypes.findOne({_id: req.params.id, company: company, tenant: tenant}, function(err, ticketTypes){
-        if(err){
+    TicketTypes.findOne({_id: req.params.id, company: company, tenant: tenant}, function (err, ticketTypes) {
+        if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get Ticket Types Failed", false, undefined);
             res.end(jsonString);
-        }else{
-            if(ticketTypes){
+        } else {
+            if (ticketTypes) {
                 ticketTypes.activate_default = req.body.activate_default;
                 ticketTypes.custom_types = req.body.custom_types;
                 ticketTypes.updated_at = Date.now();
@@ -8838,7 +9133,7 @@ module.exports.UpdateTicketTypes = function(req,res){
                     }
                     res.end(jsonString);
                 });
-            }else{
+            } else {
                 jsonString = messageFormatter.FormatMessage(err, "No Ticket Types Found", false, undefined);
                 res.end(jsonString);
             }
@@ -8846,7 +9141,7 @@ module.exports.UpdateTicketTypes = function(req,res){
     });
 };
 
-module.exports.RemoveTicketTypes = function(req,res){
+module.exports.RemoveTicketTypes = function (req, res) {
     logger.info("DVP-LiteTicket.RemoveTicketTypes Internal method ");
 
     var company = parseInt(req.user.company);
@@ -8875,15 +9170,18 @@ module.exports.RemoveTicketTypes = function(req,res){
     });
 };
 
-module.exports.AddCustomType = function(req,res){
+module.exports.AddCustomType = function (req, res) {
     logger.info("DVP-LiteTicket.AddCustomType Internal method ");
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    TicketTypes.findOneAndUpdate({_id: req.params.id,company: company, tenant: tenant}, { $addToSet :{
-        custom_types : req.params.customtype}}, function (err, ticketTypes) {
+    TicketTypes.findOneAndUpdate({_id: req.params.id, company: company, tenant: tenant}, {
+        $addToSet: {
+            custom_types: req.params.customtype
+        }
+    }, function (err, ticketTypes) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Add Custom Type Failed", false, undefined);
         } else {
@@ -8893,15 +9191,18 @@ module.exports.AddCustomType = function(req,res){
     });
 };
 
-module.exports.RemoveCustomType = function(req,res){
+module.exports.RemoveCustomType = function (req, res) {
     logger.info("DVP-LiteTicket.RemoveCutomType Internal method ");
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    TicketTypes.findOneAndUpdate({_id: req.params.id,company: company, tenant: tenant}, { $pull :{
-        custom_types : req.params.customtype}}, function (err, ticketTypes) {
+    TicketTypes.findOneAndUpdate({_id: req.params.id, company: company, tenant: tenant}, {
+        $pull: {
+            custom_types: req.params.customtype
+        }
+    }, function (err, ticketTypes) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Delete Custom Type Failed", false, undefined);
         } else {
@@ -8911,7 +9212,7 @@ module.exports.RemoveCustomType = function(req,res){
     });
 };
 
-module.exports.GetTicketTypes = function(req,res){
+module.exports.GetTicketTypes = function (req, res) {
     logger.info("DVP-LiteTicket.GetTicketTypes Internal method ");
 
     var company = parseInt(req.user.company);
@@ -8929,19 +9230,19 @@ module.exports.GetTicketTypes = function(req,res){
     });
 };
 
-module.exports.GetAvailableTypes = function(req,res){
+module.exports.GetAvailableTypes = function (req, res) {
     logger.info("DVP-LiteTicket.GetAvailableTypes Internal method ");
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
 
-    GetAvailableTicketTypes(company, tenant, function(message, obj){
+    GetAvailableTicketTypes(company, tenant, function (message, obj) {
         res.end(message);
     });
 };
 
 
-var GetAvailableTicketTypes = function(company, tenant, callback){
+var GetAvailableTicketTypes = function (company, tenant, callback) {
     var jsonString;
     TicketTypes.findOne({company: company, tenant: tenant}, function (err, ticketTypes) {
         if (err) {
@@ -8950,9 +9251,9 @@ var GetAvailableTicketTypes = function(company, tenant, callback){
         } else {
             var tTypes = [];
             if (ticketTypes) {
-                if(ticketTypes.activate_default) {
+                if (ticketTypes.activate_default) {
                     tTypes = ticketTypes.default_types.concat(ticketTypes.custom_types);
-                }else{
+                } else {
                     tTypes = ticketTypes.custom_types;
                 }
             }
@@ -8975,29 +9276,26 @@ module.exports.AddNewTicketPrefix = function (req, res) {
     var jsonString;
 
 
-
-    var ticketPrefix =TicketPrefix({
-        company:company,
-        tenant:tenant,
-        name:req.body.name,
-        status:false
+    var ticketPrefix = TicketPrefix({
+        company: company,
+        tenant: tenant,
+        name: req.body.name,
+        status: false
     });
 
     ticketPrefix.save(function (errPrefix, resPrefix) {
-        if(errPrefix)
-        {
+        if (errPrefix) {
             jsonString = messageFormatter.FormatMessage(errPrefix, "Ticket prefix saving failed ", false, undefined);
             res.end(jsonString);
         }
-        else
-        {
+        else {
             jsonString = messageFormatter.FormatMessage(undefined, "Ticket prefix saving succeeded ", true, resPrefix);
             res.end(jsonString);
         }
     });
 
 };
-module.exports.GetTicketPrefixAvailability= function(req, res){
+module.exports.GetTicketPrefixAvailability = function (req, res) {
 
     logger.info("DVP-LiteTicket.GetTicketPrefixAvailability Internal method ");
     var company = parseInt(req.user.company);
@@ -9010,12 +9308,10 @@ module.exports.GetTicketPrefixAvailability= function(req, res){
         if (errPrefix) {
             jsonString = messageFormatter.FormatMessage(errPrefix, "Check Prefix availability failed", false, undefined);
         } else {
-            if(resPrefix.length>0)
-            {
+            if (resPrefix.length > 0) {
                 jsonString = messageFormatter.FormatMessage(undefined, "Check Prefix availability Successful", false, false);
             }
-            else
-            {
+            else {
                 jsonString = messageFormatter.FormatMessage(undefined, "Check Prefix availability Successful", true, true);
             }
 
@@ -9025,14 +9321,14 @@ module.exports.GetTicketPrefixAvailability= function(req, res){
 
 
 };
-module.exports.GetAllTicketPrefixes= function(req, res){
+module.exports.GetAllTicketPrefixes = function (req, res) {
 
     logger.info("DVP-LiteTicket.GetAllTicketPrefixes Internal method ");
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    var tempQuery = {company:company , tenant:tenant};
+    var tempQuery = {company: company, tenant: tenant};
 
     TicketPrefix.find(tempQuery, function (errPrefix, resPrefix) {
         if (errPrefix) {
@@ -9048,14 +9344,14 @@ module.exports.GetAllTicketPrefixes= function(req, res){
 
 
 };
-module.exports.GetTicketPrefix= function(req, res){
+module.exports.GetTicketPrefix = function (req, res) {
 
     logger.info("DVP-LiteTicket.GetTicketPrefix Internal method ");
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    var tempQuery = {company:company , tenant:tenant,name:req.params.prefix};
+    var tempQuery = {company: company, tenant: tenant, name: req.params.prefix};
 
     TicketPrefix.find(tempQuery, function (errPrefix, resPrefix) {
         if (errPrefix) {
@@ -9071,22 +9367,22 @@ module.exports.GetTicketPrefix= function(req, res){
 
 
 };
-module.exports.MakePrefixAvailable= function(req, res){
+module.exports.MakePrefixAvailable = function (req, res) {
 
     logger.info("DVP-LiteTicket.MakePrefixAvailable Internal method ");
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    var disableQuery = {company:company , tenant:tenant,status:true};
-    var enableQuery = {company:company , tenant:tenant,name:req.params.prefix};
+    var disableQuery = {company: company, tenant: tenant, status: true};
+    var enableQuery = {company: company, tenant: tenant, name: req.params.prefix};
 
     TicketPrefix.update(disableQuery,
         {
-            status:false
+            status: false
         },
         {
-            multi:true
+            multi: true
         },
         function (errDisable, resDisable) {
             if (errDisable) {
@@ -9095,26 +9391,22 @@ module.exports.MakePrefixAvailable= function(req, res){
             } else {
 
 
-                TicketPrefix.findOneAndUpdate(enableQuery,{status:true}, function (errDefault,resDefault) {
+                TicketPrefix.findOneAndUpdate(enableQuery, {status: true}, function (errDefault, resDefault) {
 
                     if (errDefault) {
                         jsonString = messageFormatter.FormatMessage(errDefault, "Set available prefix failed", false, undefined);
                     }
-                    else
-                    {
+                    else {
 
-                        if(redisClient)
-                        {
+                        if (redisClient) {
 
-                            var prefixKey=tenant+":"+company+":prefix:ticket";
-                            redisClient.set(prefixKey,req.params.prefix, function (errSet,resSet) {
+                            var prefixKey = tenant + ":" + company + ":prefix:ticket";
+                            redisClient.set(prefixKey, req.params.prefix, function (errSet, resSet) {
 
-                                if(errSet)
-                                {
+                                if (errSet) {
                                     jsonString = messageFormatter.FormatMessage(errSet, "Default prefix cache recording failed", false, errSet);
                                 }
-                                else
-                                {
+                                else {
                                     jsonString = messageFormatter.FormatMessage(undefined, "Default prefix cache recording successful", true, resDefault);
                                 }
                                 res.end(jsonString);
@@ -9122,8 +9414,7 @@ module.exports.MakePrefixAvailable= function(req, res){
 
 
                         }
-                        else
-                        {
+                        else {
                             jsonString = messageFormatter.FormatMessage(new Error("Redis client not responding"), "Default prefix cache recording failed/ Redis client not responding", false, undefined);
                             res.end(jsonString);
                         }
@@ -9140,7 +9431,6 @@ module.exports.MakePrefixAvailable= function(req, res){
 };
 
 
-
 // -------------------------------- Tickets by Me ----------------------------------------
 module.exports.GetAllTicketsSubmittedByMe = function (req, res) {
     logger.debug("DVP-LiteTicket.GetAllTicketsSubmittedByMe Internal method ");
@@ -9152,14 +9442,16 @@ module.exports.GetAllTicketsSubmittedByMe = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var qObj = {
                     company: company,
@@ -9180,11 +9472,11 @@ module.exports.GetAllTicketsSubmittedByMe = function (req, res) {
 
                 var sortQuery = {};
 
-                if(req.query.sorted_by){
+                if (req.query.sorted_by) {
 
                     sortQuery[req.query.sorted_by] = -1;
 
-                }else{
+                } else {
                     sortQuery = {created_at: -1}
                 }
 
@@ -9230,19 +9522,20 @@ module.exports.GetAllTicketsWatchedByMe = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
 
+                var user = useraccount.userref.toObject();
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    watchers:{$in:[user.id]}
+                    watchers: {$in: [user.id]}
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9259,11 +9552,11 @@ module.exports.GetAllTicketsWatchedByMe = function (req, res) {
 
                 var sortQuery = {};
 
-                if(req.query.sorted_by){
+                if (req.query.sorted_by) {
 
                     sortQuery[req.query.sorted_by] = -1;
 
-                }else{
+                } else {
                     sortQuery = {created_at: -1}
                 }
 
@@ -9311,19 +9604,22 @@ module.exports.GetAllTicketsCollaboratedByMe = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    collaborators:{$in:[user.id]}
+                    collaborators: {$in: [user.id]}
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9339,11 +9635,11 @@ module.exports.GetAllTicketsCollaboratedByMe = function (req, res) {
 
                 var sortQuery = {};
 
-                if(req.query.sorted_by){
+                if (req.query.sorted_by) {
 
                     sortQuery[req.query.sorted_by] = -1;
 
-                }else{
+                } else {
                     sortQuery = {created_at: -1}
                 }
 
@@ -9387,14 +9683,17 @@ module.exports.GetMySubmittedTicketCount = function (req, res) {
     var tenant = parseInt(req.user.tenant);
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
 
                 var qObj = {
                     company: company,
@@ -9413,7 +9712,7 @@ module.exports.GetMySubmittedTicketCount = function (req, res) {
                     qObj.status = {$in: paramArr}
                 }
 
-                Ticket.count(qObj).exec(function (err,tickets) {
+                Ticket.count(qObj).exec(function (err, tickets) {
                     if (err) {
 
                         jsonString = messageFormatter.FormatMessage(err, "Fail to get count of Tickets submitted by me ", false, undefined);
@@ -9446,19 +9745,22 @@ module.exports.GetMyWatchedTicketCount = function (req, res) {
     var tenant = parseInt(req.user.tenant);
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    watchers: {$in:[user.id]}
+                    watchers: {$in: [user.id]}
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9505,19 +9807,22 @@ module.exports.GetMyCollaboratedTicketCount = function (req, res) {
     var tenant = parseInt(req.user.tenant);
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    collaborators: {$in:[user.id]}
+                    collaborators: {$in: [user.id]}
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9584,7 +9889,7 @@ module.exports.GetAllTicketsCount = function (req, res) {
         qObj.status = {$in: paramArr};
     }
 
-    Ticket.count(qObj).exec(function (err,resCount) {
+    Ticket.count(qObj).exec(function (err, resCount) {
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
@@ -9616,14 +9921,17 @@ module.exports.GetMyTicketsCount = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if (user) {
+            if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 var qObj = {
                     company: company,
@@ -9680,14 +9988,17 @@ module.exports.GetMyGroupTicketsCount = function (req, res) {
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+    UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').populate({path: 'group'}).exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
 
         } else {
 
-            if(user && user.group) {
+            if (useraccount && useraccount.userref && useraccount.group) {
+
+                //    var user = useraccount.userref.toObject();
+                // if (user && user.group) {
                 /*
                  UserGroup.find({"users": user.id}, function (error, groups) {
                  if(!error  && groups) {
@@ -9714,14 +10025,11 @@ module.exports.GetMyGroupTicketsCount = function (req, res) {
                  */
 
 
-
-
-
                 var obj = {
 
                     "company": company,
                     "tenant": tenant,
-                    "assignee_group": user.group,
+                    "assignee_group": useraccount.group,
                     "active": true
                 }
 
@@ -9755,7 +10063,7 @@ module.exports.GetMyGroupTicketsCount = function (req, res) {
                 });
 
 
-            }else{
+            } else {
 
                 jsonString = messageFormatter.FormatMessage(undefined, "No User Found", false, undefined);
                 res.end(jsonString);
