@@ -2872,7 +2872,8 @@ module.exports.AddComment = function (req, res) {
                                                 reply_session: req.body.reply_session,
                                                 company: company,
                                                 tenant: tenant,
-                                                author: req.user.iss
+                                                author: req.user.iss,
+                                                imageUrl: req.body.imageUrl
                                             };
 
                                             if (req.body.channel == 'twitter') {
