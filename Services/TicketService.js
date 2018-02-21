@@ -8907,7 +8907,7 @@ module.exports.CreateTicketTypes = function (req, res) {
         company: company,
         tenant: tenant,
         activate_default: true,
-        default_types: ['question', 'complain', 'incident', 'action'],
+        default_types: ['Action', 'Complaint', 'Incident', 'Question' ],
         custom_types: customTypes,
         created_at: Date.now(),
         updated_at: Date.now()
