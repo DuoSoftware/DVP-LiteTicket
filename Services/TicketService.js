@@ -1743,13 +1743,13 @@ module.exports.GetTicketWithDetails = function (req, res) {
 
 
 
-                                                InsertUserRecentTicket(company, tenant, user._id, ticket.id, "get");
+                                                InsertUserRecentTicket(company, tenant, user.id, ticket.id, "get");
 
 
                                                 if (ticket.comments) {
                                                     var commentArray = ticket.comments.filter(function (comment) {
                                                         var updatedComment;
-                                                        if (!(comment.public === 'private' && comment.author.id !== user._id)) {
+                                                        if (!(comment.public === 'private' && comment.author.id !== user.id)) {
                                                             updatedComment = comment;
                                                         }
                                                         else {
@@ -1797,13 +1797,13 @@ module.exports.GetTicketWithDetails = function (req, res) {
 
 
 
-                                            InsertUserRecentTicket(company, tenant, user._id, ticket.id, "get");
+                                            InsertUserRecentTicket(company, tenant, user.id, ticket.id, "get");
 
 
                                             if (ticket.comments) {
                                                 var commentArray = ticket.comments.filter(function (comment) {
                                                     var updatedComment;
-                                                    if (!(comment.public === 'private' && comment.author.id !== user._id)) {
+                                                    if (!(comment.public === 'private' && comment.author.id !== user.id)) {
                                                         updatedComment = comment;
                                                     }
                                                     else {
@@ -1975,7 +1975,7 @@ module.exports.PickTicket = function (req, res) {
                                 var assigneeGroup = deepcopy(ticket.toJSON().assignee_group);
                                 var time = new Date().toISOString();
                                 //ticket.assignee_group = undefined;
-                                ticket.assignee = user._id;
+                                ticket.assignee = user.id;
                                 ticket.updated_at = time;
                                 var tEvent = TicketEvent({
                                     type: 'status',
@@ -2271,7 +2271,7 @@ module.exports.AddCommentByEngagement = function (req, res) {
                                         body_type: req.body.body_type,
                                         type: req.body.type,
                                         public: req.body.public,
-                                        author: user._id,
+                                        author: user.id,
                                         author_external: req.body.author_external,
                                         attachments: req.body.attachments,
                                         channel: req.body.channel,
@@ -2362,7 +2362,7 @@ module.exports.AddCommentByEngagement = function (req, res) {
                                 body_type: req.body.body_type,
                                 type: req.body.type,
                                 public: req.body.public,
-                                author: user._id,
+                                author: user.id,
                                 author_external: req.body.author_external,
                                 attachments: req.body.attachments,
                                 channel: req.body.channel,
@@ -2419,11 +2419,11 @@ module.exports.AddCommentByEngagement = function (req, res) {
 
                                                 if (ticket.collaborators && util.isArray(ticket.collaborators)) {
 
-                                                    if (ticket.collaborators.indexOf(user._id) == -1) {
-                                                        ticket.collaborators.push(user._id);
+                                                    if (ticket.collaborators.indexOf(user.id) == -1) {
+                                                        ticket.collaborators.push(user.id);
                                                     }
                                                 } else {
-                                                    ticket.collaborators = [user._id];
+                                                    ticket.collaborators = [user.id];
                                                 }
                                             }
                                         }
@@ -2492,7 +2492,7 @@ module.exports.AddCommentByEngagement = function (req, res) {
                                             body_type: req.body.body_type,
                                             type: req.body.type,
                                             public: req.body.public,
-                                            author: user._id,
+                                            author: user.id,
                                             author_external: req.body.author_external,
                                             attachments: req.body.attachments,
                                             channel: req.body.channel,
@@ -2891,7 +2891,7 @@ module.exports.AddCommentByReference = function (req, res) {
                                 body_type: req.body.body_type,
                                 type: req.body.type,
                                 public: req.body.public,
-                                author: user._id,
+                                author: user.id,
                                 author_external: req.body.author_external,
                                 attachments: req.body.attachments,
                                 channel: req.body.channel,
@@ -2951,11 +2951,11 @@ module.exports.AddCommentByReference = function (req, res) {
 
                                                 if (ticket.collaborators && util.isArray(ticket.collaborators)) {
 
-                                                    if (ticket.collaborators.indexOf(user._id) == -1) {
-                                                        ticket.collaborators.push(user._id);
+                                                    if (ticket.collaborators.indexOf(user.id) == -1) {
+                                                        ticket.collaborators.push(user.id);
                                                     }
                                                 } else {
-                                                    ticket.collaborators = [user._id];
+                                                    ticket.collaborators = [user.id];
                                                 }
                                             }
                                         }
@@ -3084,7 +3084,7 @@ module.exports.AddComment = function (req, res) {
                                 body_type: req.body.body_type,
                                 type: req.body.type,
                                 public: req.body.public,
-                                author: user._id,
+                                author: user.id,
                                 author_external: req.body.author_external,
                                 attachments: req.body.attachments,
                                 channel_from: req.body.channel_from,
@@ -3204,11 +3204,11 @@ module.exports.AddComment = function (req, res) {
 
                                                 if (ticket.collaborators && util.isArray(ticket.collaborators)) {
 
-                                                    if (ticket.collaborators.indexOf(user._id) == -1) {
-                                                        ticket.collaborators.push(user._id);
+                                                    if (ticket.collaborators.indexOf(user.id) == -1) {
+                                                        ticket.collaborators.push(user.id);
                                                     }
                                                 } else {
-                                                    ticket.collaborators = [user._id];
+                                                    ticket.collaborators = [user.id];
                                                 }
                                             }
                                         }
@@ -3506,7 +3506,7 @@ module.exports.AddCommentToComment = function (req, res) {
                                             body_type: req.body.body_type,
                                             type: req.body.type,
                                             public: req.body.public,
-                                            author: user._id,
+                                            author: user.id,
                                             author_external: req.body.author_external,
                                             attachments: req.body.attachments,
                                             channel: req.body.channel,
@@ -3628,11 +3628,11 @@ module.exports.AddCommentToComment = function (req, res) {
 
                                                             if (ticket.collaborators && util.isArray(ticket.collaborators)) {
 
-                                                                if (ticket.collaborators.indexOf(user._id) == -1) {
-                                                                    ticket.collaborators.push(user._id);
+                                                                if (ticket.collaborators.indexOf(user.id) == -1) {
+                                                                    ticket.collaborators.push(user.id);
                                                                 }
                                                             } else {
-                                                                ticket.collaborators = [user._id];
+                                                                ticket.collaborators = [user.id];
                                                             }
 
                                                         }
@@ -4072,7 +4072,7 @@ module.exports.AssignToUser = function (req, res) {
                                 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-                                //ticket.assignee = user._id;
+                                //ticket.assignee = user.id;
                                 ticket.assignee = user;
                                 ticket.updated_at = time;
                                 ticket.$addToSet = {"events": tEvent};
@@ -4697,7 +4697,7 @@ module.exports.CreateSubTicket = function (req, res) {
                                 requester: req.body.requester,
                                 assignee: req.body.assignee,
                                 assignee_group: req.body.assignee_group,
-                                submitter: user._id,
+                                submitter: user.id,
                                 company: company,
                                 tenant: tenant,
                                 attachments: req.body.attachments,
@@ -5403,7 +5403,7 @@ module.exports.WatchTicket = function (req, res) {
                     _id: req.params.id,
                 }, {
 
-                    $addToSet: {watchers: user._id},
+                    $addToSet: {watchers: user.id},
                     updated_at: time
 
                 }, function (err, recentticket) {
@@ -5451,7 +5451,7 @@ module.exports.StopWatchTicket = function (req, res) {
                     _id: req.params.id
                 }, {
 
-                    $pull: {watchers: user._id},
+                    $pull: {watchers: user.id},
                     updated_at: time
 
                 }, function (err, recentticket) {
@@ -5994,7 +5994,7 @@ module.exports.AddCaseConfiguration = function (req, res) {
                                 active: true,
                                 configurationName: req.body.configurationName,
                                 description: req.body.description,
-                                submitter: user._id,
+                                submitter: user.id,
                                 company: company,
                                 tenant: tenant,
                                 configurationRule: req.body.configurationRule,
@@ -6186,7 +6186,7 @@ module.exports.CreateCase = function (req, res) {
                     status: "new",
                     caseName: req.body.caseName,
                     description: req.body.description,
-                    submitter: user._id,
+                    submitter: user.id,
                     company: company,
                     tenant: tenant,
                     attachments: req.body.attachments,
@@ -6624,7 +6624,7 @@ module.exports.CreateTicketWithComment = function (req, res) {
                     description: req.body.description,
                     priority: req.body.priority,
                     status: "new",
-                    submitter: user._id,
+                    submitter: user.id,
                     company: company,
                     tenant: tenant,
                     attachments: req.body.attachments,
@@ -6692,7 +6692,7 @@ module.exports.CreateTicketWithComment = function (req, res) {
                     }
                     else {
                         if (client) {
-                            InsertUserRecentTicket(company, tenant, user._id, client.id, "comment");
+                            InsertUserRecentTicket(company, tenant, user.id, client.id, "comment");
                             if (req.body.requester)
                                 AddExternalUserRecentTicket(company, tenant, req.body.requester, client.id);
                         }
@@ -6777,11 +6777,11 @@ module.exports.CreateTicketWithComment = function (req, res) {
 
                                                         if (ticket.collaborators && util.isArray(ticket.collaborators)) {
 
-                                                            if (ticket.collaborators.indexOf(user._id) == -1) {
-                                                                ticket.collaborators.push(user._id);
+                                                            if (ticket.collaborators.indexOf(user.id) == -1) {
+                                                                ticket.collaborators.push(user.id);
                                                             }
                                                         } else {
-                                                            ticket.collaborators = [user._id];
+                                                            ticket.collaborators = [user.id];
                                                         }
                                                     }
                                                 }
@@ -9459,7 +9459,7 @@ module.exports.GetAllTicketsSubmittedByMe = function (req, res) {
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    submitter: user._id
+                    submitter: user.id
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9538,7 +9538,7 @@ module.exports.GetAllTicketsWatchedByMe = function (req, res) {
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    watchers: {$in: [user._id]}
+                    watchers: {$in: [user.id]}
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9622,7 +9622,7 @@ module.exports.GetAllTicketsCollaboratedByMe = function (req, res) {
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    collaborators: {$in: [user._id]}
+                    collaborators: {$in: [user.id]}
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9701,7 +9701,7 @@ module.exports.GetMySubmittedTicketCount = function (req, res) {
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    submitter: user._id
+                    submitter: user.id
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9763,7 +9763,7 @@ module.exports.GetMyWatchedTicketCount = function (req, res) {
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    watchers: {$in: [user._id]}
+                    watchers: {$in: [user.id]}
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9825,7 +9825,7 @@ module.exports.GetMyCollaboratedTicketCount = function (req, res) {
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    collaborators: {$in: [user._id]}
+                    collaborators: {$in: [user.id]}
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9939,7 +9939,7 @@ module.exports.GetMyTicketsCount = function (req, res) {
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    assignee: user._id
+                    assignee: user.id
                 };
 
 
@@ -10003,7 +10003,7 @@ module.exports.GetMyGroupTicketsCount = function (req, res) {
                 //    var user = useraccount.userref.toObject();
                 // if (user && user.group) {
                 /*
-                 UserGroup.find({"users": user._id}, function (error, groups) {
+                 UserGroup.find({"users": user.id}, function (error, groups) {
                  if(!error  && groups) {
                  var ids = [];
                  groups.forEach(function (item) {
