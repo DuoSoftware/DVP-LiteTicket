@@ -49,7 +49,7 @@ function CreateTimer(req, res){
                                 if ((err || !forms)&& req.body) {
 
                                         var timeentry = TimeEntry({
-                                            user: user.id,
+                                            user: user._id,
                                             ticket: req.body.ticket,
                                             startTime: Date.now(),
                                             running: true,
@@ -690,7 +690,7 @@ function StopTimer(req, res){
                 var user = useraccount.userref.toObject();
 
 
-                TimeEntry.findOne({user: user.id, _id:req.params.id, company: company, tenant: tenant}, function(err, timer) {
+                TimeEntry.findOne({user: user._id, _id:req.params.id, company: company, tenant: tenant}, function(err, timer) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Get Time entry Failed", false, undefined);
                         res.end(jsonString);
@@ -709,11 +709,11 @@ function StopTimer(req, res){
                                 if (timer.last_event == 'start') {
                                     var ms = moment(Date.now()).diff(moment(timer.last_event_date));
                                     var d = moment.duration(ms);
-                                    time = timer.time + d;
+                                    time = timer.time + ms;
                                 }
 
                                 TimeEntry.findOneAndUpdate(
-                                    {user: user.id, running: true, company: company, tenant: tenant},
+                                    {user: user._id, running: true, company: company, tenant: tenant},
                                     {
                                         last_event_date: Date.now(),
                                         time: time,
