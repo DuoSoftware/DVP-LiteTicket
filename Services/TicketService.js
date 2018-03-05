@@ -315,7 +315,7 @@ module.exports.CreateTicket = function (req, res) {
                             assignee: req.body.assignee,
                             assignee_group: req.body.assignee_group,
                             due_at: req.body.due_at,
-                            watchers: [user._id],
+                            watchers: [user.id],
                             businessUnit: req.body.businessUnit
                         });
 
@@ -397,7 +397,7 @@ module.exports.CreateTicket = function (req, res) {
                                 if (client) {
                                     ExecuteTrigger(client.id, "change_status", "new");
                                     ExecuteCase(client);
-                                    InsertUserRecentTicket(company, tenant, user._id, client.id, "create");
+                                    InsertUserRecentTicket(company, tenant, user.id, client.id, "create");
                                     SetRelatedSlots(req, client.id, client.isolated_tags);
                                     if (req.body.requester)
                                         AddExternalUserRecentTicket(company, tenant, req.body.requester, client.id);
@@ -1167,7 +1167,7 @@ module.exports.GetAllMyTickets = function (req, res) {
                     var qObj = {
                         company: company,
                         tenant: tenant, active: true,
-                        assignee: user._id,
+                        assignee: user.id,
                     };
 
                     var sortQuery = {};
@@ -1376,7 +1376,7 @@ module.exports.GetAllMyTicketsWithStatus = function (req, res) {
                     var qObj = {
                         company: company,
                         tenant: tenant, active: true,
-                        submitter: user._id,
+                        submitter: user.id,
                         status: req.params.status
                     };
                     if (req.query.businessunit) {
@@ -1508,7 +1508,7 @@ module.exports.GetRecentTicket = function (req, res) {
                     RecentUserTicket.find({
                         company: company,
                         tenant: tenant,
-                        user: user._id
+                        user: user.id
                     }).populate('ticket').sort({"updated_at": -1}).limit(10).exec(function (err, resent) {
                         if (err) {
                             jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Failed", false, undefined);
@@ -1569,7 +1569,7 @@ module.exports.GetRecentTicketx = function (req, res) {
                     RecentTicket.findOne({
                         company: company,
                         tenant: tenant,
-                        user: user._id
+                        user: user.id
                     }).populate('tickets').exec(function (err, resent) {
                         if (err) {
                             jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Failed", false, undefined);
