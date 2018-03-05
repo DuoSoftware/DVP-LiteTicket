@@ -3077,6 +3077,7 @@ module.exports.AddComment = function (req, res) {
 
                             var user = useraccount.userref.toObject();
 
+                            console.log(user);
 
                             var comment = Comment({
                                 body: req.body.body,
@@ -3091,6 +3092,8 @@ module.exports.AddComment = function (req, res) {
                                 created_at: new Date().toISOString(),
                                 meta_data: req.body.meta_data
                             });
+
+                            console.log(comment);
 
                             if (req.body.channel) {
                                 comment.channel = req.body.channel;
