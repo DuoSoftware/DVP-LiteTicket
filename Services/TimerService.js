@@ -4,6 +4,7 @@ var TimeEntry = require('dvp-mongomodels/model/TimeEntry').TimeEntry;
 var Ticket = require('dvp-mongomodels/model/Ticket').Ticket;
 var TicketEvent = require('dvp-mongomodels/model/Ticket').TicketEvent;
 var User = require('dvp-mongomodels/model/User');
+var UserAccount = require('dvp-mongomodels/model/UserAccount');
 var messageFormatter = require('dvp-common/CommonMessageGenerator/ClientMessageJsonFormatter.js');
 var moment = require('moment');
 var unique = require("array-unique");
@@ -26,13 +27,16 @@ function CreateTimer(req, res){
         else {
             if (ticket) {
 
-                User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+                 UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                         res.end(jsonString);
                     }
                     else {
-                        if (user) {
+                         if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                             TimeEntry.findOne({
                                 user: user.id,
@@ -45,7 +49,7 @@ function CreateTimer(req, res){
                                 if ((err || !forms)&& req.body) {
 
                                         var timeentry = TimeEntry({
-                                            user: user.id,
+                                            user: user._id,
                                             ticket: req.body.ticket,
                                             startTime: Date.now(),
                                             running: true,
@@ -287,13 +291,16 @@ function GetMyTimes(req, res){
 
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+     UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+             if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 TimeEntry.find({user: user.id, company: company, tenant: tenant}, function(err, forms) {
                     if (err) {
@@ -326,13 +333,16 @@ function DeleteMyTimer(req, res) {
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+     UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+             if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 TimeEntry.findOneAndRemove({
                     user: user.id,
@@ -368,13 +378,16 @@ function GetMyTimer(req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+     UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+             if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 TimeEntry.findOne({
                     user: user.id,
@@ -420,13 +433,16 @@ function UpdateMyTimerTicket(req, res){
         else {
             if (ticket) {
 
-                User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+                 UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
                         res.end(jsonString);
                     }
                     else {
-                        if (user) {
+                         if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                             TimeEntry.findOneAndUpdate({_id: req.params.id, user: user.id, running: true, company: company, tenant: tenant}, {ticket: req.params.tid},function(err, forms) {
                                 if (err) {
@@ -470,13 +486,16 @@ function UpdateMyTimerTime(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+     UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+             if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 TimeEntry.findOneAndUpdate({_id: req.params.id, running: true, company: company, tenant: tenant}, {time: req.params.time},function(err, forms) {
                     if (err) {
@@ -508,13 +527,16 @@ function StartTimer(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+     UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+             if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 TimeEntry.findOne({user: user.id, running: true, last_event:'pause', company: company, tenant: tenant}, function(err, timer) {
                     if (err) {
@@ -572,13 +594,16 @@ function PauseTimer(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+     UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+             if (useraccount && useraccount.userref) {
+
+                var user = useraccount.userref.toObject();
+
 
                 TimeEntry.findOne({user: user.id, _id: req.params.id, company: company, tenant: tenant}, function(err, timer) {
                     if (err) {
@@ -654,15 +679,18 @@ function StopTimer(req, res){
     var jsonString;
 
 
-    User.findOne({username: req.user.iss, company: company, tenant: tenant}, function (err, user) {
+     UserAccount.findOne({user: req.user.iss, company: company, tenant: tenant}).populate('userref', '-password').exec( function (err, useraccount) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get User Failed", false, undefined);
             res.end(jsonString);
         }
         else {
-            if (user) {
+             if (useraccount && useraccount.userref) {
 
-                TimeEntry.findOne({user: user.id, _id:req.params.id, company: company, tenant: tenant}, function(err, timer) {
+                var user = useraccount.userref.toObject();
+
+
+                TimeEntry.findOne({user: user._id, _id:req.params.id, company: company, tenant: tenant}, function(err, timer) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Get Time entry Failed", false, undefined);
                         res.end(jsonString);
@@ -681,11 +709,11 @@ function StopTimer(req, res){
                                 if (timer.last_event == 'start') {
                                     var ms = moment(Date.now()).diff(moment(timer.last_event_date));
                                     var d = moment.duration(ms);
-                                    time = timer.time + d;
+                                    time = timer.time + ms;
                                 }
 
                                 TimeEntry.findOneAndUpdate(
-                                    {user: user.id, running: true, company: company, tenant: tenant},
+                                    {user: user._id, running: true, company: company, tenant: tenant},
                                     {
                                         last_event_date: Date.now(),
                                         time: time,
