@@ -7830,6 +7830,8 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
     var newLine= "\r\n";
     var ticketListForCSV = [];
 
+    var dynamicFormTagHeaders = [];
+
 
     var tagHeaders = ['Reference', 'Subject', 'Phone Number', 'Email', 'SSN', 'First Name', 'Last Name', 'Address', 'Customer Number', 'Created Date', 'Assignee', 'Submitter', 'Requester', 'Channel', 'Status', 'Priority', 'Type', 'SLA Violated', 'Description', 'Comments'];
     var tagOrder = ['reference', 'subject', 'phoneNumber', 'email', 'ssn', 'firstname', 'lastname', 'address', 'fromNumber', 'createdDate', 'assignee', 'submitter', 'requester', 'channel', 'status', 'priority', 'type', 'slaViolated', 'description', 'comments'];
@@ -7967,10 +7969,10 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
                                 if(field.field)
                                 {
                                     var tempFieldName = 'DYNAMICFORM_' + field.field;
-                                    if(tagHeaders.indexOf(tempFieldName) < 0)
+                                    if(dynamicFormTagHeaders.indexOf(tempFieldName) < 0)
                                     {
-                                        tagHeaders.push(tempFieldName);
-                                        tagOrder.push(tempFieldName);
+                                        dynamicFormTagHeaders.push(tempFieldName);
+                                        //tagOrder.push(tempFieldName);
 
                                     }
 
@@ -7984,12 +7986,14 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
 
                     });
 
+                    var newOrder = tagOrder.concat(dynamicFormTagHeaders.sort());
+
                     fs.stat(fileName, function (err)
                     {
                         if (err == null)
                         {
                             //write the actual data and end with newline
-                            var csv = json2csv({ data: ticketListForCSV, fields: tagOrder, hasCSVColumnTitle: false }) + newLine;
+                            var csv = json2csv({ data: ticketListForCSV, fields: newOrder, hasCSVColumnTitle: false }) + newLine;
 
                             fs.appendFile(fileName, csv, function (err) {
                                 if (err)
@@ -8012,7 +8016,7 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
                         }
                         else
                         {
-                            var headerFields = tagOrder + newLine;
+                            var headerFields = newOrder + newLine;
 
                             fs.writeFile(fileName, headerFields, function (err, stat)
                             {
@@ -8025,7 +8029,7 @@ var appendToCSVFile = function(uniqueId, fileName, tempQuery, offset, limit, tz,
                                 }
                                 else
                                 {
-                                    var csv = json2csv({ data: ticketListForCSV, fields: tagOrder, hasCSVColumnTitle: false }) + newLine;
+                                    var csv = json2csv({ data: ticketListForCSV, fields: newOrder, hasCSVColumnTitle: false }) + newLine;
 
                                     fs.appendFile(fileName, csv, function (err) {
                                         if (err)
