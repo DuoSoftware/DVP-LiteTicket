@@ -9885,6 +9885,11 @@ module.exports.GetAllTicketsCount = function (req, res) {
     var jsonString;
     var qObj = {company: company, tenant: tenant, active: true};
 
+    if(req.query.businessunit)
+    {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
     if (req.query.status) {
         var paramArr;
         if (Array.isArray(req.query.status)) {
