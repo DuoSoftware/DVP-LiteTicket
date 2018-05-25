@@ -7431,6 +7431,11 @@ module.exports.GetTicketReport = function (req, res) {
 
         var tempQuery = {company: company, tenant: tenant};
 
+        if(req.query.businessunit)
+        {
+            tempQuery.businessUnit = req.query.businessunit;
+        }
+
         tempQuery['created_at'] = {$gte: from, $lte: to};
 
         if (req.body) {
@@ -7597,6 +7602,11 @@ module.exports.GetTicketReportTagBased = function (req, res) {
         }
 
         var tempQuery = {company: company, tenant: tenant};
+
+        if(req.query.businessunit)
+        {
+            tempQuery.businessUnit = req.query.businessunit;
+        }
 
         tempQuery['created_at'] = {$gte: from, $lte: to};
 
@@ -8446,6 +8456,11 @@ module.exports.GetTicketDetailReportDownload = function (req, res) {
 
         var tempQuery = {company: company, tenant: tenant};
 
+        if(req.query.businessunit)
+        {
+            tempQuery.businessUnit = req.query.businessunit;
+        }
+
         tempQuery['created_at'] = {$gte: from, $lte: to};
 
         var fromDate = moment(from).format("YYYY-MM-DD");
@@ -8827,6 +8842,11 @@ module.exports.GetTicketDetailReport = function (req, res) {
 
         var tempQuery = {company: company, tenant: tenant};
 
+        if(req.query.businessunit)
+        {
+            tempQuery.businessUnit = req.query.businessunit;
+        }
+
         tempQuery['created_at'] = {$gte: from, $lte: to};
 
         if (req.body) {
@@ -8930,6 +8950,11 @@ module.exports.GetTicketDetailReportCount = function (req, res) {
         }
 
         var tempQuery = {company: company, tenant: tenant};
+
+        if(req.query.businessunit)
+        {
+            tempQuery.businessUnit = req.query.businessunit;
+        }
 
         tempQuery['created_at'] = {$gte: from, $lte: to};
 
