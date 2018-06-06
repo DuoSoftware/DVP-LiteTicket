@@ -7431,6 +7431,11 @@ module.exports.GetTicketReport = function (req, res) {
 
         var tempQuery = {company: company, tenant: tenant};
 
+        if(req.query.businessunit)
+        {
+            tempQuery.businessUnit = req.query.businessunit;
+        }
+
         tempQuery['created_at'] = {$gte: from, $lte: to};
 
         if (req.body) {
@@ -7597,6 +7602,11 @@ module.exports.GetTicketReportTagBased = function (req, res) {
         }
 
         var tempQuery = {company: company, tenant: tenant};
+
+        if(req.query.businessunit)
+        {
+            tempQuery.businessUnit = req.query.businessunit;
+        }
 
         tempQuery['created_at'] = {$gte: from, $lte: to};
 
@@ -8201,8 +8211,8 @@ var appendToCSVFile = function (uniqueId, fileName, tempQuery, offset, limit, tz
     var dynamicFormTagHeaders = [];
 
 
-    var tagHeaders = ['Reference', 'Subject', 'Phone Number', 'Email', 'SSN', 'First Name', 'Last Name', 'Address', 'Customer Number', 'Created Date', 'Assignee', 'Submitter', 'Requester', 'Channel', 'Status', 'Priority', 'Type', 'SLA Violated', 'Description', 'Comments'];
-    var tagOrder = ['reference', 'subject', 'phoneNumber', 'email', 'ssn', 'firstname', 'lastname', 'address', 'fromNumber', 'createdDate', 'assignee', 'submitter', 'requester', 'channel', 'status', 'priority', 'type', 'slaViolated', 'description', 'comments'];
+    var tagHeaders = ['Reference', 'Subject', 'Phone Number', 'Email', 'SSN', 'First Name', 'Last Name', 'Address', 'Customer Number', 'Created Date', 'Assignee', 'Submitter', 'Requester', 'Channel', 'Status', 'Priority', 'Type', 'Business Unit', 'SLA Violated', 'Description', 'Comments'];
+    var tagOrder = ['reference', 'subject', 'phoneNumber', 'email', 'ssn', 'firstname', 'lastname', 'address', 'fromNumber', 'createdDate', 'assignee', 'submitter', 'requester', 'channel', 'status', 'priority', 'type', 'businessUnit', 'slaViolated', 'description', 'comments'];
 
     if(tagCount)
     {
@@ -8253,6 +8263,7 @@ var appendToCSVFile = function (uniqueId, fileName, tempQuery, offset, limit, tz
                                 status: ticketInfo.status,
                                 priority: ticketInfo.priority,
                                 type: ticketInfo.type,
+                                businessUnit: ticketInfo.businessUnit,
                                 slaViolated: (ticketInfo.ticket_matrix ? ticketInfo.ticket_matrix.sla_violated : false),
                                 description: ticketInfo.description
 
@@ -8445,6 +8456,11 @@ module.exports.GetTicketDetailReportDownload = function (req, res) {
         var tagOrder = ['reference', 'subject', 'phoneNumber', 'email', 'ssn', 'firstname', 'lastname', 'address', 'fromNumber', 'createdDate', 'assignee', 'submitter', 'requester', 'channel', 'status', 'priority', 'type', 'slaViolated', 'description', 'comments'];
 
         var tempQuery = {company: company, tenant: tenant};
+
+        if(req.query.businessunit)
+        {
+            tempQuery.businessUnit = req.query.businessunit;
+        }
 
         tempQuery['created_at'] = {$gte: from, $lte: to};
 
@@ -8827,6 +8843,11 @@ module.exports.GetTicketDetailReport = function (req, res) {
 
         var tempQuery = {company: company, tenant: tenant};
 
+        if(req.query.businessunit)
+        {
+            tempQuery.businessUnit = req.query.businessunit;
+        }
+
         tempQuery['created_at'] = {$gte: from, $lte: to};
 
         if (req.body) {
@@ -8930,6 +8951,11 @@ module.exports.GetTicketDetailReportCount = function (req, res) {
         }
 
         var tempQuery = {company: company, tenant: tenant};
+
+        if(req.query.businessunit)
+        {
+            tempQuery.businessUnit = req.query.businessunit;
+        }
 
         tempQuery['created_at'] = {$gte: from, $lte: to};
 
@@ -9884,6 +9910,11 @@ module.exports.GetAllTicketsCount = function (req, res) {
 
     var jsonString;
     var qObj = {company: company, tenant: tenant, active: true};
+
+    if(req.query.businessunit)
+    {
+        qObj.businessUnit = req.query.businessunit;
+    }
 
     if (req.query.status) {
         var paramArr;
