@@ -2,7 +2,7 @@ module.exports = {
   "DB": {
     "Type":"postgres",
     "User":"",
-    "Password":"DuoS123",
+    "Password":"",
     "Port":5432,
     "Host":"localhost",
     "Database":""
