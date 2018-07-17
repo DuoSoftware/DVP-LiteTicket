@@ -10,6 +10,8 @@ var moment = require('moment');
 var unique = require("array-unique");
 var util = require('util');
 
+var ObjectID= mongoose.Schema.ObjectId;
+
 function CreateTimer(req, res){
 
     logger.debug("DVP-LiteTicket.CreateTimer Internal method ");
@@ -39,7 +41,7 @@ function CreateTimer(req, res){
 
 
                             TimeEntry.findOne({
-                                user: user.id,
+                                user: user._id,
                                 running: true,
                                 company: company,
                                 //time_events: [{state:'start', time: Date.now()}],
@@ -538,7 +540,7 @@ function StartTimer(req, res){
                 var user = useraccount.userref.toObject();
 
 
-                TimeEntry.findOne({user: user.id, running: true, last_event:'pause', company: company, tenant: tenant}, function(err, timer) {
+                TimeEntry.findOne({user: user._id, running: true, last_event:'pause', company: company, tenant: tenant}, function(err, timer) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Get Time entry Failed", false, undefined);
                         res.end(jsonString);
@@ -552,7 +554,7 @@ function StartTimer(req, res){
                             }
 
                             TimeEntry.findOneAndUpdate(
-                                {user: user.id,  running: true, last_event:'pause', company: company, tenant: tenant},
+                                {user: user._id,  running: true, last_event:'pause', company: company, tenant: tenant},
                                 {
                                     last_event_date: Date.now(),
                                     last_event:'start',
@@ -605,7 +607,7 @@ function PauseTimer(req, res){
                 var user = useraccount.userref.toObject();
 
 
-                TimeEntry.findOne({user: user.id, _id: req.params.id, company: company, tenant: tenant}, function(err, timer) {
+                TimeEntry.findOne({user: user._id, _id: req.params.id, company: company, tenant: tenant}, function(err, timer) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Get Time entry Failed", false, undefined);
                         res.end(jsonString);
@@ -628,7 +630,7 @@ function PauseTimer(req, res){
                                 var time = timer.time + d;
                                 TimeEntry.findOneAndUpdate(
                                     {
-                                        user: user.id,
+                                        user: user._id,
                                         running: true,
                                         last_event: 'start',
                                         company: company,
