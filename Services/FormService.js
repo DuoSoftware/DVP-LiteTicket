@@ -503,13 +503,8 @@ function UpdateFormSubmission(req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    FormSubmission.findOneAndUpdate({
-        reference: req.params.reference,
-        company: company,
-        tenant: tenant},
-        {
-            fields: req.body.fields
-        }, function (err, form) {
+    FormMaster.findOne({name: req.body.form, company: company, tenant: tenant}, function (err, formmaster) {
+
         if (err) {
 
             jsonString = messageFormatter.FormatMessage(err, "Get Form Failed", false, undefined);
@@ -517,12 +512,42 @@ function UpdateFormSubmission(req, res) {
 
         } else {
 
-            jsonString = messageFormatter.FormatMessage(undefined, "Update Field successful", true, form);
-            res.end(jsonString);
+            if (formmaster) {
 
+                FormSubmission.findOneAndUpdate({
+                        reference: req.params.reference,
+                        company: company,
+                        tenant: tenant},
+                    {
+                        form: formmaster.id,
+                        fields: req.body.fields
+                    }, function (err, form) {
+                        if (err) {
+
+                            jsonString = messageFormatter.FormatMessage(err, "Get Form Failed", false, undefined);
+                            res.end(jsonString);
+
+                        } else {
+
+                            jsonString = messageFormatter.FormatMessage(undefined, "Update Field successful", true, form);
+                            res.end(jsonString);
+
+                        }
+
+                    });
+
+            } else {
+
+                jsonString = messageFormatter.FormatMessage(undefined, "No Form found", false, undefined);
+                res.end(jsonString);
+
+            }
         }
 
+
     });
+
+
 
 };
 function GetFormSubmissions(req, res) {
