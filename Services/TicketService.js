@@ -315,7 +315,7 @@ module.exports.CreateTicket = function (req, res) {
                             assignee: req.body.assignee,
                             assignee_group: req.body.assignee_group,
                             due_at: req.body.due_at,
-                            watchers: [user.id],
+                            watchers: [user._id],
                             businessUnit: req.body.businessUnit
                         });
 
@@ -397,7 +397,7 @@ module.exports.CreateTicket = function (req, res) {
                                 if (client) {
                                     ExecuteTrigger(client.id, "change_status", "new");
                                     ExecuteCase(client);
-                                    InsertUserRecentTicket(company, tenant, user.id, client.id, "create");
+                                    InsertUserRecentTicket(company, tenant, user._id, client.id, "create");
                                     SetRelatedSlots(req, client.id, client.isolated_tags);
                                     if (req.body.requester)
                                         AddExternalUserRecentTicket(company, tenant, req.body.requester, client.id);
@@ -1167,7 +1167,7 @@ module.exports.GetAllMyTickets = function (req, res) {
                     var qObj = {
                         company: company,
                         tenant: tenant, active: true,
-                        assignee: user.id,
+                        assignee: user._id,
                     };
 
                     var sortQuery = {};
@@ -1376,7 +1376,7 @@ module.exports.GetAllMyTicketsWithStatus = function (req, res) {
                     var qObj = {
                         company: company,
                         tenant: tenant, active: true,
-                        submitter: user.id,
+                        submitter: user._id,
                         status: req.params.status
                     };
                     if (req.query.businessunit) {
@@ -1508,7 +1508,7 @@ module.exports.GetRecentTicket = function (req, res) {
                     RecentUserTicket.find({
                         company: company,
                         tenant: tenant,
-                        user: user.id
+                        user: user._id
                     }).populate('ticket').sort({"updated_at": -1}).limit(10).exec(function (err, resent) {
                         if (err) {
                             jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Failed", false, undefined);
@@ -1569,7 +1569,7 @@ module.exports.GetRecentTicketx = function (req, res) {
                     RecentTicket.findOne({
                         company: company,
                         tenant: tenant,
-                        user: user.id
+                        user: user._id
                     }).populate('tickets').exec(function (err, resent) {
                         if (err) {
                             jsonString = messageFormatter.FormatMessage(err, "Get Recent Ticket Failed", false, undefined);
@@ -1743,13 +1743,13 @@ module.exports.GetTicketWithDetails = function (req, res) {
 
 
 
-                                                InsertUserRecentTicket(company, tenant, user.id, ticket.id, "get");
+                                                InsertUserRecentTicket(company, tenant, user._id, ticket.id, "get");
 
 
                                                 if (ticket.comments) {
                                                     var commentArray = ticket.comments.filter(function (comment) {
                                                         var updatedComment;
-                                                        if (!(comment.public === 'private' && comment.author.id !== user.id)) {
+                                                        if (!(comment.public === 'private' && comment.author.id !== user._id)) {
                                                             updatedComment = comment;
                                                         }
                                                         else {
@@ -1797,13 +1797,13 @@ module.exports.GetTicketWithDetails = function (req, res) {
 
 
 
-                                            InsertUserRecentTicket(company, tenant, user.id, ticket.id, "get");
+                                            InsertUserRecentTicket(company, tenant, user._id, ticket.id, "get");
 
 
                                             if (ticket.comments) {
                                                 var commentArray = ticket.comments.filter(function (comment) {
                                                     var updatedComment;
-                                                    if (!(comment.public === 'private' && comment.author.id !== user.id)) {
+                                                    if (!(comment.public === 'private' && comment.author.id !== user._id)) {
                                                         updatedComment = comment;
                                                     }
                                                     else {
@@ -1975,7 +1975,7 @@ module.exports.PickTicket = function (req, res) {
                                 var assigneeGroup = deepcopy(ticket.toJSON().assignee_group);
                                 var time = new Date().toISOString();
                                 //ticket.assignee_group = undefined;
-                                ticket.assignee = user.id;
+                                ticket.assignee = user._id;
                                 ticket.updated_at = time;
                                 var tEvent = TicketEvent({
                                     type: 'status',
@@ -2271,7 +2271,7 @@ module.exports.AddCommentByEngagement = function (req, res) {
                                         body_type: req.body.body_type,
                                         type: req.body.type,
                                         public: req.body.public,
-                                        author: user.id,
+                                        author: user._id,
                                         author_external: req.body.author_external,
                                         attachments: req.body.attachments,
                                         channel: req.body.channel,
@@ -2362,7 +2362,7 @@ module.exports.AddCommentByEngagement = function (req, res) {
                                 body_type: req.body.body_type,
                                 type: req.body.type,
                                 public: req.body.public,
-                                author: user.id,
+                                author: user._id,
                                 author_external: req.body.author_external,
                                 attachments: req.body.attachments,
                                 channel: req.body.channel,
@@ -2492,7 +2492,7 @@ module.exports.AddCommentByEngagement = function (req, res) {
                                             body_type: req.body.body_type,
                                             type: req.body.type,
                                             public: req.body.public,
-                                            author: user.id,
+                                            author: user._id,
                                             author_external: req.body.author_external,
                                             attachments: req.body.attachments,
                                             channel: req.body.channel,
@@ -2891,7 +2891,7 @@ module.exports.AddCommentByReference = function (req, res) {
                                 body_type: req.body.body_type,
                                 type: req.body.type,
                                 public: req.body.public,
-                                author: user.id,
+                                author: user._id,
                                 author_external: req.body.author_external,
                                 attachments: req.body.attachments,
                                 channel: req.body.channel,
@@ -3077,13 +3077,14 @@ module.exports.AddComment = function (req, res) {
 
                             var user = useraccount.userref.toObject();
 
+                            console.log(user);
 
                             var comment = Comment({
                                 body: req.body.body,
                                 body_type: req.body.body_type,
                                 type: req.body.type,
                                 public: req.body.public,
-                                author: user.id,
+                                author: user._id,
                                 author_external: req.body.author_external,
                                 attachments: req.body.attachments,
                                 channel_from: req.body.channel_from,
@@ -3091,6 +3092,8 @@ module.exports.AddComment = function (req, res) {
                                 created_at: new Date().toISOString(),
                                 meta_data: req.body.meta_data
                             });
+
+                            console.log(comment);
 
                             if (req.body.channel) {
                                 comment.channel = req.body.channel;
@@ -3503,7 +3506,7 @@ module.exports.AddCommentToComment = function (req, res) {
                                             body_type: req.body.body_type,
                                             type: req.body.type,
                                             public: req.body.public,
-                                            author: user.id,
+                                            author: user._id,
                                             author_external: req.body.author_external,
                                             attachments: req.body.attachments,
                                             channel: req.body.channel,
@@ -4069,7 +4072,7 @@ module.exports.AssignToUser = function (req, res) {
                                 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-                                //ticket.assignee = user.id;
+                                //ticket.assignee = user._id;
                                 ticket.assignee = user;
                                 ticket.updated_at = time;
                                 ticket.$addToSet = {"events": tEvent};
@@ -4694,7 +4697,7 @@ module.exports.CreateSubTicket = function (req, res) {
                                 requester: req.body.requester,
                                 assignee: req.body.assignee,
                                 assignee_group: req.body.assignee_group,
-                                submitter: user.id,
+                                submitter: user._id,
                                 company: company,
                                 tenant: tenant,
                                 attachments: req.body.attachments,
@@ -5991,7 +5994,7 @@ module.exports.AddCaseConfiguration = function (req, res) {
                                 active: true,
                                 configurationName: req.body.configurationName,
                                 description: req.body.description,
-                                submitter: user.id,
+                                submitter: user._id,
                                 company: company,
                                 tenant: tenant,
                                 configurationRule: req.body.configurationRule,
@@ -6183,7 +6186,7 @@ module.exports.CreateCase = function (req, res) {
                     status: "new",
                     caseName: req.body.caseName,
                     description: req.body.description,
-                    submitter: user.id,
+                    submitter: user._id,
                     company: company,
                     tenant: tenant,
                     attachments: req.body.attachments,
@@ -6621,7 +6624,7 @@ module.exports.CreateTicketWithComment = function (req, res) {
                     description: req.body.description,
                     priority: req.body.priority,
                     status: "new",
-                    submitter: user.id,
+                    submitter: user._id,
                     company: company,
                     tenant: tenant,
                     attachments: req.body.attachments,
@@ -6689,7 +6692,7 @@ module.exports.CreateTicketWithComment = function (req, res) {
                     }
                     else {
                         if (client) {
-                            InsertUserRecentTicket(company, tenant, user.id, client.id, "comment");
+                            InsertUserRecentTicket(company, tenant, user._id, client.id, "comment");
                             if (req.body.requester)
                                 AddExternalUserRecentTicket(company, tenant, req.body.requester, client.id);
                         }
@@ -7428,6 +7431,11 @@ module.exports.GetTicketReport = function (req, res) {
 
         var tempQuery = {company: company, tenant: tenant};
 
+        if(req.query.businessunit)
+        {
+            tempQuery.businessUnit = req.query.businessunit;
+        }
+
         tempQuery['created_at'] = {$gte: from, $lte: to};
 
         if (req.body) {
@@ -7594,6 +7602,11 @@ module.exports.GetTicketReportTagBased = function (req, res) {
         }
 
         var tempQuery = {company: company, tenant: tenant};
+
+        if(req.query.businessunit)
+        {
+            tempQuery.businessUnit = req.query.businessunit;
+        }
 
         tempQuery['created_at'] = {$gte: from, $lte: to};
 
@@ -8195,9 +8208,11 @@ var appendToCSVFile = function (uniqueId, fileName, tempQuery, offset, limit, tz
     var newLine = "\r\n";
     var ticketListForCSV = [];
 
+    var dynamicFormTagHeaders = [];
 
-    var tagHeaders = ['Reference', 'Subject', 'Phone Number', 'Email', 'SSN', 'First Name', 'Last Name', 'Address', 'Customer Number', 'Created Date', 'Assignee', 'Submitter', 'Requester', 'Channel', 'Status', 'Priority', 'Type', 'SLA Violated', 'Description', 'Comments'];
-    var tagOrder = ['reference', 'subject', 'phoneNumber', 'email', 'ssn', 'firstname', 'lastname', 'address', 'fromNumber', 'createdDate', 'assignee', 'submitter', 'requester', 'channel', 'status', 'priority', 'type', 'slaViolated', 'description', 'comments'];
+
+    var tagHeaders = ['Reference', 'Subject', 'Phone Number', 'Email', 'SSN', 'First Name', 'Last Name', 'Address', 'Customer Number', 'Created Date', 'Assignee', 'Submitter', 'Requester', 'Channel', 'Status', 'Priority', 'Type', 'Business Unit', 'SLA Violated', 'Description', 'Comments'];
+    var tagOrder = ['reference', 'subject', 'phoneNumber', 'email', 'ssn', 'firstname', 'lastname', 'address', 'fromNumber', 'createdDate', 'assignee', 'submitter', 'requester', 'channel', 'status', 'priority', 'type', 'businessUnit', 'slaViolated', 'description', 'comments'];
 
     if(tagCount)
     {
@@ -8248,6 +8263,7 @@ var appendToCSVFile = function (uniqueId, fileName, tempQuery, offset, limit, tz
                                 status: ticketInfo.status,
                                 priority: ticketInfo.priority,
                                 type: ticketInfo.type,
+                                businessUnit: ticketInfo.businessUnit,
                                 slaViolated: (ticketInfo.ticket_matrix ? ticketInfo.ticket_matrix.sla_violated : false),
                                 description: ticketInfo.description
 
@@ -8311,9 +8327,9 @@ var appendToCSVFile = function (uniqueId, fileName, tempQuery, offset, limit, tz
                             ticketInfo.form_submission.fields.forEach(function (field) {
                                 if (field.field) {
                                     var tempFieldName = 'DYNAMICFORM_' + field.field;
-                                    if (tagHeaders.indexOf(tempFieldName) < 0) {
-                                        tagHeaders.push(tempFieldName);
-                                        tagOrder.push(tempFieldName);
+                                    if (dynamicFormTagHeaders.indexOf(tempFieldName) < 0) {
+                                        dynamicFormTagHeaders.push(tempFieldName);
+                                        //tagOrder.push(tempFieldName);
 
                                     }
 
@@ -8327,12 +8343,14 @@ var appendToCSVFile = function (uniqueId, fileName, tempQuery, offset, limit, tz
 
                     });
 
+                    var newOrder = tagOrder.concat(dynamicFormTagHeaders.sort());
+
                     fs.stat(fileName, function (err) {
                         if (err == null) {
                             //write the actual data and end with newline
                             var csv = json2csv({
                                     data: ticketListForCSV,
-                                    fields: tagOrder,
+                                    fields: newOrder,
                                     hasCSVColumnTitle: false
                                 }) + newLine;
 
@@ -8354,7 +8372,7 @@ var appendToCSVFile = function (uniqueId, fileName, tempQuery, offset, limit, tz
                             });
                         }
                         else {
-                            var headerFields = tagOrder + newLine;
+                            var headerFields = newOrder + newLine;
 
                             fs.writeFile(fileName, headerFields, function (err, stat) {
                                 if (err) {
@@ -8366,7 +8384,7 @@ var appendToCSVFile = function (uniqueId, fileName, tempQuery, offset, limit, tz
                                 else {
                                     var csv = json2csv({
                                             data: ticketListForCSV,
-                                            fields: tagOrder,
+                                            fields: newOrder,
                                             hasCSVColumnTitle: false
                                         }) + newLine;
 
@@ -8438,6 +8456,11 @@ module.exports.GetTicketDetailReportDownload = function (req, res) {
         var tagOrder = ['reference', 'subject', 'phoneNumber', 'email', 'ssn', 'firstname', 'lastname', 'address', 'fromNumber', 'createdDate', 'assignee', 'submitter', 'requester', 'channel', 'status', 'priority', 'type', 'slaViolated', 'description', 'comments'];
 
         var tempQuery = {company: company, tenant: tenant};
+
+        if(req.query.businessunit)
+        {
+            tempQuery.businessUnit = req.query.businessunit;
+        }
 
         tempQuery['created_at'] = {$gte: from, $lte: to};
 
@@ -8820,6 +8843,11 @@ module.exports.GetTicketDetailReport = function (req, res) {
 
         var tempQuery = {company: company, tenant: tenant};
 
+        if(req.query.businessunit)
+        {
+            tempQuery.businessUnit = req.query.businessunit;
+        }
+
         tempQuery['created_at'] = {$gte: from, $lte: to};
 
         if (req.body) {
@@ -8923,6 +8951,11 @@ module.exports.GetTicketDetailReportCount = function (req, res) {
         }
 
         var tempQuery = {company: company, tenant: tenant};
+
+        if(req.query.businessunit)
+        {
+            tempQuery.businessUnit = req.query.businessunit;
+        }
 
         tempQuery['created_at'] = {$gte: from, $lte: to};
 
@@ -9071,7 +9104,7 @@ module.exports.CreateTicketTypes = function (req, res) {
         company: company,
         tenant: tenant,
         activate_default: true,
-        default_types: ['question', 'complain', 'incident', 'action'],
+        default_types: ['Action', 'Complaint', 'Incident', 'Question' ],
         custom_types: customTypes,
         created_at: Date.now(),
         updated_at: Date.now()
@@ -9456,7 +9489,7 @@ module.exports.GetAllTicketsSubmittedByMe = function (req, res) {
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    submitter: user.id
+                    submitter: user._id
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9535,7 +9568,7 @@ module.exports.GetAllTicketsWatchedByMe = function (req, res) {
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    watchers: {$in: [user.id]}
+                    watchers: {$in: [user._id]}
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9619,7 +9652,7 @@ module.exports.GetAllTicketsCollaboratedByMe = function (req, res) {
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    collaborators: {$in: [user.id]}
+                    collaborators: {$in: [user._id]}
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9698,7 +9731,7 @@ module.exports.GetMySubmittedTicketCount = function (req, res) {
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    submitter: user.id
+                    submitter: user._id
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9760,7 +9793,7 @@ module.exports.GetMyWatchedTicketCount = function (req, res) {
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    watchers: {$in: [user.id]}
+                    watchers: {$in: [user._id]}
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9822,7 +9855,7 @@ module.exports.GetMyCollaboratedTicketCount = function (req, res) {
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    collaborators: {$in: [user.id]}
+                    collaborators: {$in: [user._id]}
                 };
                 if (req.query.status) {
                     var paramArr;
@@ -9877,6 +9910,11 @@ module.exports.GetAllTicketsCount = function (req, res) {
 
     var jsonString;
     var qObj = {company: company, tenant: tenant, active: true};
+
+    if(req.query.businessunit)
+    {
+        qObj.businessUnit = req.query.businessunit;
+    }
 
     if (req.query.status) {
         var paramArr;
@@ -9936,7 +9974,7 @@ module.exports.GetMyTicketsCount = function (req, res) {
                 var qObj = {
                     company: company,
                     tenant: tenant, active: true,
-                    assignee: user.id
+                    assignee: user._id
                 };
 
 
@@ -10000,7 +10038,7 @@ module.exports.GetMyGroupTicketsCount = function (req, res) {
                 //    var user = useraccount.userref.toObject();
                 // if (user && user.group) {
                 /*
-                 UserGroup.find({"users": user.id}, function (error, groups) {
+                 UserGroup.find({"users": user._id}, function (error, groups) {
                  if(!error  && groups) {
                  var ids = [];
                  groups.forEach(function (item) {
