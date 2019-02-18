@@ -482,7 +482,7 @@ function ScheduleCallback(req, res){
                     }else{
                         if(ticket.priority === matrixInfo.priority){
                             if(ticket.ticket_matrix) {
-                                ticket.ticket_matrix.sla_violated = true;
+                                ticket.ticket_matrix.sla_violated = !(references[1] === "on_threshold");
                                 ticket.update(ticket, function (err, updateResult) {
                                     if (err) {
                                         console.log("Update Ticket failed:: " + err);
