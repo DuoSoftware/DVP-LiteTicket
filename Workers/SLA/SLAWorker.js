@@ -397,10 +397,10 @@ function UpdateSLAWhenStateChange(ticket, callback){
                     for(var i = 0; i < sla.matrix.length; i++) {
                         var matrix = sla.matrix[i];
                         if(criteriaToDelete.indexOf(matrix.criteria) > -1){
-                            var delOnFailedUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_fail", ticket.id, matrix.criteria)));
+                            var delOnFailedUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_fail", ticket._id.toString(), matrix.criteria)));
                             RestClient.DoDelete(internalAccessToken, delOnFailedUrl, function (err, res1, result) {});
                             if(matrix.threshold){
-                                var delOnThresholdUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_threshold", ticket.id, matrix.criteria)));
+                                var delOnThresholdUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_threshold", ticket._id.toString(), matrix.criteria)));
                                 RestClient.DoDelete(internalAccessToken, delOnThresholdUrl, function (err, res1, result) {});
                             }
                         }
@@ -478,7 +478,7 @@ function ScheduleCallback(req, res){
 
             //.findOne({_id: ticketId}).populate('requester', '-password').populate('submitter', '-password').populate('assignee', '-password').populate('assignee_group collaborators watchers attachments comments').populate('form_submission').lean().exec(
 
-                Ticket.findOne({_id:ticketId}, function(err, ticket){
+                Ticket.findOne({_id: ticketId}).populate('requester', '-password').populate('submitter', '-password').populate('assignee', '-password').populate('assignee_group collaborators watchers attachments comments').populate('form_submission').exec( function(err, ticket){
                     if(err){
                         console.log("Get Ticket Information Failed.");
                         jsonString = messageFormatter.FormatMessage(undefined, "Get Ticket Information Failed.", false, undefined);
@@ -499,7 +499,7 @@ function ScheduleCallback(req, res){
                                 if (operationsToExecute && operationsToExecute.length > 0) {
                                     for (var i = 0; i < operationsToExecute.length; i++) {
                                         var operationToExecute = operationsToExecute[i];
-                                        var ticketCopy = deepcopy(ticket.toJSON());
+                                        var ticketCopy = deepcopy(ticket.toObject({ getters: true }));
                                         CommonWorker.ExecuteOperations(ticketCopy, operationToExecute);
                                     }
                                     console.log("Execute Operations Success");

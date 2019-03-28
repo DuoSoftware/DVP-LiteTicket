@@ -99,8 +99,8 @@ module.exports = {
 
     "LBServer" : {
 
-        "ip": "192.168.0.101",
-        "port": "3636"
+        "ip": "192.168.0.45",
+        "port": "3635"
 
     },
 
@@ -138,10 +138,10 @@ module.exports = {
         "ardsServiceHost": "ardsliteservice.app.veery.cloud",
         "ardsServicePort": "8828",
         "ardsServiceVersion": "1.0.0.0",
-        "notificationServiceHost": "127.0.0.1",
+        "notificationServiceHost": "notificationservice.app.veery.cloud",
         "notificationServicePort": "8089",
         "notificationServiceVersion": "1.0.0.0",
-        "scheduleWorkerHost": "scheduleworker.app.veery.cloud",
+        "scheduleWorkerHost": "192.168.0.16",
         "scheduleWorkerPort": "8080",
         "scheduleWorkerVersion": "1.0.0.0",
         "interactionServiceHost": "interactions.app.veery.cloud",

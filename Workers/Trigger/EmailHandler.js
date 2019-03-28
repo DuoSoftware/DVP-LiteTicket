@@ -105,6 +105,7 @@ function SendMessage(ticket, template, messageData, messageType, callback){
         if(template) {
             sendObj.body = "";
             sendObj.Parameters = extend({}, ticket);
+            sendObj.template = template;
 
             if (ticket.form_submission && ticket.form_submission.fields && Array.isArray(ticket.form_submission.fields)) {
                 sendObj.Parameters.FormData = {};
