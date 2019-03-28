@@ -475,7 +475,9 @@ function ScheduleCallback(req, res){
                 //var matrixInfo = JSON.parse(req.body.CallbackData);
                 var matrixInfo = req.body;
 
-                Ticket.findOne({_id:ticketId}, function(err, ticket){
+
+
+                Ticket.findOne({_id: ticketId}).populate('requester', '-password').populate('submitter', '-password').populate('assignee', '-password').populate('assignee_group collaborators watchers attachments comments').populate('form_submission').lean().exec(function(err, ticket){
                     if(err){
                         console.log("Get Ticket Information Failed.");
                         jsonString = messageFormatter.FormatMessage(undefined, "Get Ticket Information Failed.", false, undefined);
