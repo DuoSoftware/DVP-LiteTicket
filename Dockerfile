@@ -13,5 +13,6 @@ RUN git clone -b $VERSION_TAG https://github.com/DuoSoftware/DVP-LiteTicket.git 
 RUN cd /usr/local/src/liteticket;
 WORKDIR /usr/local/src/liteticket
 RUN npm install
+COPY . .
 EXPOSE 8872
 CMD [ "node", --expose-gc "/usr/local/src/liteticket/app.js" ]
