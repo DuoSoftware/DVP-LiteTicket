@@ -397,10 +397,10 @@ function UpdateSLAWhenStateChange(ticket, callback){
                     for(var i = 0; i < sla.matrix.length; i++) {
                         var matrix = sla.matrix[i];
                         if(criteriaToDelete.indexOf(matrix.criteria) > -1){
-                            var delOnFailedUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_fail", ticket.id, matrix.criteria)));
+                            var delOnFailedUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_fail", ticket._id, matrix.criteria)));
                             RestClient.DoDelete(internalAccessToken, delOnFailedUrl, function (err, res1, result) {});
                             if(matrix.threshold){
-                                var delOnThresholdUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_threshold", ticket.id, matrix.criteria)));
+                                var delOnThresholdUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_threshold", ticket._id, matrix.criteria)));
                                 RestClient.DoDelete(internalAccessToken, delOnThresholdUrl, function (err, res1, result) {});
                             }
                         }
