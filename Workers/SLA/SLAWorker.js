@@ -476,8 +476,9 @@ function ScheduleCallback(req, res){
                 var matrixInfo = req.body;
 
 
+            //.findOne({_id: ticketId}).populate('requester', '-password').populate('submitter', '-password').populate('assignee', '-password').populate('assignee_group collaborators watchers attachments comments').populate('form_submission').lean().exec(
 
-                Ticket.findOne({_id: ticketId}).populate('requester', '-password').populate('submitter', '-password').populate('assignee', '-password').populate('assignee_group collaborators watchers attachments comments').populate('form_submission').lean().exec(function(err, ticket){
+                Ticket.findOne({_id:ticketId}, function(err, ticket){
                     if(err){
                         console.log("Get Ticket Information Failed.");
                         jsonString = messageFormatter.FormatMessage(undefined, "Get Ticket Information Failed.", false, undefined);
@@ -498,7 +499,7 @@ function ScheduleCallback(req, res){
                                 if (operationsToExecute && operationsToExecute.length > 0) {
                                     for (var i = 0; i < operationsToExecute.length; i++) {
                                         var operationToExecute = operationsToExecute[i];
-                                        var ticketCopy = deepcopy(ticket);
+                                        var ticketCopy = deepcopy(ticket.toJSON());
                                         CommonWorker.ExecuteOperations(ticketCopy, operationToExecute);
                                     }
                                     console.log("Execute Operations Success");
