@@ -103,7 +103,6 @@ function SendMessage(ticket, template, messageData, messageType, callback){
         sendObj.to =  to? to : "";
         sendObj.subject = subject? subject : "";
         if(template) {
-            sendObj.template = template;
             sendObj.body = "";
             sendObj.Parameters = extend({}, ticket);
 

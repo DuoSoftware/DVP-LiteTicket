@@ -14,6 +14,7 @@ var moment = require('moment');
 var RestClient = require('../Trigger/RestClient.js');
 var CommonWorker = require('../Trigger/TriggerWorker.js');
 var dashboardEventHandler = require('../Common/DashboardEventHandler');
+var deepcopy = require("deepcopy");
 
 function numSort(a, b) {
     return a.priority - b.priority;
@@ -495,7 +496,8 @@ function ScheduleCallback(req, res){
                                 if (operationsToExecute && operationsToExecute.length > 0) {
                                     for (var i = 0; i < operationsToExecute.length; i++) {
                                         var operationToExecute = operationsToExecute[i];
-                                        CommonWorker.ExecuteOperations(ticket, operationToExecute);
+                                        var ticketCopy = deepcopy(ticket);
+                                        CommonWorker.ExecuteOperations(ticketCopy, operationToExecute);
                                     }
                                     console.log("Execute Operations Success");
                                     jsonString = messageFormatter.FormatMessage(undefined, "Execute Operations Success", true, undefined);
