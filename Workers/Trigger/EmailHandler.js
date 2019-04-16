@@ -6,6 +6,8 @@ var config = require('config');
 var q = require('q');
 var amqp = require('amqp');
 var logger = require('dvp-common/LogHandler/CommonLogHandler.js').logger;
+var extend = require('util')._extend;
+
 
 //var queueHost = format('amqp://{0}:{1}@{2}:{3}', config.RabbitMQ.user, config.RabbitMQ.password, config.RabbitMQ.ip, config.RabbitMQ.port);
 var rabbitmqIp = [];
@@ -88,6 +90,11 @@ function SendMessage(ticket, template, messageData, messageType, callback){
             "tenant": ticket.tenant
         };
 
+
+        var queryRegexForm = "\\${form([.]([A-Z]*[a-z]*[_]*)*)*}";
+        var queryPatternForm = new RegExp(queryRegexForm);
+
+
         var from = queryPattern.test(messageData.from)? ReadDataFromTicket(ticket, messageData.from) : messageData.from;
         var to =  queryPattern.test(messageData.to)? ReadDataFromTicket(ticket, messageData.to) : messageData.to;
         var subject = queryPattern.test(messageData.subject)? ReadDataFromTicket(ticket, messageData.subject) : messageData.subject;
@@ -95,20 +102,43 @@ function SendMessage(ticket, template, messageData, messageType, callback){
         sendObj.from =  from? from : "";
         sendObj.to =  to? to : "";
         sendObj.subject = subject? subject : "";
-        if(template){
-            sendObj.template = template;
+        if(template) {
             sendObj.body = "";
-            sendObj.Parameters = {};
-            //if(emailData.Parameters) {
-                var parameterCount = Object.keys(ticket).length;
-                for (var i = 0; i < parameterCount; i++) {
-                    var paramKey = Object.keys(ticket)[i];
-                    var valueAt = ticket[paramKey];
-                    if (valueAt) {
-                        sendObj.Parameters[paramKey] = valueAt;
-                    }
-                }
-            //}
+            sendObj.Parameters = extend({}, ticket);
+            sendObj.template = template;
+
+            if (ticket.form_submission && ticket.form_submission.fields && Array.isArray(ticket.form_submission.fields)) {
+                sendObj.Parameters.FormData = {};
+
+                ticket.form_submission.fields.forEach(function (item) {
+                    var key = item.field;
+                    var val = item.value;
+
+                    var mKey = item.field.toLowerCase().replace(/[^A-Z0-9]/ig, '_')
+                    sendObj.Parameters.FormData[mKey] = val;
+                })
+            }
+
+
+            ////////////////check against parameter object form data//////////////////////////////////
+            var fromx = queryPatternForm.test(sendObj.from) ? ReadDataFromTicket(sendObj.Parameters.FormData, sendObj.from) : sendObj.from;
+            var tox = queryPatternForm.test(sendObj.to) ? ReadDataFromTicket(sendObj.Parameters.FormData, sendObj.to) : sendObj.to;
+            var subjectx = queryPatternForm.test(sendObj.subject) ? ReadDataFromTicket(sendObj.Parameters.FormData, sendObj.subject) : sendObj.subject;
+            sendObj.from = fromx || from;
+            sendObj.to = tox || to;
+            to = tox || to;
+            sendObj.subject = subjectx || subject;
+
+            //removed by adding extend methos, need to check --------->
+            // var parameterCount = Object.keys(ticket).length;
+            // for (var i = 0; i < parameterCount; i++) {
+            //     var paramKey = Object.keys(ticket)[i];
+            //     var valueAt = ticket[paramKey];
+            //     if (valueAt) {
+            //         sendObj.Parameters[paramKey] = valueAt;
+            //     }
+            // }
+
         }else{
             sendObj.template = "";
             sendObj.body = messageData.body;

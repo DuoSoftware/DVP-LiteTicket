@@ -14,6 +14,7 @@ var moment = require('moment');
 var RestClient = require('../Trigger/RestClient.js');
 var CommonWorker = require('../Trigger/TriggerWorker.js');
 var dashboardEventHandler = require('../Common/DashboardEventHandler');
+var deepcopy = require("deepcopy");
 
 function numSort(a, b) {
     return a.priority - b.priority;
@@ -396,10 +397,10 @@ function UpdateSLAWhenStateChange(ticket, callback){
                     for(var i = 0; i < sla.matrix.length; i++) {
                         var matrix = sla.matrix[i];
                         if(criteriaToDelete.indexOf(matrix.criteria) > -1){
-                            var delOnFailedUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_fail", ticket.id, matrix.criteria)));
+                            var delOnFailedUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_fail", ticket._id.toString(), matrix.criteria)));
                             RestClient.DoDelete(internalAccessToken, delOnFailedUrl, function (err, res1, result) {});
                             if(matrix.threshold){
-                                var delOnThresholdUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_threshold", ticket.id, matrix.criteria)));
+                                var delOnThresholdUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_threshold", ticket._id.toString(), matrix.criteria)));
                                 RestClient.DoDelete(internalAccessToken, delOnThresholdUrl, function (err, res1, result) {});
                             }
                         }
@@ -474,7 +475,10 @@ function ScheduleCallback(req, res){
                 //var matrixInfo = JSON.parse(req.body.CallbackData);
                 var matrixInfo = req.body;
 
-                Ticket.findOne({_id:ticketId}, function(err, ticket){
+
+            //.findOne({_id: ticketId}).populate('requester', '-password').populate('submitter', '-password').populate('assignee', '-password').populate('assignee_group collaborators watchers attachments comments').populate('form_submission').lean().exec(
+
+                Ticket.findOne({_id: ticketId}).populate('requester', '-password').populate('submitter', '-password').populate('assignee', '-password').populate('assignee_group collaborators watchers attachments comments').populate('form_submission').exec( function(err, ticket){
                     if(err){
                         console.log("Get Ticket Information Failed.");
                         jsonString = messageFormatter.FormatMessage(undefined, "Get Ticket Information Failed.", false, undefined);
@@ -482,7 +486,7 @@ function ScheduleCallback(req, res){
                     }else{
                         if(ticket.priority === matrixInfo.priority){
                             if(ticket.ticket_matrix) {
-                                ticket.ticket_matrix.sla_violated = true;
+                                ticket.ticket_matrix.sla_violated = !(references[1] === "on_threshold");
                                 ticket.update(ticket, function (err, updateResult) {
                                     if (err) {
                                         console.log("Update Ticket failed:: " + err);
@@ -495,7 +499,8 @@ function ScheduleCallback(req, res){
                                 if (operationsToExecute && operationsToExecute.length > 0) {
                                     for (var i = 0; i < operationsToExecute.length; i++) {
                                         var operationToExecute = operationsToExecute[i];
-                                        CommonWorker.ExecuteOperations(ticket, operationToExecute);
+                                        var ticketCopy = deepcopy(ticket.toObject({ getters: true }));
+                                        CommonWorker.ExecuteOperations(ticketCopy, operationToExecute);
                                     }
                                     console.log("Execute Operations Success");
                                     jsonString = messageFormatter.FormatMessage(undefined, "Execute Operations Success", true, undefined);
