@@ -557,7 +557,15 @@ function AggregateCondition(obj, field, value, operator, callback) {
                     var pattern_ni = new RegExp(GenerateFilterRegex(value));
                     callback(!pattern_ni.test(obj[field]));
                 } else {
-                    callback(obj[field].indexOf(value) === -1);
+                    if(field=="requester")
+                    {
+                        callback(true);
+                    }
+                    else
+                    {
+                        callback(obj[field].indexOf(value) === -1);
+                    }
+
                 }
                 break;
             case "greater_than_or_equal":
