@@ -606,7 +606,8 @@ module.exports.GetTicketsByTimeRange = function (req, res) {
         "created_at": {"$gte": req.params.fromDate, "$lt": req.params.toDate}
     };
     if (req.query.businessunit) {
-        qObj.businessUnit = req.query.businessunit;
+        qObj.$or = [{businessUnit: req.query.businessunit}, {businessUnit: null}];
+        //qObj.businessUnit = req.query.businessunit;
     }
 
     if(req.query.channel && req.query.channel.toLowerCase()!="all")
