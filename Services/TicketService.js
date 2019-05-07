@@ -480,7 +480,8 @@ module.exports.GetAllTickets = function (req, res) {
     }
 
     if (req.query.businessunit) {
-        qObj.businessUnit = req.query.businessunit;
+        qObj.$or = [{businessUnit: req.query.businessunit}, {businessUnit: null}];
+        //qObj.businessUnit = req.query.businessunit;
     }
 
     var sortQuery = {};
