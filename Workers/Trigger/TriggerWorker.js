@@ -22,6 +22,7 @@ var async = require('async');
 var OrganisationConfig = require('dvp-mongomodels/model/OrganisationConfig');
 var logger = require('dvp-common/LogHandler/CommonLogHandler.js').logger;
 var q = require('q');
+var dvpEventsHandler = require('../Common/DVPEventsHandler.js');
 
 function numSort(a, b) {
     return a.priority - b.priority;
@@ -683,7 +684,7 @@ function ExecuteTrigger(ticketId, triggerEvent, data, sendResult) {
 
                         var ticketCopy = deepcopy(tResult);
 
-
+                        dvpEventsHandler.PublishEvent(ticketCopy, triggerEvent, data, null, false);
                         var preOperationsTasks = [];
 
 

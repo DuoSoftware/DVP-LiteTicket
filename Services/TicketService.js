@@ -23,6 +23,7 @@ var Case = require('dvp-mongomodels/model/CaseManagement').Case;
 var CaseConfiguration = require('dvp-mongomodels/model/CaseManagement').CaseConfiguration;
 var FileSlotArray = require('dvp-mongomodels/model/Ticket').FileSlotArray;
 var FileSlot = require('dvp-mongomodels/model/Ticket').FileSlot;
+var dvpEventsHandler = require('../Workers/Common/DVPEventsHandler.js');
 
 
 /*var CaseConfiguration = require('dvp-mongomodels/model/CaseConfiguration').CaseConfiguration;*/
@@ -2190,6 +2191,7 @@ module.exports.UpdateTicket = function (req, res) {
                     }
                     else {
                         if (rUser) {
+                            dvpEventsHandler.PublishEvent(rUser._id, 'change_status', 'update ticket', null, true);
                             jsonString = messageFormatter.FormatMessage(undefined, "Ticket Update Successfully", true, rUser);
                             SendTicketNotification(ticket, "contentupdate", req.user.iss);
                         }
@@ -2253,6 +2255,7 @@ module.exports.UpdateFormSubmission = function (req, res) {
                     }
                     else {
                         if (rUser) {
+                            dvpEventsHandler.PublishEvent(null, 'change_status', 'update ticket', null, true);
                             jsonString = messageFormatter.FormatMessage(undefined, "Ticket Update Successfully", true, rUser);
                         }
                         else {
@@ -4817,6 +4820,7 @@ module.exports.CreateSubTicket = function (req, res) {
                                     res.end(jsonString);
                                 }
                                 else {
+                                    dvpEventsHandler.PublishEvent(obj._id, 'change_status', 'new', null, true);
                                     SetRelatedSlots(req, obj.id, obj.isolated_tags);
                                     parentTicket.update({$addToSet: {sub_tickets: obj._doc._id}}
                                         , function (err, rOrg) {
