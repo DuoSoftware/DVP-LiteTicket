@@ -28,6 +28,9 @@ var publishEvent = function (ticketObj, eventType, data, additionalData, populat
     }
 
     var otherData = null;
+    var requester = "";
+    var assignee = "";
+    var submitter = "";
 
     if(populate)
     {
@@ -35,6 +38,18 @@ var publishEvent = function (ticketObj, eventType, data, additionalData, populat
 
             if(tResult)
             {
+                if(tResult.requester)
+                {
+                    requester = tResult.requester.firstname + ' ' + tResult.requester.lastname;
+                }
+                if(tResult.submitter)
+                {
+                    submitter = tResult.submitter.username;
+                }
+                if(tResult.assignee)
+                {
+                    assignee = tResult.assignee.username;
+                }
                 var evtData =
                     {
                         SessionId: tResult._id,
@@ -52,12 +67,12 @@ var publishEvent = function (ticketObj, eventType, data, additionalData, populat
                             TicketState: tResult.status,
                             Subject: tResult.subject,
                             Reference: tResult.reference,
-                            Tags: JSON.strigify(tResult.tags),
+                            Tags: JSON.stringify(tResult.tags),
                             TicketType: tResult.type,
                             Priority: tResult.priority,
-                            Requester: tResult.requester.firstname + ' ' + tResult.requester.lastname,
-                            Submitter: tResult.submitter.user,
-                            Assignee: tResult.assignee.user,
+                            Requester: requester,
+                            Submitter: submitter,
+                            Assignee: assignee,
                             Other: otherData,
                             BusinessUnit: tResult.businessUnit,
                             Timestamp: new Date().valueOf()
@@ -73,6 +88,19 @@ var publishEvent = function (ticketObj, eventType, data, additionalData, populat
     }
     else
     {
+        if(ticketObj.requester)
+        {
+            requester = ticketObj.requester.firstname + ' ' + ticketObj.requester.lastname;
+        }
+        if(ticketObj.submitter)
+        {
+            submitter = ticketObj.submitter.username;
+        }
+        if(ticketObj.assignee)
+        {
+            assignee = ticketObj.assignee.username;
+        }
+
         var evtData =
             {
                 SessionId: ticketObj._id,
@@ -90,12 +118,12 @@ var publishEvent = function (ticketObj, eventType, data, additionalData, populat
                     TicketState: ticketObj.status,
                     Subject: ticketObj.subject,
                     Reference: ticketObj.reference,
-                    Tags: JSON.strigify(ticketObj.tags),
+                    Tags: JSON.stringify(ticketObj.tags),
                     TicketType: ticketObj.type,
                     Priority: ticketObj.priority,
-                    Requester: ticketObj.requester.firstname + ' ' + ticketObj.requester.lastname,
-                    Submitter: ticketObj.submitter.user,
-                    Assignee: ticketObj.assignee.user,
+                    Requester: requester,
+                    Submitter: submitter,
+                    Assignee: assignee,
                     Other: otherData,
                     BusinessUnit: ticketObj.businessUnit,
                     Timestamp: new Date().valueOf()
@@ -105,6 +133,7 @@ var publishEvent = function (ticketObj, eventType, data, additionalData, populat
             };
 
         dvpEventsHandler(evtData)
+
     }
 
 
