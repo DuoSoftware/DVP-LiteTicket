@@ -576,6 +576,10 @@ function GetTicketsByView(req, res){
                     } else {
                         if(view) {
                             var andQueryObject = {company: company, tenant: tenant};
+                            if(req.query.channel){
+                                andQueryObject.channel=req.query.channel;
+                            }
+
                             if(view.conditions.all && Array.isArray(view.conditions.all) && view.conditions.all.length > 0){
 
                                 view.conditions.all.forEach(function(item){
@@ -739,6 +743,8 @@ function GetTicketsByView(req, res){
                             }
 
 
+
+
                             Ticket.find(mainQuery).sort(sortQuery).populate('assignee', 'name avatar').populate('assignee_group', 'name').populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus').populate('submitter', 'name avatar').populate('collaborators', 'name avatar').exec( function (err, tickets){
                                 if (err) {
                                     jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
@@ -797,14 +803,19 @@ function GetTicketsByViewWithPages(req, res){
             if (useraccount && useraccount.userref) {
 
                 var user = useraccount.userref.toObject();
+                var qObj={company: company, tenant: tenant, _id: req.params.id};
 
-                TicketView.findOne({company: company, tenant: tenant, _id: req.params.id}).exec(function (err, view) {
+                TicketView.findOne(qObj).exec(function (err, view) {
                     if (err) {
                         jsonString = messageFormatter.FormatMessage(err, "Get Ticket Views Failed", false, undefined);
                         res.end(jsonString);
                     } else {
                         if(view) {
                             var andQueryObject = {company: company, tenant: tenant};
+                            if(req.query.channel && req.query.channel.toLowerCase()!='all')
+                            {
+                                andQueryObject.channel=req.query.channel;
+                            }
                             if(view.conditions.all && Array.isArray(view.conditions.all) && view.conditions.all.length > 0){
 
                                 view.conditions.all.forEach(function(item){

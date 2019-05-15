@@ -176,5 +176,20 @@ function PublishToDashboard(messageType, sendObj){
     }
 }
 
+function PublishToDVPEvents(sendObj){
+
+    try {
+        if(sendObj) {
+            queueConnection.publish('DVPEVENTS', sendObj, {
+                contentType: 'application/json'
+            });
+        }
+    }catch(exp){
+
+        console.log(exp);
+    }
+}
+
 module.exports.SendMessage = SendMessage;
 module.exports.PublishToDashboard = PublishToDashboard;
+module.exports.PublishToDVPEvents= PublishToDVPEvents;

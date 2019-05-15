@@ -660,6 +660,70 @@ function CreateTagsToTagCategory(req, res){
 
 };
 
+function UpdateTagCategoryName(req, res){
+
+    logger.debug("DVP-LiteTicket.UpdateTagCategoryName Internal method ");
+
+    var company = parseInt(req.user.company);
+    var tenant = parseInt(req.user.tenant);
+    var jsonString;
+
+    var updateObj = {
+        name:req.body.name,
+        company:company,
+        tenant:tenant
+    };
+
+
+
+    TagCategory.findOneAndUpdate({_id:req.params.id},updateObj,function (err,resp) {
+
+        if(err)
+        {
+            jsonString=messageFormatter.FormatMessage(err, "Updating Tag Category failed", false, undefined);
+        }
+        else
+        {
+            jsonString=messageFormatter.FormatMessage(undefined, "Tag Category update succeeded", true, resp);
+        }
+        res.end(jsonString);
+    });
+
+
+
+};
+function UpdateTagName(req, res){
+
+    logger.debug("DVP-LiteTicket.UpdateTagName Internal method ");
+
+    var company = parseInt(req.user.company);
+    var tenant = parseInt(req.user.tenant);
+    var jsonString;
+
+    var updateObj = {
+        name:req.body.name,
+        company:company,
+        tenant:tenant
+    };
+
+
+
+    Tag.findOneAndUpdate({_id:req.params.id},updateObj,function (err,resp) {
+
+        if(err)
+        {
+            jsonString=messageFormatter.FormatMessage(err, "Updating Tag failed", false, undefined);
+        }
+        else
+        {
+            jsonString=messageFormatter.FormatMessage(undefined, "Tag update succeeded", true, resp);
+        }
+        res.end(jsonString);
+    });
+
+
+
+};
 
 
 module.exports.CreateTag = CreateTag;
@@ -678,5 +742,7 @@ module.exports.GetTagCategories = GetTagCategories;
 module.exports.CreateTagsToTagCategory = CreateTagsToTagCategory;
 module.exports.GetTagCategoriesWithoutPopulation = GetTagCategoriesWithoutPopulation;
 module.exports.GetTagsWithoutPopulation = GetTagsWithoutPopulation;
+module.exports.UpdateTagCategoryName = UpdateTagCategoryName;
+module.exports.UpdateTagName = UpdateTagName;
 
 

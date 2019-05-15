@@ -175,6 +175,7 @@ server.get('/DVP/API/:version/TagCategories', authorization({resource:"tag", act
 server.get('/DVP/API/:version/TagCategoriesWithoutData', authorization({resource:"tag", action:"read"}), tagService.GetTagCategoriesWithoutPopulation);
 server.del('/DVP/API/:version/TagCategory/:id', authorization({resource:"tag", action:"write"}), tagService.RemoveTagCategory);
 server.put('/DVP/API/:version/TagCategory/:id/Tag', authorization({resource:"tag", action:"write"}), tagService.CreateTagsToTagCategory);
+server.put('/DVP/API/:version/TagCategory/:id', authorization({resource:"tag", action:"write"}), tagService.UpdateTagCategoryName);
 
 
 server.post('/DVP/API/:version/Tag', authorization({resource:"tag", action:"write"}), tagService.CreateTag);
@@ -185,6 +186,7 @@ server.del('/DVP/API/:version/Tag/:id', authorization({resource:"tag", action:"w
 server.post('/DVP/API/:version/Tag/:id', authorization({resource:"tag", action:"write"}), tagService.CreateTagsToTag);
 server.put('/DVP/API/:version/Tag/:id/AttachToTag/:tagid', authorization({resource:"tag", action:"write"}), tagService.AttachTagsToTag);
 server.del('/DVP/API/:version/Tag/:id/DetachFrom/:tagid', authorization({resource:"tag", action:"write"}), tagService.DetachTagsFromTag);
+server.put('/DVP/API/:version/Tag/:id', authorization({resource:"tag", action:"write"}), tagService.UpdateTagName);
 
 /////////////////////////////////////////////Tag Category///////////////////////////////////////////////////////////////////////////////////////////////
 server.put('/DVP/API/:version/Tag/:id/AttachToCategory/:cid', authorization({resource:"tag", action:"write"}), tagService.AttachTagsToCategory);
