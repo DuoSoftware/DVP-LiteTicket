@@ -10025,6 +10025,59 @@ module.exports.GetAllTicketsCount = function (req, res) {
     });
 
 };
+
+module.exports.GetVoicemailTicketsCount = function (req, res) {
+
+    logger.info("DVP-LiteTicket.GetVoicemailTicketsCount Internal method ");
+    var company = parseInt(req.user.company);
+    var tenant = parseInt(req.user.tenant);
+
+    var page = parseInt(req.params.Page),
+        size = parseInt(req.params.Size),
+        skip = page > 0 ? ((page - 1) * size) : 0;
+
+    var jsonString;
+    var qObj = {company: company, tenant: tenant, active: true, channel:'voicemail'};
+
+    if(req.query.businessunit)
+    {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    if (req.query.status) {
+        var paramArr;
+        if (Array.isArray(req.query.status)) {
+            paramArr = req.query.status;
+        } else {
+
+            paramArr = [req.query.status];
+        }
+        qObj.status = {$in: paramArr};
+    }
+
+    Ticket.count(qObj).exec(function (err, resCount) {
+        if (err) {
+
+            jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
+
+        } else {
+
+            if (resCount) {
+
+                jsonString = messageFormatter.FormatMessage(undefined, "Get All Tickets Successful", true, resCount);
+
+            } else {
+
+                jsonString = messageFormatter.FormatMessage(undefined, "No Tickets Found", false, 0);
+
+            }
+        }
+
+        res.end(jsonString);
+    });
+
+};
+
 module.exports.GetMyTicketsCount = function (req, res) {
     logger.debug("DVP-LiteTicket.GetAllMyTickets Internal method ");
 
