@@ -3,6 +3,7 @@ var dvpEventsHandler = require('../Trigger/EmailHandler').PublishToDVPEvents;
 var publishEvent = function (ticketObj, eventType, data, additionalData, populate) {
 
     //Get Ticket
+    var otherData = null;
     var evtName = data;
     if(data === 'new')
     {
@@ -27,7 +28,7 @@ var publishEvent = function (ticketObj, eventType, data, additionalData, populat
         otherData = data.body
     }
 
-    var otherData = null;
+
     var requester = "";
     var assignee = "";
     var submitter = "";
