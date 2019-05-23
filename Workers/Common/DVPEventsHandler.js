@@ -1,4 +1,5 @@
 var dvpEventsHandler = require('../Trigger/EmailHandler').PublishToDVPEvents;
+var Ticket = require('dvp-mongomodels/model/Ticket').Ticket;
 
 var publishEvent = function (ticketObj, eventType, data, additionalData, populate) {
 
