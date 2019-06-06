@@ -3,8 +3,38 @@ var logger = require('dvp-common/LogHandler/CommonLogHandler.js').logger;
 var Tag = require('dvp-mongomodels/model/Tag').Tag;
 var TagCategory = require('dvp-mongomodels/model/Tag').TagCategory;
 var messageFormatter = require('dvp-common/CommonMessageGenerator/ClientMessageJsonFormatter.js');
+var auditTrailsHandler = require('dvp-common/AuditTrail/AuditTrailsHandler.js');
 
 
+function addAuditTrail(tenantId, companyId, iss, auditData) {
+    /*var auditData =  {
+     KeyProperty: keyProperty,
+     OldValue: auditTrails.OldValue,
+     NewValue: auditTrails.NewValue,
+     Description: auditTrails.Description,
+     Author: auditTrails.Author,
+     User: iss,
+     OtherData: auditTrails.OtherData,
+     ObjectType: auditTrails.ObjectType,
+     Action: auditTrails.Action,
+     Application: auditTrails.Application,
+     TenantId: tenantId,
+     CompanyId: companyId
+     }*/
+
+    try {
+        auditTrailsHandler.CreateAuditTrails(tenantId, companyId, iss, auditData, function (err, obj) {
+            if (err) {
+                var jsonString = messageFormatter.FormatMessage(err, "Fail", false, auditData);
+                logger.error('addAuditTrail -  Fail To Save Audit trail-[%s]', jsonString);
+            }
+        });
+    }
+    catch (ex) {
+        var jsonString = messageFormatter.FormatMessage(ex, "Fail", false, auditData);
+        logger.error('addAuditTrail -  insertion  failed-[%s]', jsonString);
+    }
+}
 
 function CreateTagCategory(req, res){
 
@@ -12,7 +42,7 @@ function CreateTagCategory(req, res){
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
-
+    var iss = req.user.iss;
     var jsonString;
     var tagCategory = TagCategory({
         name:req.body.name,
@@ -28,6 +58,21 @@ function CreateTagCategory(req, res){
         }
         else
         {
+
+            var auditData = {
+                KeyProperty: "TagCategory",
+                OldValue: {},
+                NewValue: resNewCategory,
+                Description: "New Tag Category Created.",
+                Author: iss,
+                User: iss,
+                ObjectType: "TagCategory",
+                Action: "SAVE",
+                Application: "Lite Ticket Service"
+            };
+            addAuditTrail(tenant, company, iss, auditData);
+
+
             jsonString=messageFormatter.FormatMessage(undefined, "Tag category creation succeeded", true, resNewCategory);
         }
         res.end(jsonString);
@@ -42,6 +87,7 @@ function RemoveTagCategory(req, res){
     var jsonString;
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
+    var iss = req.user.iss;
 
     TagCategory.findOneAndRemove({_id:req.params.id,company:company,tenant:tenant}, function (errRemove,resRemove) {
         if(errRemove)
@@ -50,6 +96,20 @@ function RemoveTagCategory(req, res){
         }
         else
         {
+
+            var auditData = {
+                KeyProperty: "TagCategory",
+                OldValue: {},
+                NewValue: resRemove,
+                Description: "Tag Category Removed.",
+                Author: iss,
+                User: iss,
+                ObjectType: "TagCategory",
+                Action: "DELETE",
+                Application: "Lite Ticket Service"
+            };
+            addAuditTrail(tenant, company, iss, auditData);
+
             jsonString=messageFormatter.FormatMessage(undefined, "Tag category deletion succeeded", true, resRemove);
         }
         res.end(jsonString);
@@ -79,7 +139,6 @@ function GetTagCategory(req, res){
     });
 
 };
-
 function GetTagCategories(req, res){
 
     logger.debug("DVP-LiteTicket.GetTagCategories Internal method ");
@@ -110,8 +169,6 @@ function GetTagCategories(req, res){
     });
 
 };
-
-
 function GetTagCategoriesWithoutPopulation(req, res){
 
     logger.debug("DVP-LiteTicket.GetTagCategories Internal method ");
@@ -142,14 +199,13 @@ function GetTagCategoriesWithoutPopulation(req, res){
     });
 
 };
-
 function CreateTag(req, res){
 
     logger.debug("DVP-LiteTicket.CreateTagCategory Internal method ");
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
-
+    var iss = req.user.iss;
     var jsonString;
 
     var tag = Tag({
@@ -167,13 +223,24 @@ function CreateTag(req, res){
         }
         else
         {
+            var auditData = {
+                KeyProperty: "Tag",
+                OldValue: {},
+                NewValue: resNewTag,
+                Description: "New Tag Created.",
+                Author: iss,
+                User: iss,
+                ObjectType: "Tag",
+                Action: "SAVE",
+                Application: "Lite Ticket Service"
+            };
+            addAuditTrail(tenant, company, iss, auditData);
             jsonString=messageFormatter.FormatMessage(undefined, "Tag creation succeeded", true, resNewTag);
         }
         res.end(jsonString);
     });
 
 };
-
 function GetTags(req, res){
 
     logger.debug("DVP-LiteTicket.GetTags Internal method ");
@@ -208,8 +275,6 @@ function GetTags(req, res){
 
 
 };
-
-
 function GetTagsWithoutPopulation(req, res){
 
     logger.debug("DVP-LiteTicket.GetTags Internal method ");
@@ -244,8 +309,6 @@ function GetTagsWithoutPopulation(req, res){
 
 
 };
-
-
 function GetTag(req, res){
 
     logger.debug("DVP-LiteTicket.GetTag Internal method ");
@@ -269,13 +332,13 @@ function GetTag(req, res){
     });
 
 };
-
 function DeleteTag(req, res){
 
     logger.debug("DVP-LiteTicket.DeleteTag Internal method ");
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
+    var iss = req.user.iss;
     var jsonString;
 
     Tag.findOneAndRemove({id:req.params.id,company:company,tenant:tenant}, function (errTagRemove,resTagRemove) {
@@ -285,6 +348,19 @@ function DeleteTag(req, res){
         }
         else
         {
+            var auditData = {
+                KeyProperty: "Tag",
+                OldValue: {},
+                NewValue: resTagRemove,
+                Description: "Tag Removed.",
+                Author: iss,
+                User: iss,
+                ObjectType: "Tag",
+                Action: "DELETE",
+                Application: "Lite Ticket Service"
+            };
+            addAuditTrail(tenant, company, iss, auditData);
+
             jsonString=messageFormatter.FormatMessage(undefined, "Tag category deletion succeeded", true, resTagRemove);
         }
         res.end(jsonString);
@@ -292,11 +368,10 @@ function DeleteTag(req, res){
 
 
 };
-
 function AttachTagsToTag(req, res){
 
     logger.debug("DVP-LiteTicket.AttachTagsToTag Internal method ");
-
+    var iss = req.user.iss;
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
@@ -314,6 +389,19 @@ function AttachTagsToTag(req, res){
         }
         else
         {
+            var auditData = {
+                KeyProperty: "Tag",
+                OldValue: {tags : req.params.id},
+                NewValue: resAttachTag,
+                Description: "Tag Attached To Tag.",
+                Author: iss,
+                User: iss,
+                ObjectType: "Tag",
+                Action: "UPDATE",
+                Application: "Lite Ticket Service"
+            };
+            addAuditTrail(tenant, company, iss, auditData);
+
             jsonString=messageFormatter.FormatMessage(undefined, "Attaching Tags succeeded", true, resAttachTag);
         }
         res.end(jsonString);
@@ -328,6 +416,7 @@ function CreateTagsToTag(req, res){
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
+    var iss = req.user.iss;
     var jsonString;
 
     var newTag = Tag({
@@ -359,6 +448,19 @@ function CreateTagsToTag(req, res){
                 }
                 else
                 {
+                    var auditData = {
+                        KeyProperty: "Tag",
+                        OldValue: {tags : req.params.id},
+                        NewValue: resAttachTag,
+                        Description: "Tag Attached To Tag.",
+                        Author: iss,
+                        User: iss,
+                        ObjectType: "Tag",
+                        Action: "UPDATE",
+                        Application: "Lite Ticket Service"
+                    };
+                    addAuditTrail(tenant, company, iss, auditData);
+
                     var tempAttachTag = resAttachTag.toJSON();
                     tempAttachTag.newTagID=resSubTag.id;
                     console.log(JSON.stringify(tempAttachTag.newTagID));
@@ -381,6 +483,7 @@ function DetachTagsFromTag(req,res){
     var jsonString;
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
+    var iss = req.user.iss;
     var parentTagId=req.params.tagid;
     var childTagId=req.params.id;
 
@@ -392,6 +495,18 @@ function DetachTagsFromTag(req,res){
         }
         else
         {
+            var auditData = {
+                KeyProperty: "Tag",
+                OldValue: {},
+                NewValue: resDetachTag,
+                Description: "Tag Detach To Tag.",
+                Author: iss,
+                User: iss,
+                ObjectType: "Tag",
+                Action: "UPDATE",
+                Application: "Lite Ticket Service"
+            };
+            addAuditTrail(tenant, company, iss, auditData);
             jsonString=messageFormatter.FormatMessage(undefined, "Detaching Tags succeeded", false, resDetachTag)
         }
         res.end(jsonString);
@@ -399,7 +514,6 @@ function DetachTagsFromTag(req,res){
     });
 
 };
-
 function AttachTagsToCategory(req, res){
 
     logger.debug("DVP-LiteTicket.AttachTagsToCategory Internal method ");
@@ -409,6 +523,7 @@ function AttachTagsToCategory(req, res){
     var CategoryId=req.params.cid;
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
+    var iss = req.user.iss;
 
 
     TagCategory.findOneAndUpdate({_id:CategoryId,company:company,tenant:tenant},{
@@ -422,6 +537,18 @@ function AttachTagsToCategory(req, res){
         }
         else
         {
+            var auditData = {
+                KeyProperty: "Tag",
+                OldValue: {},
+                NewValue: resAttachCatToTag,
+                Description: "Attach tag to category.",
+                Author: iss,
+                User: iss,
+                ObjectType: "Tag",
+                Action: "UPDATE",
+                Application: "Lite Ticket Service"
+            };
+            addAuditTrail(tenant, company, iss, auditData);
             jsonString=messageFormatter.FormatMessage(undefined, "Attaching Tags succeeded", true, resAttachCatToTag);
         }
         res.end(jsonString);
@@ -437,6 +564,7 @@ function DetachTagsFromCategory(req,res){
     var CaregoryId=req.params.cid;
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
+    var iss = req.user.iss;
 
     TagCategory.findOneAndUpdate({_id:CaregoryId,company:company,tenant:tenant},{$pull:{tags:TagId}},function(errDetachCatToTag,resDetachCatToTag)
     {
@@ -446,6 +574,19 @@ function DetachTagsFromCategory(req,res){
         }
         else
         {
+            var auditData = {
+                KeyProperty: "Tag",
+                OldValue: {},
+                NewValue: resDetachCatToTag,
+                Description: "Delete tag to category.",
+                Author: iss,
+                User: iss,
+                ObjectType: "Tag",
+                Action: "DELETE",
+                Application: "Lite Ticket Service"
+            };
+            addAuditTrail(tenant, company, iss, auditData);
+
             jsonString=messageFormatter.FormatMessage(undefined, "Attaching Tags succeeded", true, resDetachCatToTag);
         }
         res.end(jsonString);
@@ -453,13 +594,13 @@ function DetachTagsFromCategory(req,res){
 
 
 };
-
 function CreateTagsToTagCategory(req, res){
 
     logger.debug("DVP-LiteTicket.CreateTagsToTagCategory Internal method ");
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
+    var iss = req.user.iss;
     var jsonString;
 
     var newTag = Tag({
@@ -491,6 +632,18 @@ function CreateTagsToTagCategory(req, res){
                 }
                 else
                 {
+                    var auditData = {
+                        KeyProperty: "Tag",
+                        OldValue: {},
+                        NewValue: resAttachTag,
+                        Description: "Create tag to category.",
+                        Author: iss,
+                        User: iss,
+                        ObjectType: "Tag",
+                        Action: "UPDATE",
+                        Application: "Lite Ticket Service"
+                    };
+                    addAuditTrail(tenant, company, iss, auditData);
                     /*var tempAttachTag = resAttachTag.toJSON();
                     tempAttachTag.newTagID=resSubTag._doc._id;
                     console.log(JSON.stringify(tempAttachTag.newTagID));

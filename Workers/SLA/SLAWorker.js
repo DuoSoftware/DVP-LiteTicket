@@ -85,7 +85,15 @@ function AggregateCondition(obj, field, value, operator, callback){
                     var pattern_ni = new RegExp(GenerateFilterRegex(value));
                     callback(!pattern_ni.test(obj[field]));
                 }else {
-                    callback(obj[field].indexOf(value) === -1);
+                    if(field === "requester")
+                    {
+                        callback(true);
+                    }
+                    else
+                    {
+                        callback(obj[field].indexOf(value) === -1);
+                    }
+
                 }
                 break;
             case "greater_than_or_equal":
@@ -439,11 +447,11 @@ function UpdateSLAWhenFirstComment(ticketId){
                             for (var i = 0; i < sla.matrix.length; i++) {
                                 var matrix = sla.matrix[i];
                                 if (matrix.criteria === "update") {
-                                    var delOnFailedUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_fail", ticket.id, matrix.criteria)));
+                                    var delOnFailedUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_fail", ticket._id.toString(), matrix.criteria)));
                                     RestClient.DoDelete(internalAccessToken, delOnFailedUrl, function (err, res1, result) {
                                     });
                                     if (matrix.threshold) {
-                                        var delOnThresholdUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_threshold", ticket.id, matrix.criteria)));
+                                        var delOnThresholdUrl = util.format("%s/%s", cronDeleteUrl, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_threshold", ticket._id.toString(), matrix.criteria)));
                                         RestClient.DoDelete(internalAccessToken, delOnThresholdUrl, function (err, res1, result) {
                                         });
                                     }

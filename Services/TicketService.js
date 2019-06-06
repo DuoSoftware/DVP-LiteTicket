@@ -23,6 +23,7 @@ var Case = require('dvp-mongomodels/model/CaseManagement').Case;
 var CaseConfiguration = require('dvp-mongomodels/model/CaseManagement').CaseConfiguration;
 var FileSlotArray = require('dvp-mongomodels/model/Ticket').FileSlotArray;
 var FileSlot = require('dvp-mongomodels/model/Ticket').FileSlot;
+var dvpEventsHandler = require('../Workers/Common/DVPEventsHandler.js');
 
 
 /*var CaseConfiguration = require('dvp-mongomodels/model/CaseConfiguration').CaseConfiguration;*/
@@ -494,6 +495,11 @@ module.exports.GetAllTickets = function (req, res) {
         sortQuery = {created_at: -1}
     }
 
+    if(req.query.channel && req.query.channel.toLowerCase()!="all")
+    {
+        qObj.channel=req.query.channel;
+    }
+
     Ticket.find(qObj).populate('assignee', 'name avatar firstname lastname').populate('assignee_group', 'name')
         .populate('requester', 'name avatar firstname lastname phone email landnumber facebook twitter linkedin googleplus')
         .populate('submitter', 'name avatar firstname lastname')
@@ -605,6 +611,10 @@ module.exports.GetTicketsByTimeRange = function (req, res) {
         qObj.businessUnit = req.query.businessunit;
     }
 
+    if(req.query.channel && req.query.channel.toLowerCase()!="all")
+    {
+        qObj.channel=req.query.channel;
+    }
     Ticket.find(qObj, function (err, tickets) {
         //db.posts.find( //query today up to tonight  {"created_on": {"$gte": new Date(2012, 7, 14), "$lt": new Date(2012, 7, 15)}})
         if (err) {
@@ -637,7 +647,10 @@ module.exports.GetAllTicketsWithStatus = function (req, res) {
         skip = page > 0 ? ((page - 1) * size) : 0;
 
     var jsonString;
-
+    if(req.query.channel && req.query.channel.toLowerCase()!="all")
+    {
+        qObj.channel=req.query.channel;
+    }
     var qObj = {company: company, tenant: tenant, active: true, status: req.params.status};
     if (req.query.businessunit) {
         qObj.businessUnit = req.query.businessunit;
@@ -681,7 +694,10 @@ module.exports.GetAllTicketsWithStatusTimeRange = function (req, res) {
     if (req.query.businessunit) {
         qObj.businessUnit = req.query.businessunit;
     }
-
+    if(req.query.channel && req.query.channel.toLowerCase()!="all")
+    {
+        qObj.channel=req.query.channel;
+    }
     Ticket.find(qObj).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
 
@@ -717,6 +733,10 @@ module.exports.GetAllTicketsWithMatrix = function (req, res) {
     var qObj = {company: company, tenant: tenant, active: true};
     if (req.query.businessunit) {
         qObj.businessUnit = req.query.businessunit;
+    }
+    if(req.query.channel && req.query.channel.toLowerCase()!="all")
+    {
+        qObj.channel=req.query.channel;
     }
 
     TicketStatics.find().populate({
@@ -804,7 +824,10 @@ module.exports.GetAllTicketsByChannel = function (req, res) {
     if (req.query.businessunit) {
         qObj.businessUnit = req.query.businessunit;
     }
-
+    if(req.query.channel && req.query.channel.toLowerCase()!="all")
+    {
+        qObj.channel=req.query.channel;
+    }
     Ticket.find(qObj).skip(skip)
         .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
@@ -845,7 +868,10 @@ module.exports.GetAllTicketsByChannelTimeRange = function (req, res) {
     if (req.query.businessunit) {
         qObj.businessUnit = req.query.businessunit;
     }
-
+    if(req.query.channel && req.query.channel.toLowerCase()!="all")
+    {
+        qObj.channel=req.query.channel;
+    }
     Ticket.find(qObj).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
 
@@ -889,6 +915,11 @@ module.exports.GetAllTicketsByRequester = function (req, res) {
         qObj.businessUnit = req.query.businessunit;
     }
 
+    if(req.query.channel && req.query.channel.toLowerCase()!="all")
+    {
+        qObj.channel=req.query.channel;
+    }
+
     Ticket.find(qObj).populate('requester', 'name avatar phone email landnumber facebook twitter linkedin googleplus').populate('submitter', 'name avatar').populate('assignee', 'name avatar').skip(skip)
         .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
@@ -929,7 +960,10 @@ module.exports.GetAllTicketsByRequesterTimeRange = function (req, res) {
     if (req.query.businessunit) {
         qObj.businessUnit = req.query.businessunit;
     }
-
+    if(req.query.channel && req.query.channel.toLowerCase()!="all")
+    {
+        qObj.channel=req.query.channel;
+    }
     Ticket.find(qObj).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
 
@@ -967,7 +1001,10 @@ module.exports.GetAllTicketsByPriority = function (req, res) {
     if (req.query.businessunit) {
         qObj.businessUnit = req.query.businessunit;
     }
-
+    if(req.query.channel && req.query.channel.toLowerCase()!="all")
+    {
+        qObj.channel=req.query.channel;
+    }
     Ticket.find(qObj).skip(skip)
         .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
@@ -1008,7 +1045,10 @@ module.exports.GetAllTicketsByPriorityTimeRange = function (req, res) {
     if (req.query.businessunit) {
         qObj.businessUnit = req.query.businessunit;
     }
-
+    if(req.query.channel && req.query.channel.toLowerCase()!="all")
+    {
+        qObj.channel=req.query.channel;
+    }
     Ticket.find(qObj).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
 
@@ -1046,7 +1086,10 @@ module.exports.GetAllGroupTickets = function (req, res) {
     if (req.query.businessunit) {
         qObj.businessUnit = req.query.businessunit;
     }
-
+    if(req.query.channel && req.query.channel.toLowerCase()!="all")
+    {
+        qObj.channel=req.query.channel;
+    }
     Ticket.find(qObj).skip(skip)
         .limit(size).sort({created_at: -1}).exec(function (err, tickets) {
         if (err) {
@@ -1106,6 +1149,10 @@ module.exports.GetMyGroupTicketList = function (req, res) {
                     }
                     if (req.query.businessunit) {
                         obj.businessUnit = req.query.businessunit;
+                    }
+                    if(req.query.channel && req.query.channel.toLowerCase()!="all")
+                    {
+                        obj.channel=req.query.channel;
                     }
 
                     Ticket.find(obj).populate('assignee', 'name avatar firstname lastname')
@@ -1194,6 +1241,10 @@ module.exports.GetAllMyTickets = function (req, res) {
                     }
                     if (req.query.businessunit) {
                         qObj.businessUnit = req.query.businessunit;
+                    }
+                    if(req.query.channel && req.query.channel.toLowerCase()!="all")
+                    {
+                        qObj.channel=req.query.channel;
                     }
 
                     Ticket.find(qObj
@@ -2140,6 +2191,7 @@ module.exports.UpdateTicket = function (req, res) {
                     }
                     else {
                         if (rUser) {
+                            dvpEventsHandler.PublishEvent(rUser._id, 'change_status', 'update ticket', null, true);
                             jsonString = messageFormatter.FormatMessage(undefined, "Ticket Update Successfully", true, rUser);
                             SendTicketNotification(ticket, "contentupdate", req.user.iss);
                         }
@@ -2203,6 +2255,7 @@ module.exports.UpdateFormSubmission = function (req, res) {
                     }
                     else {
                         if (rUser) {
+                            dvpEventsHandler.PublishEvent(null, 'change_status', 'update ticket', null, true);
                             jsonString = messageFormatter.FormatMessage(undefined, "Ticket Update Successfully", true, rUser);
                         }
                         else {
@@ -4767,6 +4820,7 @@ module.exports.CreateSubTicket = function (req, res) {
                                     res.end(jsonString);
                                 }
                                 else {
+                                    dvpEventsHandler.PublishEvent(obj._id, 'change_status', 'new', null, true);
                                     SetRelatedSlots(req, obj.id, obj.isolated_tags);
                                     parentTicket.update({$addToSet: {sub_tickets: obj._doc._id}}
                                         , function (err, rOrg) {
@@ -8894,6 +8948,11 @@ module.exports.GetTicketDetailReport = function (req, res) {
             }
         }
 
+        if(req.query.channel && req.query.channel.toLowerCase()!="all")
+        {
+            tempQuery.channel=req.query.channel;
+        }
+
         var tempLimit = parseInt(req.params.limit);
         var tempSkip = parseInt(req.params.skip);
 
@@ -9040,6 +9099,10 @@ module.exports.GetTicketsByField = function (req, res) {
     if (req.params.key && req.params.value) {
 
         tempQuery[req.params.key] = req.params.value;
+    }
+    if(req.query.channel && req.query.channel.toLowerCase()!="all")
+    {
+        qObj.channel=req.query.channel;
     }
 
     Ticket.find(tempQuery, function (err, tickets) {
@@ -9514,6 +9577,11 @@ module.exports.GetAllTicketsSubmittedByMe = function (req, res) {
                     sortQuery = {created_at: -1}
                 }
 
+                if(req.query.channel && req.query.channel.toLowerCase()!="all")
+                {
+                    qObj.channel=req.query.channel;
+                }
+
                 Ticket.find(qObj
                 ).populate('assignee', 'name avatar firstname lastname')
                     .populate('assignee', 'name avatar firstname lastname')
@@ -9593,7 +9661,10 @@ module.exports.GetAllTicketsWatchedByMe = function (req, res) {
                 } else {
                     sortQuery = {created_at: -1}
                 }
-
+                if(req.query.channel && req.query.channel.toLowerCase()!="all")
+                {
+                    qObj.channel=req.query.channel;
+                }
 
                 Ticket.find(qObj
                 ).populate('assignee', 'name avatar firstname lastname')
@@ -9677,6 +9748,10 @@ module.exports.GetAllTicketsCollaboratedByMe = function (req, res) {
                     sortQuery = {created_at: -1}
                 }
 
+                if(req.query.channel && req.query.channel.toLowerCase()!="all")
+                {
+                    qObj.channel=req.query.channel;
+                }
 
                 Ticket.find(qObj
                 ).populate('assignee', 'name avatar firstname lastname')
@@ -9950,6 +10025,59 @@ module.exports.GetAllTicketsCount = function (req, res) {
     });
 
 };
+
+module.exports.GetVoicemailTicketsCount = function (req, res) {
+
+    logger.info("DVP-LiteTicket.GetVoicemailTicketsCount Internal method ");
+    var company = parseInt(req.user.company);
+    var tenant = parseInt(req.user.tenant);
+
+    var page = parseInt(req.params.Page),
+        size = parseInt(req.params.Size),
+        skip = page > 0 ? ((page - 1) * size) : 0;
+
+    var jsonString;
+    var qObj = {company: company, tenant: tenant, active: true, channel:'voicemail'};
+
+    if(req.query.businessunit)
+    {
+        qObj.businessUnit = req.query.businessunit;
+    }
+
+    if (req.query.status) {
+        var paramArr;
+        if (Array.isArray(req.query.status)) {
+            paramArr = req.query.status;
+        } else {
+
+            paramArr = [req.query.status];
+        }
+        qObj.status = {$in: paramArr};
+    }
+
+    Ticket.count(qObj).exec(function (err, resCount) {
+        if (err) {
+
+            jsonString = messageFormatter.FormatMessage(err, "Get All Tickets Failed", false, undefined);
+
+        } else {
+
+            if (resCount) {
+
+                jsonString = messageFormatter.FormatMessage(undefined, "Get All Tickets Successful", true, resCount);
+
+            } else {
+
+                jsonString = messageFormatter.FormatMessage(undefined, "No Tickets Found", false, 0);
+
+            }
+        }
+
+        res.end(jsonString);
+    });
+
+};
+
 module.exports.GetMyTicketsCount = function (req, res) {
     logger.debug("DVP-LiteTicket.GetAllMyTickets Internal method ");
 

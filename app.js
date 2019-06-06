@@ -150,6 +150,8 @@ server.get('/DVP/API/:version/TicketsWatchedByMe/:Size/:Page', authorization({re
 server.get('/DVP/API/:version/TicketsWatchedByMe/count', authorization({resource:"ticket", action:"read"}), ticketService.GetMyWatchedTicketCount);
 server.get('/DVP/API/:version/TicketsCollaboratedByMe/:Size/:Page', authorization({resource:"ticket", action:"read"}), ticketService.GetAllTicketsCollaboratedByMe);
 server.get('/DVP/API/:version/TicketsCollaboratedByMe/count', authorization({resource:"ticket", action:"read"}), ticketService.GetMyCollaboratedTicketCount);
+server.get('/DVP/API/:version/VoicemailTickets/count', authorization({resource:"ticket", action:"read"}), ticketService.GetVoicemailTicketsCount);
+
 
 
 
