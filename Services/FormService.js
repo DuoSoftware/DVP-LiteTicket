@@ -503,7 +503,7 @@ function UpdateFormSubmission(req, res) {
     var tenant = parseInt(req.user.tenant);
     var jsonString;
 
-    FormMaster.findOne({name: req.body.form, company: company, tenant: tenant}, function (err, formmaster) {
+    FormMaster.findOne({_id: req.body.form, company: company, tenant: tenant}, function (err, formmaster) {
 
         if (err) {
 
