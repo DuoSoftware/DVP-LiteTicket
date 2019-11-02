@@ -36,7 +36,7 @@
     "json-query": "^2.1.0",
     "json2csv": "^3.7.3",
     "moment": "^2.14.1",
-    "mongoose": "^4.5.3",
+    "mongoose": "^5.7.7",
     "mongoose-unique-validator": "^1.0.2",
     "node-uuid": "^1.4.7",
     "q": "^1.4.1",
