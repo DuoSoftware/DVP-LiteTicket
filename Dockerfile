@@ -7,11 +7,20 @@
 
 #EXPOSE 8872
 
-FROM node:9.9.0
-ARG VERSION_TAG
-RUN git clone -b $VERSION_TAG https://github.com/DuoSoftware/DVP-LiteTicket.git /usr/local/src/liteticket
-RUN cd /usr/local/src/liteticket;
-WORKDIR /usr/local/src/liteticket
+# FROM node:9.9.0
+# ARG VERSION_TAG
+# RUN git clone -b $VERSION_TAG https://github.com/DuoSoftware/DVP-LiteTicket.git /usr/local/src/liteticket
+# RUN cd /usr/local/src/liteticket;
+# WORKDIR /usr/local/src/liteticket
+# RUN npm install
+# EXPOSE 8872
+# CMD [ "node", --expose-gc "/usr/local/src/liteticket/app.js" ]
+
+
+FROM node:10-alpine
+WORKDIR /usr/local/src/eventservice
+COPY package*.json ./
 RUN npm install
+COPY . .
 EXPOSE 8872
-CMD [ "node", --expose-gc "/usr/local/src/liteticket/app.js" ]
+CMD [ "node", "app.js" ]
