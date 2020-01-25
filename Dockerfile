@@ -18,7 +18,7 @@
 
 
 FROM node:10-alpine
-WORKDIR /usr/local/src/eventservice
+WORKDIR /usr/local/src/liteticket
 COPY package*.json ./
 RUN npm install
 COPY . .
