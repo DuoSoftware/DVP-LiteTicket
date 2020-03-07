@@ -4,7 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
   },
   "repository": {
     "type": "git",
@@ -30,13 +31,14 @@
     "dustjs-linkedin": "^2.7.5",
     "dvp-common": "^1.1.0",
     "dvp-dbmodels": "^2.1.0",
-    "dvp-mongomodels": "5.1.5",
+    "dvp-mongomodels": "^6.0.4",
     "ioredis": "^3.1.1",
     "is-json": "^2.0.1",
     "json-query": "^2.1.0",
     "json2csv": "^3.7.3",
     "moment": "^2.14.1",
-    "mongoose-unique-validator": "^1.0.2",
+    "mongoose": "^5.9.3",
+    "mongoose-unique-validator": "^2.0.3",
     "node-uuid": "^1.4.7",
     "q": "^1.4.1",
     "redis": "^2.6.3",
