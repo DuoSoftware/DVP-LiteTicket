@@ -20,6 +20,8 @@ var port = config.Host.port || 3000;
 var host = config.Host.vdomain || 'localhost';
 var ardsService =  require('./Workers/Trigger/PickAgent.js');
 var scheduleWorker = require('./Workers/SLA/SLAWorker.js');
+var healthcheck = require('dvp-healthcheck/DBHealthChecker');
+var {redisClient} = require('./Services/RedisHandler');
 
 process.on("uncaughtException", function(err) {
   console.error(err);
@@ -46,8 +48,12 @@ server.use(restify.fullResponse());
 server.use(restify.acceptParser(server.acceptable));
 server.use(restify.queryParser());
 
-server.use(jwt({secret: secret.Secret}));
+server.use(jwt({secret: secret.Secret}).unless({path: ['/healthcheck']}));
 
+//------------------------- Health Check ------------------------------- \\
+
+hc = new healthcheck(server, {redis: redisClient, mongo:mongomodels.connection });
+hc.Initiate();
 
 //var mongoip=config.Mongo.ip;
 //var mongoport=config.Mongo.port;
