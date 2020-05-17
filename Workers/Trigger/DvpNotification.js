@@ -13,7 +13,7 @@ var uuid =require('node-uuid');
 
 function InitiateNotification(internalAccessToken, notificationData){
     var initUrl = util.format("http://%s/DVP/API/%s/NotificationService/Notification/initiate", config.Services.notificationServiceHost, config.Services.notificationServiceVersion);
-    if (validator.isIP(config.Services.notificationServiceHost)) {
+    if (config.Services.dynamicPort || validator.isIP(config.Services.notificationServiceHost)) {
         initUrl = util.format("http://%s:%s/DVP/API/%s/NotificationService/Notification/initiate", config.Services.notificationServiceHost, config.Services.notificationServicePort, config.Services.notificationServiceVersion);
     }
     restClientHandler.DoPostNotification(internalAccessToken, initUrl, notificationData, function (err, res1, result) {
@@ -29,7 +29,7 @@ function InitiateNotification(internalAccessToken, notificationData){
 
 function InitiateTicketNotification(internalAccessToken, notificationData){
     var initUrl = util.format("http://%s/DVP/API/%s/NotificationService/Notification/initiate", config.Services.notificationServiceHost, config.Services.notificationServiceVersion);
-    if (validator.isIP(config.Services.notificationServiceHost)) {
+    if (config.Services.dynamicPort || validator.isIP(config.Services.notificationServiceHost)) {
         initUrl = util.format("http://%s:%s/DVP/API/%s/NotificationService/Notification/initiate", config.Services.notificationServiceHost, config.Services.notificationServicePort, config.Services.notificationServiceVersion);
     }
     restClientHandler.DoPostTicketNotification(internalAccessToken, initUrl, notificationData, function (err, res1, result) {
@@ -45,7 +45,7 @@ function InitiateTicketNotification(internalAccessToken, notificationData){
 
 function BroadcastNotification(internalAccessToken, notificationData){
     var initUrl = util.format("http://%s/DVP/API/%s/NotificationService/Notification/Broadcast", config.Services.notificationServiceHost, config.Services.notificationServiceVersion);
-    if (validator.isIP(config.Services.notificationServiceHost)) {
+    if (config.Services.dynamicPort || validator.isIP(config.Services.notificationServiceHost)) {
         initUrl = util.format("http://%s:%s/DVP/API/%s/NotificationService/Notification/Broadcast", config.Services.notificationServiceHost, config.Services.notificationServicePort, config.Services.notificationServiceVersion);
     }
     restClientHandler.DoPostNotification(internalAccessToken, initUrl, notificationData, function (err, res1, result) {
