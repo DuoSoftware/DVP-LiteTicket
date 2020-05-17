@@ -18,7 +18,7 @@ function RegisterWithArds(callback){
         var serverId = util.format("TICKET_%s", config.Host.port);
         var callbackUrl = util.format("http://%s/DVP/API/%s/Ticket/ArdsCallback", config.LBServer.ip, config.Host.version);
         var addReqServerUrl = util.format("http://%s/DVP/API/%s/ARDS/requestserver", config.Services.ardsServiceHost, config.Services.ardsServiceVersion);
-        if (config.Services.dynamicPort || validator.isIP(config.LBServer.ip)) {
+        if (validator.isIP(config.LBServer.ip)) {
             callbackUrl = util.format("http://%s:%s/DVP/API/%s/Ticket/ArdsCallback", config.LBServer.ip, config.LBServer.port, config.Host.version);
         }
         if (config.Services.dynamicPort || validator.isIP(config.Services.routingServiceHost)) {

@@ -278,7 +278,7 @@ function UpdateCron(tenant, company, ticketId, priority, previousPriority, matri
                 if (config.Services.dynamicPort || validator.isIP(config.Services.scheduleWorkerHost)) {
                     cronUrl = util.format("http://%s:%s/DVP/API/%s/Cron", config.Services.scheduleWorkerHost, config.Services.scheduleWorkerPort, config.Services.scheduleWorkerVersion);
                 }
-                if (config.Services.dynamicPort || validator.isIP(config.LBServer.ip)) {
+                if (validator.isIP(config.LBServer.ip)) {
                     callbackUrl = util.format("http://%s:%s/DVP/API/%s/SLA/ScheduleCallback", config.LBServer.ip, config.LBServer.port, config.Host.version);
                 }
 
