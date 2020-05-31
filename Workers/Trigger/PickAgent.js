@@ -21,7 +21,7 @@ function RegisterWithArds(callback){
         if (validator.isIP(config.LBServer.ip)) {
             callbackUrl = util.format("http://%s:%s/DVP/API/%s/Ticket/ArdsCallback", config.LBServer.ip, config.LBServer.port, config.Host.version);
         }
-        if (validator.isIP(config.Services.routingServiceHost)) {
+        if (config.Services.dynamicPort || validator.isIP(config.Services.routingServiceHost)) {
             addReqServerUrl = util.format("http://%s:%s/DVP/API/%s/ARDS/requestserver", config.Services.ardsServiceHost, config.Services.ardsServicePort, config.Services.ardsServiceVersion);
         }
         var reqData = {
@@ -64,7 +64,7 @@ function AddRequest(tenant, company, sessionId, attributeId, priority, otherInfo
     };
 
     var addReqUrl = util.format("http://%s/DVP/API/%s/ARDS/request", config.Services.ardsServiceHost, config.Services.ardsServiceVersion);
-    if (validator.isIP(config.Services.ardsServiceHost)) {
+    if (config.Services.dynamicPort || validator.isIP(config.Services.ardsServiceHost)) {
         addReqUrl = util.format("http://%s:%s/DVP/API/%s/ARDS/request", config.Services.ardsServiceHost, config.Services.ardsServicePort, config.Services.ardsServiceVersion);
     }
     restClientHandler.DoPost(internalAccessToken, addReqUrl, ardsRequest, function (err, res1, result) {
@@ -82,7 +82,7 @@ function AddRequest(tenant, company, sessionId, attributeId, priority, otherInfo
 function RemoveRequest(tenant, company, sessionId, reason, callback){
     var internalAccessToken = util.format("%s:%s", tenant, company);
     var addReqRemoveUrl = util.format("http://%s/DVP/API/%s/ARDS/request/%s/%s", config.Services.ardsServiceHost, config.Services.ardsServiceVersion, sessionId, reason);
-    if (validator.isIP(config.Services.ardsServiceHost)) {
+    if (config.Services.dynamicPort || validator.isIP(config.Services.ardsServiceHost)) {
         addReqRemoveUrl = util.format("http://%s:%s/DVP/API/%s/ARDS/request/%s/%s", config.Services.ardsServiceHost, config.Services.ardsServicePort, config.Services.ardsServiceVersion, sessionId, reason);
     }
     restClientHandler.DoDelete(internalAccessToken, addReqRemoveUrl, function (err, res1, result) {
@@ -100,7 +100,7 @@ function RemoveRequest(tenant, company, sessionId, reason, callback){
 function RejectRequest(tenant, company, sessionId, reason, callback){
     var internalAccessToken = util.format("%d:%d", tenant, company);
     var addReqRemoveUrl = util.format("http://%s/DVP/API/%s/ARDS/request/%s/reject/%s", config.Services.ardsServiceHost, config.Services.ardsServiceVersion, sessionId, reason);
-    if (validator.isIP(config.Services.ardsServiceHost)) {
+    if (config.Services.dynamicPort || validator.isIP(config.Services.ardsServiceHost)) {
         addReqRemoveUrl = util.format("http://%s:%s/DVP/API/%s/ARDS/request/%s/reject/%s", config.Services.ardsServiceHost, config.Services.ardsServicePort, config.Services.ardsServiceVersion, sessionId, reason);
     }
     restClientHandler.DoDelete(internalAccessToken, addReqRemoveUrl, function (err, res1, result) {
@@ -129,7 +129,7 @@ function UpdateSlotState(company, tenant, triggerType, previousUserId, newUserId
                         if (preUser && preUser.resourceid) {
                             var preUserData = {RequestType: "TICKET", State: "Available", Reason: "", OtherInfo: ""};
                             var preUserUrl = util.format("http://%s/DVP/API/%s/ARDS/resource/%s/concurrencyslot/session/%s", config.Services.ardsServiceHost, config.Services.ardsServiceVersion, preUser.resourceid, ticketId);
-                            if (validator.isIP(config.Services.ardsServiceHost)) {
+                            if (config.Services.dynamicPort || validator.isIP(config.Services.ardsServiceHost)) {
                                 preUserUrl = util.format("http://%s:%s/DVP/API/%s/ARDS/resource/%s/concurrencyslot/session/%s", config.Services.ardsServiceHost, config.Services.ardsServicePort, config.Services.ardsServiceVersion, preUser.resourceid, ticketId);
                             }
                             restClientHandler.DoPut(internalAccessToken, preUserUrl, preUserData, function (err, res1, result) {
@@ -166,7 +166,7 @@ function UpdateSlotState(company, tenant, triggerType, previousUserId, newUserId
                         if (newUser && newUser.resourceid) {
                             var preUserData = {RequestType: "TICKET", State: "Connected", Reason: "", OtherInfo: ""};
                             var preUserUrl = util.format("http://%s/DVP/API/%s/ARDS/resource/%s/concurrencyslot/session/%s", config.Services.ardsServiceHost, config.Services.ardsServiceVersion, newUser.resourceid, ticketId);
-                            if (validator.isIP(config.Services.ardsServiceHost)) {
+                            if (config.Services.dynamicPort || validator.isIP(config.Services.ardsServiceHost)) {
                                 preUserUrl = util.format("http://%s:%s/DVP/API/%s/ARDS/resource/%s/concurrencyslot/session/%s", config.Services.ardsServiceHost, config.Services.ardsServicePort, config.Services.ardsServiceVersion, newUser.resourceid, ticketId);
                             }
                             restClientHandler.DoPut(internalAccessToken, preUserUrl, preUserData, function (err, res1, result) {

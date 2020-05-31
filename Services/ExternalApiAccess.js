@@ -24,7 +24,7 @@ var RemoteGetFileMetadata = function(reqId, filename, companyId, tenantId, callb
         {
             var httpUrl = util.format('http://%s/DVP/API/%s/FileService/File/%s/MetaData', fileServiceHost, fileServiceVersion, filename);
 
-            if(validator.isIP(fileServiceHost))
+            if(config.Services.dynamicPort || validator.isIP(fileServiceHost))
             {
                 httpUrl = util.format('http://%s:%s/DVP/API/%s/FileService/File/%s/MetaData', fileServiceHost, fileServicePort, fileServiceVersion, filename);
             }
@@ -89,7 +89,7 @@ var FileUploadReserve = function(reqId, filename, companyId, tenantId, callback)
         {
             var httpUrl = util.format('http://%s/DVP/API/%s/FileService/File/Reserve', fileServiceHost, fileServiceVersion);
 
-            if(validator.isIP(fileServiceHost))
+            if(config.Services.dynamicPort || validator.isIP(fileServiceHost))
             {
                 httpUrl = util.format('http://%s:%s/DVP/API/%s/FileService/File/Reserve', fileServiceHost, fileServicePort, fileServiceVersion);
             }
@@ -147,7 +147,7 @@ var UploadFile = function(reqId, uniqueId, filename, companyId, tenantId, callba
         {
             var httpUrl = util.format('http://%s/DVP/API/%s/FileService/File/Upload', fileServiceHost, fileServiceVersion);
 
-            if(validator.isIP(fileServiceHost))
+            if(config.Services.dynamicPort || validator.isIP(fileServiceHost))
             {
                 httpUrl = util.format('http://%s:%s/DVP/API/%s/FileService/File/Upload', fileServiceHost, fileServicePort, fileServiceVersion);
             }
@@ -218,7 +218,7 @@ var DeleteFile = function(reqId, uniqueId, companyId, tenantId, callback)
         {
             var httpUrl = util.format('http://%s/DVP/API/%s/FileService/File/%s', fileServiceHost, fileServiceVersion, uniqueId);
 
-            if(validator.isIP(fileServiceHost))
+            if(config.Services.dynamicPort || validator.isIP(fileServiceHost))
             {
                 httpUrl = util.format('http://%s:%s/DVP/API/%s/FileService/File/%s', fileServiceHost, fileServicePort, fileServiceVersion, uniqueId);
             }

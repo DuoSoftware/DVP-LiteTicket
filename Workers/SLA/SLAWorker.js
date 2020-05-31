@@ -275,7 +275,7 @@ function UpdateCron(tenant, company, ticketId, priority, previousPriority, matri
             if(priority === matrix.priority) {
                 var cronUrl = util.format("http://%s/DVP/API/%s/Cron", config.Services.scheduleWorkerHost, config.Services.scheduleWorkerVersion);
                 var callbackUrl = util.format("http://%s/DVP/API/%s/SLA/ScheduleCallback", config.LBServer.ip, config.Host.version);
-                if (validator.isIP(config.Services.scheduleWorkerHost)) {
+                if (config.Services.dynamicPort || validator.isIP(config.Services.scheduleWorkerHost)) {
                     cronUrl = util.format("http://%s:%s/DVP/API/%s/Cron", config.Services.scheduleWorkerHost, config.Services.scheduleWorkerPort, config.Services.scheduleWorkerVersion);
                 }
                 if (validator.isIP(config.LBServer.ip)) {
@@ -345,7 +345,7 @@ function UpdateCron(tenant, company, ticketId, priority, previousPriority, matri
             }else if(previousPriority && previousPriority != priority && previousPriority === matrix.priority){
                 var cronTargetDeleteUrl = util.format("http://%s/DVP/API/%s/Cron/Reference/%s", config.Services.scheduleWorkerHost, config.Services.scheduleWorkerVersion, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_fail", ticketId, matrix.criteria)));
                 var cronThresholdDeleteUrl = util.format("http://%s/DVP/API/%s/Cron/Reference/%s", config.Services.scheduleWorkerHost, config.Services.scheduleWorkerVersion, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_threshold", ticketId, matrix.criteria)));
-                if (validator.isIP(config.Services.scheduleWorkerHost)) {
+                if (config.Services.dynamicPort || validator.isIP(config.Services.scheduleWorkerHost)) {
                     cronTargetDeleteUrl = util.format("http://%s:%s/DVP/API/%s/Cron/Reference/%s", config.Services.scheduleWorkerHost, config.Services.scheduleWorkerPort, config.Services.scheduleWorkerVersion, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_fail", ticketId, matrix.criteria)));
                     cronThresholdDeleteUrl = util.format("http://%s:%s/DVP/API/%s/Cron/Reference/%s", config.Services.scheduleWorkerHost, config.Services.scheduleWorkerPort, config.Services.scheduleWorkerVersion, encodeURIComponent(util.format("%s#%s#%s#%s", matrix.id, "on_threshold", ticketId, matrix.criteria)));
                 }
@@ -369,7 +369,7 @@ function UpdateSLAWhenStateChange(ticket, callback){
     try{
         var internalAccessToken = util.format("%d:%d", ticket.tenant, ticket.company);
         var cronDeleteUrl = util.format("http://%s/DVP/API/%s/Cron/Reference", config.Services.scheduleWorkerHost, config.Services.scheduleWorkerVersion);
-        if (validator.isIP(config.Services.scheduleWorkerHost)) {
+        if (config.Services.dynamicPort || validator.isIP(config.Services.scheduleWorkerHost)) {
             cronDeleteUrl = util.format("http://%s:%s/DVP/API/%s/Cron/Reference", config.Services.scheduleWorkerHost, config.Services.scheduleWorkerPort, config.Services.scheduleWorkerVersion);
         }
         if(ticket && ticket.sla){
@@ -436,7 +436,7 @@ function UpdateSLAWhenFirstComment(ticketId){
             } else {
                 var internalAccessToken = util.format("%d:%d", ticket.tenant, ticket.company);
                 var cronDeleteUrl = util.format("http://%s/DVP/API/%s/Cron/Reference", config.Services.scheduleWorkerHost, config.Services.scheduleWorkerVersion);
-                if (validator.isIP(config.Services.scheduleWorkerHost)) {
+                if (config.Services.dynamicPort || validator.isIP(config.Services.scheduleWorkerHost)) {
                     cronDeleteUrl = util.format("http://%s:%s/DVP/API/%s/Cron/Reference", config.Services.scheduleWorkerHost, config.Services.scheduleWorkerPort, config.Services.scheduleWorkerVersion);
                 }
                 if (ticket && ticket.sla) {

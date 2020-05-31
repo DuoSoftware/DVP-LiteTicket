@@ -21,7 +21,7 @@ function AddEngagementSession(company, tenant, sessionId, channelFrom, channelTo
     };
 
     var initUrl = util.format("http://%s/DVP/API/%s/Engagement/%s/EngagementSession", config.Services.interactionServiceHost, config.Services.interactionServiceVersion, requesterId);
-    if (validator.isIP(config.Services.interactionServiceHost)) {
+    if (config.Services.dynamicPort || validator.isIP(config.Services.interactionServiceHost)) {
         initUrl = util.format("http://%s:%s/DVP/API/%s/Engagement/%s/EngagementSession", config.Services.interactionServiceHost, config.Services.interactionServicePort, config.Services.interactionServiceVersion, requesterId);
     }
     restClientHandler.DoPost(internalAccessToken, initUrl, engSessionObj, function (err, res1, result) {
@@ -50,7 +50,7 @@ function AppendNoteToEngagement(company, tenant, sessionId, note){
     };
 
     var initUrl = util.format("http://%s/DVP/API/%s/EngagementSession/%s/Note", config.Services.interactionServiceHost, config.Services.interactionServiceVersion, sessionId);
-    if (validator.isIP(config.Services.interactionServiceHost)) {
+    if (config.Services.dynamicPort || validator.isIP(config.Services.interactionServiceHost)) {
         initUrl = util.format("http://%s:%s/DVP/API/%s/EngagementSession/%s/Note", config.Services.interactionServiceHost, config.Services.interactionServicePort, config.Services.interactionServiceVersion, sessionId);
     }
     restClientHandler.DoPost(internalAccessToken, initUrl, noteObj, function (err, res1, result) {
