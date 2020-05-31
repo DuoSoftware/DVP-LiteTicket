@@ -1,8 +1,8 @@
 var mongoose = require('mongoose');
-var logger = require('dvp-common/LogHandler/CommonLogHandler.js').logger;
+var logger = require('dvp-common-lite/LogHandler/CommonLogHandler.js').logger;
 var Tag = require('dvp-mongomodels/model/Tag').Tag;
 var TagCategory = require('dvp-mongomodels/model/Tag').TagCategory;
-var messageFormatter = require('dvp-common/CommonMessageGenerator/ClientMessageJsonFormatter.js');
+var messageFormatter = require('dvp-common-lite/CommonMessageGenerator/ClientMessageJsonFormatter.js');
 var auditTrailsHandler = require('dvp-common/AuditTrail/AuditTrailsHandler.js');
 
 

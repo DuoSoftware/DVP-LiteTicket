@@ -3,11 +3,11 @@
  */
 
 var mongoose = require('mongoose');
-var logger = require('dvp-common/LogHandler/CommonLogHandler.js').logger;
+var logger = require('dvp-common-lite/LogHandler/CommonLogHandler.js').logger;
 var TimeEntry = require('dvp-mongomodels/model/TimeEntry').TimeEntry;
 var Ticket = require('dvp-mongomodels/model/Ticket').Ticket;
 var SLA = require('dvp-mongomodels/model/SLA').SLA;
-var messageFormatter = require('dvp-common/CommonMessageGenerator/ClientMessageJsonFormatter.js');
+var messageFormatter = require('dvp-common-lite/CommonMessageGenerator/ClientMessageJsonFormatter.js');
 
 
 

@@ -1,10 +1,10 @@
 var mongoose = require('mongoose');
-var logger = require('dvp-common/LogHandler/CommonLogHandler.js').logger;
+var logger = require('dvp-common-lite/LogHandler/CommonLogHandler.js').logger;
 var FormMaster = require('dvp-mongomodels/model/FormMaster').FormMaster;
 var FormSubmission = require('dvp-mongomodels/model/FormMaster').FormSubmission;
 var FormProfile = require('dvp-mongomodels/model/FormMaster').FormProfile;
 var IsolatedTagForm = require('dvp-mongomodels/model/FormMaster').FormIsolatedTag;
-var messageFormatter = require('dvp-common/CommonMessageGenerator/ClientMessageJsonFormatter.js');
+var messageFormatter = require('dvp-common-lite/CommonMessageGenerator/ClientMessageJsonFormatter.js');
 
 function CreateForm(req, res) {
 

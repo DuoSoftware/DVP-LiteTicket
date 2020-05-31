@@ -1,7 +1,7 @@
 var mongoose = require('mongoose');
 var json2csv = require('json2csv');
 var fs = require('fs');
-var logger = require('dvp-common/LogHandler/CommonLogHandler.js').logger;
+var logger = require('dvp-common-lite/LogHandler/CommonLogHandler.js').logger;
 var Ticket = require('dvp-mongomodels/model/Ticket').Ticket;
 var RecentTicket = require('dvp-mongomodels/model/RecentTickets').RecentTicket;
 var RecentUserTicket = require('dvp-mongomodels/model/RecentTickets').RecentUserTickets;
@@ -28,7 +28,7 @@ var dvpEventsHandler = require('../Workers/Common/DVPEventsHandler.js');
 
 /*var CaseConfiguration = require('dvp-mongomodels/model/CaseConfiguration').CaseConfiguration;*/
 var EngagementSession = require('dvp-mongomodels/model/Engagement').EngagementSession;
-var messageFormatter = require('dvp-common/CommonMessageGenerator/ClientMessageJsonFormatter.js');
+var messageFormatter = require('dvp-common-lite/CommonMessageGenerator/ClientMessageJsonFormatter.js');
 var triggerWorker = require('../Workers/Trigger/TriggerWorker');
 var slaWorker = require('../Workers/SLA/SLAWorker.js');
 var caseWorker = require('../Workers/Case/CaseWorker');

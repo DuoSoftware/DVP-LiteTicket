@@ -8,7 +8,7 @@ var UserGroup = require('dvp-mongomodels/model/UserGroup').UserGroup;
 var Trigger = require('dvp-mongomodels/model/TicketTrigers').Trigger;
 var Ticket = require('dvp-mongomodels/model/Ticket').Ticket;
 var EventEmitter = require('events').EventEmitter;
-var messageFormatter = require('dvp-common/CommonMessageGenerator/ClientMessageJsonFormatter.js');
+var messageFormatter = require('dvp-common-lite/CommonMessageGenerator/ClientMessageJsonFormatter.js');
 var util = require('util');
 var PickAgent = require('./PickAgent.js');
 var DvpNotification = require('./DvpNotification.js');
@@ -20,7 +20,7 @@ var emailHandler = require('./EmailHandler.js');
 var dvpInteraction = require('../Common/DvpInteractions');
 var async = require('async');
 var OrganisationConfig = require('dvp-mongomodels/model/OrganisationConfig');
-var logger = require('dvp-common/LogHandler/CommonLogHandler.js').logger;
+var logger = require('dvp-common-lite/LogHandler/CommonLogHandler.js').logger;
 var q = require('q');
 var dvpEventsHandler = require('../Common/DVPEventsHandler.js');
 

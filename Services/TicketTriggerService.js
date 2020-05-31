@@ -3,13 +3,13 @@
  */
 
 var mongoose = require('mongoose');
-var logger = require('dvp-common/LogHandler/CommonLogHandler.js').logger;
+var logger = require('dvp-common-lite/LogHandler/CommonLogHandler.js').logger;
 var TimeEntry = require('dvp-mongomodels/model/TimeEntry').TimeEntry;
 var Ticket = require('dvp-mongomodels/model/Ticket').Ticket;
 var User = require('dvp-mongomodels/model/User');
 var Trigger = require('dvp-mongomodels/model/TicketTrigers').Trigger;
 var OrganisationConfig = require('dvp-mongomodels/model/OrganisationConfig');
-var messageFormatter = require('dvp-common/CommonMessageGenerator/ClientMessageJsonFormatter.js');
+var messageFormatter = require('dvp-common-lite/CommonMessageGenerator/ClientMessageJsonFormatter.js');
 var q = require('q');
 var triggerWorker = require('../Workers/Trigger/TriggerWorker');
 

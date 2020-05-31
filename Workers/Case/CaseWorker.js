@@ -2,7 +2,7 @@
  * Created by Heshan.i on 10/17/2016.
  */
 
-var logger = require('dvp-common/LogHandler/CommonLogHandler.js').logger;
+var logger = require('dvp-common-lite/LogHandler/CommonLogHandler.js').logger;
 var Case = require('dvp-mongomodels/model/CaseManagement').Case;
 var CaseConfiguration = require('dvp-mongomodels/model/CaseManagement').CaseConfiguration;
 var Ticket = require('dvp-mongomodels/model/Ticket').Ticket;

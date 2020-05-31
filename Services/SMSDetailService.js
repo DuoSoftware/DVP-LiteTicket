@@ -2,8 +2,8 @@
  * Created by dinusha on 8/28/2017.
  */
 var EngagementSession = require('dvp-mongomodels/model/Engagement').EngagementSession;
-var logger = require('dvp-common/LogHandler/CommonLogHandler.js').logger;
-var messageFormatter = require('dvp-common/CommonMessageGenerator/ClientMessageJsonFormatter.js');
+var logger = require('dvp-common-lite/LogHandler/CommonLogHandler.js').logger;
+var messageFormatter = require('dvp-common-lite/CommonMessageGenerator/ClientMessageJsonFormatter.js');
 var fs = require('fs');
 var moment = require('moment');
 var externalApi = require('./ExternalApiAccess.js');
