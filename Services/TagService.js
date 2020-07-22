@@ -43,7 +43,7 @@ function CreateTagCategory(req, res){
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
-
+    var iss = req.user.iss;
     var jsonString;
     var tagCategory = TagCategory({
         name:req.body.name,
@@ -87,6 +87,7 @@ function RemoveTagCategory(req, res){
     var jsonString;
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
+    var iss = req.user.iss;
 
     TagCategory.findOneAndRemove({_id:req.params.id,company:company,tenant:tenant}, function (errRemove,resRemove) {
         if(errRemove)
@@ -208,7 +209,7 @@ function CreateTag(req, res){
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
-
+    var iss = req.user.iss;
     var jsonString;
 
     var tag = Tag({
@@ -349,6 +350,7 @@ function DeleteTag(req, res){
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
+    var iss = req.user.iss;
     var jsonString;
 
     Tag.findOneAndRemove({id:req.params.id,company:company,tenant:tenant}, function (errTagRemove,resTagRemove) {
@@ -383,7 +385,7 @@ function DeleteTag(req, res){
 function AttachTagsToTag(req, res){
 
     logger.debug("DVP-LiteTicket.AttachTagsToTag Internal method ");
-
+    var iss = req.user.iss;
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
     var jsonString;
@@ -429,6 +431,7 @@ function CreateTagsToTag(req, res){
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
+    var iss = req.user.iss;
     var jsonString;
 
     var newTag = Tag({
@@ -496,6 +499,7 @@ function DetachTagsFromTag(req,res){
     var jsonString;
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
+    var iss = req.user.iss;
     var parentTagId=req.params.tagid;
     var childTagId=req.params.id;
 
@@ -538,7 +542,7 @@ function AttachTagsToCategory(req, res){
     var CategoryId=req.params.cid;
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
-
+    var iss = req.user.iss;
 
     TagCategory.findOneAndUpdate({_id:CategoryId,company:company,tenant:tenant},{
         $addToSet :{tags : TagId}
@@ -580,6 +584,7 @@ function DetachTagsFromCategory(req,res){
     var CaregoryId=req.params.cid;
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
+    var iss = req.user.iss;
 
     TagCategory.findOneAndUpdate({_id:CaregoryId,company:company,tenant:tenant},{$pull:{tags:TagId}},function(errDetachCatToTag,resDetachCatToTag)
     {
@@ -617,6 +622,7 @@ function CreateTagsToTagCategory(req, res){
 
     var company = parseInt(req.user.company);
     var tenant = parseInt(req.user.tenant);
+    var iss = req.user.iss;
     var jsonString;
 
     var newTag = Tag({
