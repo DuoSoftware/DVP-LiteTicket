@@ -14,6 +14,7 @@ module.exports = {
     port: "SYS_REDIS_PORT",
     user: "SYS_REDIS_USER",
     password: "SYS_REDIS_PASSWORD",
+    redisDB: "SYS_REDIS_DB_CONFIG",
     sentinels: {
       hosts: "SYS_REDIS_SENTINEL_HOSTS",
       port: "SYS_REDIS_SENTINEL_PORT",
@@ -41,6 +42,7 @@ module.exports = {
     password: "SYS_DASHBOARD_REDIS_PASSWORD",
     mode: "SYS_DASHBOARD_REDIS_MODE",
     db: "SYS_REDIS_DB_DASHBOARD",
+    redisDB: "SYS_REDIS_DB_DASHBOARD",
     sentinels: {
       hosts: "SYS_DASHBOARD_REDIS_SENTINEL_HOSTS",
       port: "SYS_DASHBOARD_REDIS_SENTINEL_PORT",
@@ -83,6 +85,7 @@ module.exports = {
     dbname: "SYS_MONGO_DB",
     password: "SYS_MONGO_PASSWORD",
     user: "SYS_MONGO_USER",
+    type: "SYS_MONGO_TYPE",
     replicaset: "SYS_MONGO_REPLICASETNAME",
   },
 
