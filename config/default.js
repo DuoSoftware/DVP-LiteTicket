@@ -10,23 +10,23 @@ module.exports = {
 
   Redis: {
     mode: "instance", //instance, cluster, sentinel
-    ip: "",
-    port: 6389,
-    user: "",
-    password: "",
+    ip: "13.59.52.179",
+    port: 6379,
+    user: "duo",
+    password: "DuoS123",
     redisDB: 8,
     sentinels: {
       hosts: "138.197.90.92,45.55.205.92,138.197.90.92",
-      port: 16389,
+      port: 16379,
       name: "redis-cluster",
     },
   },
 
   Security: {
-    ip: "",
-    port: 6389,
+    ip: "13.59.52.179",
+    port: 6379,
     user: "duo",
-    password: "",
+    password: "DuoS123",
     mode: "instance", //instance, cluster, sentinel
     sentinels: {
       hosts: "138.197.90.92,45.55.205.92,138.197.90.92",
@@ -91,12 +91,13 @@ module.exports = {
     port: "3635",
   },
 
+  //mongodb+srv://facetone:Hds7236YD@facetone-prod.2xyao.mongodb.net/test?authSource=admin&replicaSet=atlas-unwxnp-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true
   Mongo: {
-    ip: "",
+    ip: "facetone-prod.2xyao.mongodb.net",
     port: "",
-    dbname: "",
-    password: "",
-    user: "",
+    dbname: "dvpdb",
+    password: "Hds7236YD",
+    user: "facetone",
     type: "mongodb+srv",
   },
 
@@ -111,28 +112,28 @@ module.exports = {
   Services: {
     accessToken:
       "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdWtpdGhhIiwianRpIjoiYWEzOGRmZWYtNDFhOC00MWUyLTgwMzktOTJjZTY0YjM4ZDFmIiwic3ViIjoiNTZhOWU3NTlmYjA3MTkwN2EwMDAwMDAxMjVkOWU4MGI1YzdjNGY5ODQ2NmY5MjExNzk2ZWJmNDMiLCJleHAiOjE5MDIzODExMTgsInRlbmFudCI6LTEsImNvbXBhbnkiOi0xLCJzY29wZSI6W3sicmVzb3VyY2UiOiJhbGwiLCJhY3Rpb25zIjoiYWxsIn1dLCJpYXQiOjE0NzAzODExMTh9.Gmlu00Uj66Fzts-w6qEwNUz46XYGzE8wHUhAJOFtiRo",
-    resourceServiceHost: "resourceservice.app.veery.cloud",
+    resourceServiceHost: "app.facetone.com",
     resourceServicePort: "8831",
     resourceServiceVersion: "1.0.0.0",
-    sipuserendpointserviceHost: "sipuserendpointservice.app.veery.cloud",
+    sipuserendpointserviceHost: "app.facetone.com",
     sipuserendpointservicePort: "8831",
     sipuserendpointserviceVersion: "1.0.0.0",
-    clusterconfigserviceHost: "clusterconfig.app.veery.cloud",
+    clusterconfigserviceHost: "app.facetone.com",
     clusterconfigservicePort: "8831",
     clusterconfigserviceVersion: "1.0.0.0",
-    ardsServiceHost: "ardsliteservice.app.veery.cloud",
+    ardsServiceHost: "app.facetone.com",
     ardsServicePort: "8828",
     ardsServiceVersion: "1.0.0.0",
-    notificationServiceHost: "notificationservice.app.veery.cloud",
+    notificationServiceHost: "app.facetone.com",
     notificationServicePort: "8089",
     notificationServiceVersion: "1.0.0.0",
     scheduleWorkerHost: "192.168.0.16",
     scheduleWorkerPort: "8080",
     scheduleWorkerVersion: "1.0.0.0",
-    interactionServiceHost: "interactions.app.veery.cloud",
+    interactionServiceHost: "app.facetone.com",
     interactionServicePort: "8080",
     interactionServiceVersion: "1.0.0.0",
-    fileServiceHost: "fileservice.app.veery.cloud",
+    fileServiceHost: "app.facetone.com",
     fileServicePort: 5645,
     fileServiceVersion: "1.0.0.0",
     dynamicPort: true,
