@@ -8311,7 +8311,7 @@ var appendToCSVFile = function (uniqueId, fileName, tempQuery, offset, limit, tz
                                 address: '',
                                 fromNumber: (ticketInfo.engagement_session ? ticketInfo.engagement_session.channel_from : ''),
                                 createdDate: moment(ticketInfo.created_at).utcOffset(tz).format("YYYY-MM-DD HH:mm:ss"),
-                                assignee: (ticketInfo.assignee ? ticketInfo.assignee.name : ''),
+                                assignee: (ticketInfo.assignee ? ticketInfo.assignee.name : (ticketInfo.assignee_group ? ticketInfo.assignee_group.name : '')),
                                 submitter: (ticketInfo.submitter ? ticketInfo.submitter.name : ''),
                                 requester: (ticketInfo.requester ? ticketInfo.requester.name : ''),
                                 channel: ticketInfo.channel,
@@ -9344,6 +9344,7 @@ var GetAvailableTicketTypes = function (company, tenant, callback) {
     TicketTypes.findOne({company: company, tenant: tenant}, function (err, ticketTypes) {
         if (err) {
             jsonString = messageFormatter.FormatMessage(err, "Get Ticket Types Failed", false, undefined);
+            logger.error("DVP-LiteTicket.GetAvailableTypes Internal method-TicketService - [%s]", jsonString);
             callback(jsonString, undefined);
         } else {
             var tTypes = [];
@@ -9355,6 +9356,7 @@ var GetAvailableTicketTypes = function (company, tenant, callback) {
                 }
             }
             jsonString = messageFormatter.FormatMessage(err, "Get Ticket Types Success", true, tTypes);
+            logger.info("DVP-LiteTicket.GetAvailableTypes Internal method-TicketService - [%s]", jsonString);
             callback(jsonString, ticketTypes);
         }
     });
